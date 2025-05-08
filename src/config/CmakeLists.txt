@@ -1,0 +1,4 @@
+set(CONFIG_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/ConfigManager.cpp
+    PARENT_SCOPE
+)

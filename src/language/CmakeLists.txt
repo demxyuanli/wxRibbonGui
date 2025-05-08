@@ -1,0 +1,4 @@
+set(LANGUAGE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/LanguageManager.cpp
+    PARENT_SCOPE
+)
