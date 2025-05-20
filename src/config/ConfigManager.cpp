@@ -1,6 +1,10 @@
 #include "config/ConfigManager.h"
+#include "logger/Logger.h"
+#include "config/LoggerConfig.h"
+#include "config/Coin3DConfig.h"
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
+#include <wx/ffile.h>
 
 ConfigManager::ConfigManager() : initialized(false) {
 }
@@ -19,18 +23,19 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
         return true;
     }
 
-    // If a configuration file path is provided, use it
+    // Use provided config file path if available
     if (!configFilePath.empty()) {
         this->configFilePath = configFilePath;
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Using provided config file path: " + this->configFilePath, "ConfigManager");
     }
     else {
-        // Otherwise try to find the configuration file
+        // Otherwise, find the config file
         this->configFilePath = findConfigFile();
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file path: " + (this->configFilePath.empty() ? "none" : this->configFilePath), "ConfigManager");
     }
 
-    // If no configuration file is found, create a new one
+    // Create a new config file if none found
     if (this->configFilePath.empty()) {
-        // Create configuration file in user configuration directory
         wxString userConfigDir = wxStandardPaths::Get().GetUserConfigDir();
         wxFileName exeFile(wxStandardPaths::Get().GetExecutablePath());
         wxString appName = exeFile.GetName();
@@ -41,16 +46,70 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
         }
 
         this->configFilePath = (configDir + wxFileName::GetPathSeparator() + "config.ini").ToStdString();
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Created new config file path: " + this->configFilePath, "ConfigManager");
     }
 
-    // Create configuration object
+    // Verify file exists and is readable
+    if (!wxFileExists(this->configFilePath)) {
+        Logger::getLogger().Log(Logger::LogLevel::ERR, "Config file does not exist: " + this->configFilePath, "ConfigManager");
+        // Create an empty config file
+        wxFFile file(this->configFilePath, "w");
+        if (!file.IsOpened()) {
+            Logger::getLogger().Log(Logger::LogLevel::ERR, "Failed to create config file: " + this->configFilePath, "ConfigManager");
+            return false;
+        }
+        file.Close();
+    }
+    else {
+        // Check if file is readable
+        wxFFile file(this->configFilePath, "r");
+        if (!file.IsOpened()) {
+            Logger::getLogger().Log(Logger::LogLevel::ERR, "Config file is not readable: " + this->configFilePath, "ConfigManager");
+            return false;
+        }
+        file.Close();
+    }
+
+    // Initialize configuration object
     fileConfig = std::make_unique<wxFileConfig>(wxEmptyString, wxEmptyString,
         wxString(this->configFilePath), wxEmptyString,
         wxCONFIG_USE_LOCAL_FILE);
 
     initialized = true;
     Logger::getLogger().Log(Logger::LogLevel::INF, "Configuration manager initialized successfully, config file: " + this->configFilePath, "ConfigManager");
+
+    // Initialize Logger configuration
+    LoggerConfig::getInstance().initialize(*this);
+
+    // Initialize Coin3D configuration
+    Coin3DConfig::getInstance().initialize(*this);
+
     return true;
+}
+
+std::string ConfigManager::findConfigFile() {
+    // Check current directory
+    wxString exePath = wxStandardPaths::Get().GetExecutablePath();
+    wxFileName exeDir(exePath);
+    wxString currentDir = exeDir.GetPath();
+
+    wxString configPath = currentDir + wxFileName::GetPathSeparator() + "config.ini";
+    if (wxFileExists(configPath)) {
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file in current directory: " + configPath.ToStdString(), "ConfigManager");
+        return configPath.ToStdString();
+    }
+
+    // Check user configuration directory
+    wxString userConfigDir = wxStandardPaths::Get().GetUserConfigDir();
+    wxString appName = exeDir.GetName();
+    configPath = userConfigDir + wxFileName::GetPathSeparator() + appName + wxFileName::GetPathSeparator() + "config.ini";
+    if (wxFileExists(configPath)) {
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file in user config directory: " + configPath.ToStdString(), "ConfigManager");
+        return configPath.ToStdString();
+    }
+
+    Logger::getLogger().Log(Logger::LogLevel::WRN, "No config file found in current or user config directory", "ConfigManager");
+    return "";
 }
 
 std::string ConfigManager::getString(const std::string& section, const std::string& key, const std::string& defaultValue) {
@@ -61,7 +120,8 @@ std::string ConfigManager::getString(const std::string& section, const std::stri
 
     wxString value;
     fileConfig->SetPath("/" + wxString(section));
-    fileConfig->Read(wxString(key), &value, wxString(defaultValue));
+    bool success = fileConfig->Read(wxString(key), &value, wxString(defaultValue));
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Reading config [" + section + "][" + key + "]: " + (success ? value.ToStdString() : "default: " + defaultValue), "ConfigManager");
     return value.ToStdString();
 }
 
@@ -156,7 +216,6 @@ bool ConfigManager::reload() {
         return false;
     }
 
-    // Reload configuration file
     fileConfig = std::make_unique<wxFileConfig>(wxEmptyString, wxEmptyString,
         wxString(configFilePath), wxEmptyString,
         wxCONFIG_USE_LOCAL_FILE);
@@ -205,26 +264,4 @@ std::vector<std::string> ConfigManager::getKeys(const std::string& section) {
     }
 
     return keys;
-}
-
-std::string ConfigManager::findConfigFile() {
-    // First check current directory
-    wxString exePath = wxStandardPaths::Get().GetExecutablePath();
-    wxFileName exeDir(exePath);
-    wxString currentDir = exeDir.GetPath();
-
-    wxString configPath = currentDir + wxFileName::GetPathSeparator() + "config.ini";
-    if (wxFileExists(configPath)) {
-        return configPath.ToStdString();
-    }
-
-    // Then check user configuration directory
-    wxString userConfigDir = wxStandardPaths::Get().GetUserConfigDir();
-    wxString appName = exeDir.GetName();
-    configPath = userConfigDir + wxFileName::GetPathSeparator() + appName + wxFileName::GetPathSeparator() + "config.ini";
-    if (wxFileExists(configPath)) {
-        return configPath.ToStdString();
-    }
-
-    return "";
 }

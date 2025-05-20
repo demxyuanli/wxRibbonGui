@@ -1,0 +1,358 @@
+#include "flatui/flatui.h"
+#include <wx/log.h>
+#include "logger/Logger.h"
+#include <string>
+
+FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
+    : wxControl(parent, id, pos, size, style), m_activePage(0)
+{
+    Bind(wxEVT_PAINT, &FlatUIBar::OnPaint, this);
+    Bind(wxEVT_SIZE, &FlatUIBar::OnSize, this);
+    Bind(wxEVT_LEFT_DOWN, &FlatUIBar::OnMouseDown, this);
+}
+
+FlatUIBar::~FlatUIBar()
+{
+    for (auto page : m_pages)
+        delete page;
+}
+
+void FlatUIBar::AddPage(FlatUIPage* page)
+{
+    m_pages.push_back(page);
+    if (m_pages.size() == 1)
+        m_activePage = 0;
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Added page: " + page->GetLabel().ToStdString() + ", Total pages: " + std::to_string(m_pages.size()), "FlatUIBar");
+    Refresh();
+}
+
+void FlatUIBar::SetActivePage(size_t index)
+{
+    if (index < m_pages.size())
+    {
+        m_activePage = index;
+        Logger::getLogger().Log(Logger::LogLevel::INF, "Set active page to: " + std::to_string(index), "FlatUIBar");
+        Refresh();
+    }
+}
+
+size_t FlatUIBar::GetPageCount() const
+{
+    return m_pages.size();
+}
+
+FlatUIPage* FlatUIBar::GetPage(size_t index) const
+{
+    if (index < m_pages.size())
+        return m_pages[index];
+    return nullptr;
+}
+
+void FlatUIBar::OnPaint(wxPaintEvent& evt)
+{
+    wxPaintDC dc(this);
+    wxSize size = GetSize();
+    dc.SetBackground(wxColour(240, 240, 240));
+    dc.Clear();
+
+    int y = 0;
+    for (size_t i = 0; i < m_pages.size(); ++i)
+    {
+        FlatUIPage* page = m_pages[i];
+        wxString label = page->GetLabel();
+        wxSize labelSize = dc.GetTextExtent(label);
+        int x = 10 + i * 100;
+        if (i == m_activePage)
+        {
+            dc.SetBrush(wxColour(200, 200, 200));
+            dc.DrawRectangle(x - 5, y, 100, 30);
+        }
+        dc.DrawText(label, x, y + 5);
+    }
+
+    if (m_activePage < m_pages.size())
+    {
+        FlatUIPage* activePage = m_pages[m_activePage];
+        activePage->Show();
+        activePage->SetPosition(wxPoint(0, 30));
+        activePage->SetSize(wxSize(size.GetWidth(), size.GetHeight() - 30));
+    }
+    for (size_t i = 0; i < m_pages.size(); ++i)
+    {
+        if (i != m_activePage)
+        {
+            m_pages[i]->Hide();
+        }
+    }
+}
+
+void FlatUIBar::OnSize(wxSizeEvent& evt)
+{
+    wxSize size = GetSize();
+    if (m_activePage < m_pages.size())
+    {
+        FlatUIPage* activePage = m_pages[m_activePage];
+        activePage->SetPosition(wxPoint(0, 30));
+        activePage->SetSize(wxSize(size.GetWidth(), size.GetHeight() - 30));
+    }
+    Refresh();
+    evt.Skip();
+}
+
+void FlatUIBar::OnMouseDown(wxMouseEvent& evt)
+{
+    wxPoint pos = evt.GetPosition();
+    for (size_t i = 0; i < m_pages.size(); ++i)
+    {
+        int x = 10 + i * 100;
+        wxRect tabRect(x - 5, 0, 100, 30);
+        if (tabRect.Contains(pos))
+        {
+            Logger::getLogger().Log(Logger::LogLevel::INF, "Clicked on page tab: " + std::to_string(i), "FlatUIBar");
+            SetActivePage(i);
+            break;
+        }
+    }
+}
+
+FlatUIPage::FlatUIPage(FlatUIBar* parent, const wxString& label)
+    : wxControl(parent, wxID_ANY), m_label(label)
+{
+}
+
+FlatUIPage::~FlatUIPage()
+{
+    for (auto panel : m_panels)
+        delete panel;
+}
+
+void FlatUIPage::AddPanel(FlatUIPanel* panel)
+{
+    m_panels.push_back(panel);
+    panel->SetPosition(wxPoint(0, 0));
+    wxSize panelSizeForLog = GetSize(); 
+    panel->SetSize(wxSize(panelSizeForLog.GetWidth(), panelSizeForLog.GetHeight()));
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Added panel: " + panel->GetLabel().ToStdString() + " to page: " + GetLabel().ToStdString() + ". Initial Position: (0, 0), Initial Size: (" + std::to_string(panelSizeForLog.GetWidth()) + ", " + std::to_string(panelSizeForLog.GetHeight()) + ")", "FlatUIPage");
+
+    // Create a sizer and add the panel to it
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(panel, 1, wxEXPAND | wxALL, 5);
+    SetSizer(sizer);
+}
+
+FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
+    : wxControl(parent, wxID_ANY), m_label(label), m_orientation(orientation)
+{
+    Bind(wxEVT_PAINT, &FlatUIPanel::OnPaint, this);
+    m_sizer = new wxBoxSizer(m_orientation);
+    SetSizer(m_sizer);
+}
+
+FlatUIPanel::~FlatUIPanel()
+{
+    for (auto buttonBar : m_buttonBars)
+        delete buttonBar;
+    for (auto gallery : m_galleries)
+        delete gallery;
+}
+
+void FlatUIPanel::AddButtonBar(FlatUIButtonBar* buttonBar, int proportion, int flag, int border)
+{
+    m_buttonBars.push_back(buttonBar);
+    // Logger call can be kept if general addition logging is desired, but position/size is now sizer-managed.
+    // Logger::getLogger().Log(Logger::LogLevel::INF, "Added ButtonBar to panel: " + GetLabel().ToStdString(), "FlatUIPanel");
+
+    if (m_sizer)
+    {
+        m_sizer->Add(buttonBar, proportion, flag, border);
+        // No longer call SetPosition or SetSize directly for buttonBar
+    }
+    // Refresh(); // Refresh of the panel might still be needed or Layout if sizer changes things.
+}
+
+void FlatUIPanel::AddGallery(FlatUIGallery* gallery, int proportion, int flag, int border)
+{
+    m_galleries.push_back(gallery);
+    // Logger::getLogger().Log(Logger::LogLevel::INF, "Added Gallery to panel: " + GetLabel().ToStdString(), "FlatUIPanel");
+
+    if (m_sizer)
+    {
+        m_sizer->Add(gallery, proportion, flag, border);
+        // No longer call SetPosition or SetSize directly for gallery
+    }
+    // Refresh();
+}
+
+void FlatUIPanel::OnPaint(wxPaintEvent& evt)
+{
+    wxPaintDC dc(this);
+    wxSize size = GetSize();
+    dc.SetBackground(wxColour(240, 240, 240));
+    dc.Clear();
+
+    // Set pen for black border
+    dc.SetPen(wxPen(wxColour(0, 0, 0), 1));
+    dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
+}
+
+FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
+    : wxControl(parent, wxID_ANY)
+{
+    Bind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, this);
+    Bind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, this);
+}
+
+FlatUIButtonBar::~FlatUIButtonBar()
+{
+}
+
+void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& bitmap, wxMenu* menu)
+{
+    ButtonInfo info;
+    info.id = id;
+    info.label = label;
+    // 创建一个默认的占位符位图 (或者使用传入的bitmap，如果它IsOk())
+    if (bitmap.IsOk())
+    {
+        info.bitmap = bitmap;
+    }
+    else
+    {
+        wxBitmap defaultBitmap(32, 32);
+        wxMemoryDC dc(defaultBitmap);
+        dc.SetBackground(wxColour(180, 180, 180));
+        dc.Clear();
+        dc.SetPen(wxColour(100, 100, 100));
+        dc.DrawRectangle(0, 0, 32, 32);
+        dc.SelectObject(wxNullBitmap);
+        info.bitmap = defaultBitmap;
+    }
+
+    info.menu = menu;
+    info.isDropDown = (menu != nullptr);
+
+    m_buttons.push_back(info);
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Added button: " + label.ToStdString() + ", ID: " + std::to_string(id) + (info.isDropDown ? " (Dropdown)" : ""), "FlatUIButtonBar");
+    Refresh();
+}
+
+void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
+{
+    wxPaintDC dc(this);
+    wxSize size = GetSize();
+    dc.SetBackground(wxColour(220, 220, 220));
+    dc.Clear();
+
+    // Set pen for 2-pixel black border
+    dc.SetPen(wxPen(wxColour(0, 0, 0), 2));
+    dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
+
+    int x = 10;
+    int y = 10;
+    for (size_t i = 0; i < m_buttons.size(); ++i)
+    {
+        ButtonInfo& info = m_buttons[i];
+        if (info.bitmap.IsOk())
+        {
+            dc.DrawBitmap(info.bitmap, x, y);
+            dc.DrawText(info.label, x, y + info.bitmap.GetHeight() + 5);
+            info.rect = wxRect(x, y, info.bitmap.GetWidth(), info.bitmap.GetHeight() + 25);
+            x += info.bitmap.GetWidth() + 20;
+        }
+        else
+        {
+            dc.SetBrush(wxColour(180, 180, 180));
+            dc.DrawRectangle(x, y, 40, 40);
+            dc.DrawText(info.label, x, y + 45);
+            info.rect = wxRect(x, y, 40, 60);
+            x += 60;
+        }
+        if (x + (info.bitmap.IsOk() ? info.bitmap.GetWidth() : 40) > size.GetWidth())
+        {
+            x = 10;
+            y += (info.bitmap.IsOk() ? info.bitmap.GetHeight() : 40) + 30;
+        }
+    }
+}
+
+void FlatUIButtonBar::OnMouseDown(wxMouseEvent& evt)
+{
+    wxPoint pos = evt.GetPosition();
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Mouse down event in FlatUIButtonBar at position: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ")", "FlatUIButtonBar");
+    for (const auto& button : m_buttons)
+    {
+        if (button.rect.Contains(pos))
+        {
+            if (button.isDropDown && button.menu)
+            {
+                Logger::getLogger().Log(Logger::LogLevel::INF, "Clicked on dropdown button: " + button.label.ToStdString(), "FlatUIButtonBar");
+                PopupMenu(button.menu); // PopupMenu is a wxWindow method
+            }
+            else
+            {
+                Logger::getLogger().Log(Logger::LogLevel::INF, "Clicked on button: " + button.label.ToStdString() + ", ID: " + std::to_string(button.id), "FlatUIButtonBar");
+                wxCommandEvent event(wxEVT_BUTTON, button.id);
+                event.SetEventObject(this);
+                ProcessWindowEvent(event);
+            }
+            break;
+        }
+    }
+    evt.Skip();
+}
+
+FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
+    : wxControl(parent, wxID_ANY)
+{
+    Bind(wxEVT_PAINT, &FlatUIGallery::OnPaint, this);
+    Bind(wxEVT_LEFT_DOWN, &FlatUIGallery::OnMouseDown, this);
+}
+
+FlatUIGallery::~FlatUIGallery()
+{
+}
+
+void FlatUIGallery::AddItem(const wxBitmap& bitmap, int id)
+{
+    ItemInfo info;
+    info.bitmap = bitmap;
+    info.id = id;
+    m_items.push_back(info);
+    Refresh();
+}
+
+void FlatUIGallery::OnPaint(wxPaintEvent& evt)
+{
+    wxPaintDC dc(this);
+    wxSize size = GetSize();
+    dc.SetBackground(wxColour(230, 230, 230));
+    dc.Clear();
+
+    int x = 10;
+    int y = 10;
+    for (size_t i = 0; i < m_items.size(); ++i)
+    {
+        ItemInfo& info = m_items[i];
+        dc.DrawBitmap(info.bitmap, x, y);
+        info.rect = wxRect(x, y, info.bitmap.GetWidth(), info.bitmap.GetHeight());
+        x += info.bitmap.GetWidth() + 10;
+    }
+}
+
+void FlatUIGallery::OnMouseDown(wxMouseEvent& evt)
+{
+    wxPoint pos = evt.GetPosition();
+    Logger::getLogger().Log(Logger::LogLevel::INF, "Mouse down event in FlatUIGallery at position: (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ")", "FlatUIGallery");
+    for (const auto& item : m_items)
+    {
+        if (item.rect.Contains(pos))
+        {
+            Logger::getLogger().Log(Logger::LogLevel::INF, "Clicked on item with ID: " + std::to_string(item.id), "FlatUIGallery");
+            wxCommandEvent event(wxEVT_BUTTON, item.id);
+            event.SetEventObject(this);
+            ProcessWindowEvent(event);
+            break;
+        }
+    }
+    evt.Skip();
+}

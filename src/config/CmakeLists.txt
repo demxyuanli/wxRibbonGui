@@ -1,4 +1,6 @@
 set(CONFIG_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LoggerConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Coin3DConfig.cpp
     PARENT_SCOPE
 )

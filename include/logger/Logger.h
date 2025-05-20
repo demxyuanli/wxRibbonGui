@@ -1,31 +1,21 @@
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
+#ifndef LOGGER_H
+#define LOGGER_H
 
-#include <string>
+#include <wx/wx.h>
 #include <fstream>
-#include <wx/wx.h> 
-
-#ifdef INF
-#error "INF been defined"
-#endif
-#ifdef ERR
-#error "ERR been defined"
-#endif
-#ifdef WRN
-#error "WRN been defined"
-#endif
-#ifdef DBG
-#error "DBG been defined"
-#endif
+#include <string>
+#include <set>
 
 class Logger {
 public:
     enum class LogLevel { INF, DBG, WRN, ERR };
 
     static Logger& getLogger();
-    void Log(LogLevel level, const std::string& message, const std::string& context = "");
     void SetOutputCtrl(wxTextCtrl* ctrl);
+    void Log(LogLevel level, const std::string& message, const std::string& context = "");
     void Shutdown();
+    void SetLogLevels(const std::set<LogLevel>& levels, bool isSingleLevel); // Set allowed log levels
+    bool ShouldLog(LogLevel level) const; // Check if a level should be logged
 
 private:
     Logger();
@@ -33,9 +23,11 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    bool isShuttingDown;
     std::ofstream logFile;
     wxTextCtrl* logCtrl;
+    bool isShuttingDown = false;
+    std::set<LogLevel> allowedLogLevels; // Set of allowed log levels
+    bool isSingleLevelMode = false; // True for single-level mode (log level and above)
 };
 
-#endif // LOGGER_HPP
+#endif

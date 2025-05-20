@@ -1,0 +1,4 @@
+set(FLATUI_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/flatui.cpp
+    PARENT_SCOPE
+)

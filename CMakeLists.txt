@@ -31,6 +31,7 @@ add_subdirectory(src)
 add_subdirectory(src/logger)
 add_subdirectory(src/config)
 add_subdirectory(src/language)
+add_subdirectory(src/flatui)
 
 # 收集源文件
 set(SOURCES
@@ -38,6 +39,7 @@ set(SOURCES
     ${LOGGER_SOURCES}
     ${CONFIG_SOURCES}
     ${LANGUAGE_SOURCES}
+    ${FLATUI_SOURCES}
 )
 
 # 调试源文件
@@ -81,9 +83,22 @@ if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES
         LINK_FLAGS "/SUBSYSTEM:WINDOWS"
     )
+
+    # 复制扩展配置文件到目标目录
+    set(CONFIG_FILES
+        "${CMAKE_SOURCE_DIR}/config/config.ini"
+    )
+    set(TARGET_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+    foreach(CONFIG_FILE ${CONFIG_FILES})
+        add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${CONFIG_FILE}"
+                    "${TARGET_DIR}/"
+            COMMENT "Copying ${CONFIG_FILE} to ${TARGET_DIR}"
+        )
+    endforeach()
 endif()
 
 # 调试依赖路径
-message(STATUS "Coin3D_LIBRARIES: ${Coin3D_LIBRARIES}")
-message(STATUS "Coin3D_INCLUDE_DIRS: ${Coin3D_INCLUDE_DIRS}")
 message(STATUS "Project include dir: ${CMAKE_SOURCE_DIR}/include")

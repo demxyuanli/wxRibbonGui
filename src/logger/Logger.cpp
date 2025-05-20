@@ -8,6 +8,8 @@ Logger::Logger() : logCtrl(nullptr) {
     if (!logFile.is_open()) {
         throw std::runtime_error("Failed to open log file");
     }
+    // Default to only ERR level
+    allowedLogLevels = { LogLevel::ERR };
 }
 
 Logger::~Logger() {
@@ -25,7 +27,48 @@ void Logger::SetOutputCtrl(wxTextCtrl* ctrl) {
     logCtrl = ctrl;
 }
 
+void Logger::SetLogLevels(const std::set<LogLevel>& levels, bool isSingleLevel) {
+    isSingleLevelMode = isSingleLevel;
+    allowedLogLevels.clear();
+
+    if (levels.empty()) {
+        // Empty config: only ERR
+        allowedLogLevels.insert(LogLevel::ERR);
+    }
+    else if (isSingleLevel && levels.size() == 1) {
+        // Single level: include the specified level and above
+        auto level = *levels.begin();
+        if (level <= LogLevel::INF) allowedLogLevels.insert(LogLevel::INF);
+        if (level <= LogLevel::DBG) allowedLogLevels.insert(LogLevel::DBG);
+        if (level <= LogLevel::WRN) allowedLogLevels.insert(LogLevel::WRN);
+        allowedLogLevels.insert(LogLevel::ERR); // Always include ERR
+    }
+    else {
+        // Multiple levels: include only specified levels and ERR
+        allowedLogLevels = levels;
+        allowedLogLevels.insert(LogLevel::ERR);
+    }
+
+    // Log final allowed levels
+    std::string levelsStr;
+    for (const auto& lvl : allowedLogLevels) {
+        switch (lvl) {
+        case LogLevel::INF: levelsStr += "INF "; break;
+        case LogLevel::DBG: levelsStr += "DBG "; break;
+        case LogLevel::WRN: levelsStr += "WRN "; break;
+        case LogLevel::ERR: levelsStr += "ERR "; break;
+        }
+    }
+    Log(LogLevel::INF, "Allowed log levels set to: " + (levelsStr.empty() ? "none" : levelsStr), "Logger");
+}
+
+bool Logger::ShouldLog(LogLevel level) const {
+    return allowedLogLevels.find(level) != allowedLogLevels.end();
+}
+
 void Logger::Log(LogLevel level, const std::string& message, const std::string& context) {
+    if (!ShouldLog(level)) return; // Skip if level is not allowed
+
     if (!logFile.is_open()) return;
 
     std::time_t now = std::time(nullptr);
