@@ -6,10 +6,26 @@
 #include <wx/dcbuffer.h>
 
 
-FlatUIPage::FlatUIPage(FlatUIBar* parent, const wxString& label)
-    : wxControl(parent, wxID_ANY), m_label(label)
+FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
+    : wxWindow(parent, wxID_ANY), m_label(label)
 {
+    // 启用双缓冲绘图以减少闪烁
+    SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
+    
+    // 在Windows平台上使用WS_EX_COMPOSITED风格减少闪烁
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)GetHandle();
+    if (hwnd) {
+        long exStyle = ::GetWindowLong(hwnd, GWL_EXSTYLE);
+        ::SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_COMPOSITED);
+    }
+#endif
+    
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+    
+    m_sizer = new wxBoxSizer(wxVERTICAL);
+    SetSizer(m_sizer);
     
     FlatUIEventManager::getInstance().bindPageEvents(this);
     

@@ -29,14 +29,32 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
       m_tabFunctionSpacer(nullptr),
       m_functionProfileSpacer(nullptr)
 {
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)GetHandle();
+    if (hwnd) {
+        long exStyle = ::GetWindowLong(hwnd, GWL_EXSTYLE);
+        ::SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_COMPOSITED);
+    }
+#endif
+
+    SetDoubleBuffered(true);
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    
     // Create child component controls
     m_homeSpace = new FlatUIHomeSpace(this, wxID_ANY);
     m_functionSpace = new FlatUIFunctionSpace(this, wxID_ANY);
     m_profileSpace = new FlatUIProfileSpace(this, wxID_ANY);
     m_systemButtons = new FlatUISystemButtons(this, wxID_ANY);
     
+    m_homeSpace->SetDoubleBuffered(true);
+    m_functionSpace->SetDoubleBuffered(true);
+    m_profileSpace->SetDoubleBuffered(true);
+    m_systemButtons->SetDoubleBuffered(true);
+    
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 0);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 0);
+    m_tabFunctionSpacer->SetDoubleBuffered(true);
+    m_functionProfileSpacer->SetDoubleBuffered(true);
     m_tabFunctionSpacer->Hide();
     m_functionProfileSpacer->Hide();
 
@@ -49,8 +67,6 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     FlatUIEventManager::getInstance().bindFunctionSpaceEvents(m_functionSpace);
     FlatUIEventManager::getInstance().bindProfileSpaceEvents(m_profileSpace);
 
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
-    
     int barHeight = GetBarHeight() + 2; // Add 2 for border
     SetMinSize(wxSize(-1, barHeight));
     

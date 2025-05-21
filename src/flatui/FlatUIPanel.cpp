@@ -10,6 +10,18 @@
 FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
     : wxControl(parent, wxID_ANY), m_label(label), m_orientation(orientation)
 {
+    // 启用双缓冲绘图以减少闪烁
+    SetDoubleBuffered(true);
+    
+    // 在Windows平台上使用WS_EX_COMPOSITED风格减少闪烁
+#ifdef __WXMSW__
+    HWND hwnd = (HWND)GetHandle();
+    if (hwnd) {
+        long exStyle = ::GetWindowLong(hwnd, GWL_EXSTYLE);
+        ::SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_COMPOSITED);
+    }
+#endif
+    
     // Required for wxAutoBufferedPaintDC
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     

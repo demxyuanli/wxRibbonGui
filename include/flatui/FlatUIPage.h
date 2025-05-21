@@ -9,11 +9,11 @@
 class FlatUIBar;
 class FlatUIPanel;
 
-class FlatUIPage : public wxControl
+class FlatUIPage : public wxWindow
 {
 public:
-    // Constructor takes a FlatUIBar* parent
-    FlatUIPage(FlatUIBar* parent, const wxString& label);
+    // Constructor takes a wxWindow* parent (更通用的父窗口类型)
+    FlatUIPage(wxWindow* parent, const wxString& label);
     virtual ~FlatUIPage();
 
     void AddPanel(FlatUIPanel* panel);
@@ -29,9 +29,7 @@ public:
 private:
     wxString m_label;
     wxVector<FlatUIPanel*> m_panels;
-    // wxBoxSizer* m_sizer; // If sizer is part of FlatUIPage, declare here. Moved from cpp for clarity.
-                        // If it was only in AddPanel, it might not need to be a member.
-                        // Keeping it out unless it's confirmed to be a persistent member.
+    wxBoxSizer* m_sizer;  // 添加sizer成员变量用于页面布局
 };
 
 #endif // FLATUIPAGE_H 

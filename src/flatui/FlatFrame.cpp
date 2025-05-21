@@ -14,11 +14,15 @@
 FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size, wxBORDER_NONE)
 {
+    SetDoubleBuffered(true);
+    
     // FlatUIBar should have enough height to contain top bar and page content
     // Get standard height of the bar strip (top bar)
     int barHeight = FlatUIBar::GetBarHeight();
     // Give enough total height when creating, actual page size will be calculated in SetSize
     m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 2));
+    
+    m_ribbon->SetDoubleBuffered(true);
 
     wxPanel* searchPanel = new wxPanel(m_ribbon);
     wxBoxSizer* searchSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -279,25 +283,21 @@ void FlatFrame::OnMotion(wxMouseEvent& event)
                 break;
             case ResizeMode::NONE: break;
         }
-        SetSize(newRect);
-        Layout();
         
-        if (m_ribbon) {
-            m_ribbon->Update();
-            m_ribbon->Refresh(true);
+        SetSize(newRect);
+        
+        static wxLongLong lastRefreshTime = wxGetLocalTimeMillis();
+        wxLongLong now = wxGetLocalTimeMillis();
+        wxLongLong timeSinceLastRefresh = now - lastRefreshTime;
+        
+        if (timeSinceLastRefresh > 50) { 
+            lastRefreshTime = now;
             
-            if (m_ribbon->GetPageCount() > 0) {
-                size_t activePageIndex = m_ribbon->GetActivePage();
-                FlatUIPage* activePage = m_ribbon->GetPage(activePageIndex);
-                if (activePage && activePage->IsShown()) {
-                    activePage->Update();
-                    activePage->Refresh(true);
-                }
+            Layout();
+            if (m_ribbon) {
+                m_ribbon->Refresh(false);
             }
         }
-        
-        Refresh(true);
-        Update();
     }
     else
     {
