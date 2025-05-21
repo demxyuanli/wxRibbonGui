@@ -54,6 +54,9 @@ private:
     // Helper methods for resizing
     ResizeMode GetResizeModeForPosition(const wxPoint& clientPos);
     void UpdateCursorForResizeMode(ResizeMode mode);
+    
+    void DrawRubberBand(const wxRect& rect);
+    void EraseRubberBand();
 
     // UI Elements
     FlatUIBar* m_ribbon; // Example: if ribbon needs to be accessed by other methods
@@ -69,6 +72,8 @@ private:
     ResizeMode m_resizeMode = ResizeMode::NONE;
     wxPoint m_resizeStartMouseScreenPos; // For window resize, initial mouse pos in screen coords
     wxRect m_resizeStartWindowRect;   // For window resize, initial window rect in screen coords
+    wxRect m_currentRubberBandRect;   
+    bool m_rubberBandVisible = false; 
     int m_borderThreshold = 8;     // Pixels to detect border proximity
 };
 

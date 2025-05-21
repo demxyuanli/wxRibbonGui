@@ -55,6 +55,10 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionProfileSpacer = new FlatUISpacerControl(this, 0);
     m_tabFunctionSpacer->SetDoubleBuffered(true);
     m_functionProfileSpacer->SetDoubleBuffered(true);
+    
+    m_tabFunctionSpacer->SetCanDragWindow(true);
+    m_functionProfileSpacer->SetCanDragWindow(true);
+    
     m_tabFunctionSpacer->Hide();
     m_functionProfileSpacer->Hide();
 
@@ -735,14 +739,18 @@ void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator)
 {
     if (!m_tabFunctionSpacer) {
         m_tabFunctionSpacer = new FlatUISpacerControl(this, width);
+        m_tabFunctionSpacer->SetCanDragWindow(true);
+        m_tabFunctionSpacer->SetDoubleBuffered(true);
     }
     
     if (width > 0) {
         m_tabFunctionSpacer->SetSpacerWidth(width);
         m_tabFunctionSpacer->SetDrawSeparator(drawSeparator);
         m_tabFunctionSpacer->Show();
+        wxLogDebug("FlatUIBar: Show TabFunctionSpacer，Width=%d", width);
     } else {
         m_tabFunctionSpacer->Hide();
+        wxLogDebug("FlatUIBar: Hidden TabFunctionSpacer");
     }
     
     if (IsShown()) {
@@ -751,18 +759,23 @@ void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator)
     }
 }
 
-void FlatUIBar::SetFunctionProfileSpacer(int width, bool drawSeparator)
+void FlatUIBar::SetFunctionProfileSpacer(int width, bool drawSeparator, bool dragFlag)
 {
     if (!m_functionProfileSpacer) {
         m_functionProfileSpacer = new FlatUISpacerControl(this, width);
+        m_functionProfileSpacer->SetCanDragWindow(true);
+        m_functionProfileSpacer->SetDoubleBuffered(true);
     }
     
     if (width > 0) {
         m_functionProfileSpacer->SetSpacerWidth(width);
         m_functionProfileSpacer->SetDrawSeparator(drawSeparator);
+        m_functionProfileSpacer->SetShowDragFlag(dragFlag);
         m_functionProfileSpacer->Show();
+        wxLogDebug("FlatUIBar: Show FunctionProfileSpacer，Width=%d", width);
     } else {
         m_functionProfileSpacer->Hide();
+        wxLogDebug("FlatUIBar: Hidden FunctionProfileSpacer");
     }
     
     if (IsShown()) {

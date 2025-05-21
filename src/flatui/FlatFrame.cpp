@@ -10,6 +10,9 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUICustomControl.h"
 
+#ifdef __WXMSW__
+#include <windows.h>
+#endif
 
 FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size, wxBORDER_NONE)
@@ -58,7 +61,8 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     m_ribbon->SetTabFunctionSpacer(15, false);
     m_ribbon->SetTabFunctionSpacerAutoExpand(true);
     
-    m_ribbon->SetFunctionProfileSpacer(20, false);
+    m_ribbon->SetFunctionProfileSpacer(60, false);
+    m_ribbon->SetFunctionProfileSpacerAutoExpand(false);
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "HemePage", wxVERTICAL);
@@ -180,40 +184,155 @@ FlatFrame::~FlatFrame()
 
 void FlatFrame::OnLeftDown(wxMouseEvent& event)
 {
+    wxWindow* eventSource = dynamic_cast<wxWindow*>(event.GetEventObject());
+    
+    bool isFromSpacerControl = false;
+    if (eventSource != this) {
+        isFromSpacerControl = true;
+        m_dragStartPos = event.GetPosition(); 
+    }
+    
     ResizeMode hoverMode = GetResizeModeForPosition(event.GetPosition());
-    if (hoverMode != ResizeMode::NONE)
+    if (hoverMode != ResizeMode::NONE && !isFromSpacerControl)
     {
         m_resizing = true;
         m_resizeMode = hoverMode;
         m_resizeStartMouseScreenPos = wxGetMousePosition();
         m_resizeStartWindowRect = GetScreenRect();
-        CaptureMouse();
+        
+        if (!HasCapture()) {
+            CaptureMouse();
+        }
     }
     else
     {
         m_dragging = true;
-        m_dragStartPos = event.GetPosition();
-        CaptureMouse();
+        if (!isFromSpacerControl) {
+            m_dragStartPos = event.GetPosition();
+        }
+        m_resizeStartWindowRect = GetScreenRect();
+        
+        if (!HasCapture()) {
+            CaptureMouse();
+        }
     }
     event.Skip();
 }
 
 void FlatFrame::OnLeftUp(wxMouseEvent& event)
 {
+    wxWindow* eventSource = dynamic_cast<wxWindow*>(event.GetEventObject());
+    bool isFromSpacerControl = (eventSource != this);
+    
+    if (isFromSpacerControl) {
+        wxLogDebug("FlatFrame: Recived SpacerControl Mouse Left Up");
+    }
+    
     if (m_dragging)
     {
+        if (m_rubberBandVisible)
+        {
+            EraseRubberBand();
+        }
+        
+        wxPoint mousePosOnScreen = wxGetMousePosition();
+        int newX = mousePosOnScreen.x - m_dragStartPos.x;
+        int newY = mousePosOnScreen.y - m_dragStartPos.y;
+        
+        wxLogDebug("FlatFrame: Move Window to (%d,%d)", newX, newY);
+        Move(newX, newY);
         m_dragging = false;
+        
+        // 确保释放鼠标
         if (HasCapture())
         {
+            wxLogDebug("FlatFrame: Release Mouse");
             ReleaseMouse();
         }
     }
     else if (m_resizing)
     {
+        if (m_rubberBandVisible)
+        {
+            EraseRubberBand();
+        }
+        wxPoint currentMouseScreenPos = wxGetMousePosition();
+        int dx = currentMouseScreenPos.x - m_resizeStartMouseScreenPos.x;
+        int dy = currentMouseScreenPos.y - m_resizeStartMouseScreenPos.y;
+        wxRect newRect = m_resizeStartWindowRect;
+        int minWidth = GetMinWidth() > 0 ? GetMinWidth() : 100;
+        int minHeight = GetMinHeight() > 0 ? GetMinHeight() : 100;
+
+        switch (m_resizeMode)
+        {
+            case ResizeMode::LEFT:
+                newRect.x += dx;
+                newRect.width -= dx;
+                if (newRect.width < minWidth) { newRect.width = minWidth; newRect.x = m_resizeStartWindowRect.GetRight() - minWidth; }
+                break;
+            case ResizeMode::RIGHT:
+                newRect.width += dx;
+                if (newRect.width < minWidth) newRect.width = minWidth;
+                break;
+            case ResizeMode::TOP:
+                newRect.y += dy;
+                newRect.height -= dy;
+                if (newRect.height < minHeight) { newRect.height = minHeight; newRect.y = m_resizeStartWindowRect.GetBottom() - minHeight; }
+                break;
+            case ResizeMode::BOTTOM:
+                newRect.height += dy;
+                if (newRect.height < minHeight) newRect.height = minHeight;
+                break;
+            case ResizeMode::TOP_LEFT:
+                newRect.x += dx; newRect.width -= dx;
+                newRect.y += dy; newRect.height -= dy;
+                if (newRect.width < minWidth) { newRect.width = minWidth; newRect.x = m_resizeStartWindowRect.GetRight() - minWidth; }
+                if (newRect.height < minHeight) { newRect.height = minHeight; newRect.y = m_resizeStartWindowRect.GetBottom() - minHeight; }
+                break;
+            case ResizeMode::TOP_RIGHT:
+                newRect.width += dx;
+                newRect.y += dy; newRect.height -= dy;
+                if (newRect.width < minWidth) newRect.width = minWidth;
+                if (newRect.height < minHeight) { newRect.height = minHeight; newRect.y = m_resizeStartWindowRect.GetBottom() - minHeight; }
+                break;
+            case ResizeMode::BOTTOM_LEFT:
+                newRect.x += dx; newRect.width -= dx;
+                newRect.height += dy;
+                if (newRect.width < minWidth) { newRect.width = minWidth; newRect.x = m_resizeStartWindowRect.GetRight() - minWidth; }
+                if (newRect.height < minHeight) newRect.height = minHeight;
+                break;
+            case ResizeMode::BOTTOM_RIGHT:
+                newRect.width += dx; newRect.height += dy;
+                if (newRect.width < minWidth) newRect.width = minWidth;
+                if (newRect.height < minHeight) newRect.height = minHeight;
+                break;
+            case ResizeMode::NONE: break;
+        }
+        SetSize(newRect);
+        Layout();
+        if (m_ribbon) {
+            m_ribbon->Update();
+            m_ribbon->Refresh(true);
+            
+            if (m_ribbon->GetPageCount() > 0) {
+                size_t activePageIndex = m_ribbon->GetActivePage();
+                FlatUIPage* activePage = m_ribbon->GetPage(activePageIndex);
+                if (activePage && activePage->IsShown()) {
+                    activePage->Update();
+                    activePage->Refresh(true);
+                }
+            }
+        }
+        
+        Refresh(true);
+        Update();
+        
         m_resizing = false;
         m_resizeMode = ResizeMode::NONE;
+        
         if (HasCapture())
         {
+            wxLogDebug("FlatFrame: Release Mouse");
             ReleaseMouse();
         }
         UpdateCursorForResizeMode(ResizeMode::NONE);
@@ -223,14 +342,43 @@ void FlatFrame::OnLeftUp(wxMouseEvent& event)
 
 void FlatFrame::OnMotion(wxMouseEvent& event)
 {
+    wxWindow* eventSource = dynamic_cast<wxWindow*>(event.GetEventObject());
+    bool isFromSpacerControl = (eventSource != this);
+    
+    if (isFromSpacerControl && event.LeftIsDown()) {
+        m_dragging = true;
+        wxLogDebug("FlatFrame: Left Is Down");
+        
+        if (!HasCapture()) {
+            CaptureMouse();
+            wxLogDebug("FlatFrame: Moving Capture Mouse");
+        }
+    }
+    
     if (m_dragging && event.Dragging() && event.LeftIsDown())
     {
+        if (m_rubberBandVisible)
+        {
+            EraseRubberBand();
+        }
+        
         wxPoint mousePosOnScreen = wxGetMousePosition();
-        Move(mousePosOnScreen.x - m_dragStartPos.x,
-             mousePosOnScreen.y - m_dragStartPos.y);
+        wxRect newRect(
+            mousePosOnScreen.x - m_dragStartPos.x,
+            mousePosOnScreen.y - m_dragStartPos.y,
+            m_resizeStartWindowRect.GetWidth(),
+            m_resizeStartWindowRect.GetHeight()
+        );
+        
+        DrawRubberBand(newRect);
     }
     else if (m_resizing && event.Dragging() && event.LeftIsDown())
     {
+        if (m_rubberBandVisible)
+        {
+            EraseRubberBand();
+        }
+        
         wxPoint currentMouseScreenPos = wxGetMousePosition();
         int dx = currentMouseScreenPos.x - m_resizeStartMouseScreenPos.x;
         int dy = currentMouseScreenPos.y - m_resizeStartMouseScreenPos.y;
@@ -284,20 +432,7 @@ void FlatFrame::OnMotion(wxMouseEvent& event)
             case ResizeMode::NONE: break;
         }
         
-        SetSize(newRect);
-        
-        static wxLongLong lastRefreshTime = wxGetLocalTimeMillis();
-        wxLongLong now = wxGetLocalTimeMillis();
-        wxLongLong timeSinceLastRefresh = now - lastRefreshTime;
-        
-        if (timeSinceLastRefresh > 50) { 
-            lastRefreshTime = now;
-            
-            Layout();
-            if (m_ribbon) {
-                m_ribbon->Refresh(false);
-            }
-        }
+        DrawRubberBand(newRect);
     }
     else
     {
@@ -528,4 +663,52 @@ void FlatFrame::OnUserProfile(wxCommandEvent& event)
 void FlatFrame::OnSettings(wxCommandEvent& event)
 {
     m_messageOutput->AppendText("Open Settings\n");
+}
+
+void FlatFrame::DrawRubberBand(const wxRect& rect)
+{
+#ifdef __WXMSW__
+    HDC hdc = ::GetDC(NULL);    
+    RECT winRect;
+    winRect.left = rect.GetLeft();
+    winRect.top = rect.GetTop();
+    winRect.right = rect.GetRight() + 1;
+    winRect.bottom = rect.GetBottom() + 1;
+    
+    int oldROP = ::SetROP2(hdc, R2_XORPEN);
+    
+    HPEN hPen = ::CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+    HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
+    
+    HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    
+    ::Rectangle(hdc, winRect.left, winRect.top, winRect.right, winRect.bottom);
+    
+    ::SelectObject(hdc, hOldPen);
+    ::SelectObject(hdc, hOldBrush);
+    ::DeleteObject(hPen);
+    ::SetROP2(hdc, oldROP);
+    ::ReleaseDC(NULL, hdc);
+    
+    m_rubberBandVisible = true;
+    m_currentRubberBandRect = rect;
+#else
+    wxScreenDC dc;
+    dc.SetLogicalFunction(wxINVERT);
+    dc.SetPen(wxPen(*wxBLACK, 1, wxPENSTYLE_DOT));
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.DrawRectangle(rect);
+    
+    m_rubberBandVisible = true;
+    m_currentRubberBandRect = rect;
+#endif
+}
+
+void FlatFrame::EraseRubberBand()
+{
+    if (m_rubberBandVisible)
+    {
+        DrawRubberBand(m_currentRubberBandRect);
+        m_rubberBandVisible = false;
+    }
 } 
