@@ -1,4 +1,15 @@
 set(FLATUI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/flatui.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatFrame.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBar.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIButtonBar.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIGallery.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPage.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIHomeSpace.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFunctionSpace.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIProfileSpace.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUISystemButtons.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIEventManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUISpacerControl.cpp
     PARENT_SCOPE
 )
