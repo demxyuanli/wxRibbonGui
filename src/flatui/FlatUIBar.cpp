@@ -735,7 +735,7 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
     evt.Skip();
 }
 
-void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator)
+void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator, bool dragFlag)
 {
     if (!m_tabFunctionSpacer) {
         m_tabFunctionSpacer = new FlatUISpacerControl(this, width);
@@ -746,6 +746,7 @@ void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator)
     if (width > 0) {
         m_tabFunctionSpacer->SetSpacerWidth(width);
         m_tabFunctionSpacer->SetDrawSeparator(drawSeparator);
+        m_tabFunctionSpacer->SetShowDragFlag(dragFlag);
         m_tabFunctionSpacer->Show();
         wxLogDebug("FlatUIBar: Show TabFunctionSpacer，Width=%d", width);
     } else {

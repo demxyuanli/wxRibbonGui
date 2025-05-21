@@ -39,8 +39,8 @@ public:
     void SetFunctionSpaceControl(wxWindow* funcControl, int width = 0); // width = 0 uses control's default
     void SetProfileSpaceControl(wxWindow* profControl, int width = 0); // width = 0 uses control's default
     
-    void SetTabFunctionSpacer(int width, bool drawSeparator = false);
-    void SetFunctionProfileSpacer(int width, bool drawSeparator = false);
+    void SetTabFunctionSpacer(int width, bool drawSeparator = false, bool dragFlag = false);
+    void SetFunctionProfileSpacer(int width, bool drawSeparator = false, bool dragFlag = false);
     
     void SetTabFunctionSpacerAutoExpand(bool autoExpand);
     
