@@ -10,13 +10,19 @@ FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
       m_buttonSpacing(DEFAULT_BUTTON_SPACING)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
+    
+    SetDoubleBuffered(true);
+    
     Bind(wxEVT_PAINT, &FlatUISystemButtons::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUISystemButtons::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUISystemButtons::OnMouseMove, this);
     Bind(wxEVT_LEAVE_WINDOW, &FlatUISystemButtons::OnMouseLeave, this);
 
-    // Initial size can be set based on defaults, FlatUIBar will later set precise rects
-    SetMinSize(wxSize(GetRequiredWidth(m_buttonWidth, m_buttonSpacing), m_buttonWidth)); 
+    int requiredWidth = 3 * DEFAULT_BUTTON_WIDTH + 2 * DEFAULT_BUTTON_SPACING;
+    int buttonHeight = 30; 
+    
+    SetMinSize(wxSize(requiredWidth, buttonHeight));
+    SetSize(GetMinSize());
 }
 
 FlatUISystemButtons::~FlatUISystemButtons() {}
@@ -43,24 +49,26 @@ void FlatUISystemButtons::SetButtonRects(const wxRect& minimizeRect, const wxRec
     // FlatUIBar will tell us our total width/height. We then derive the button rects from that.
 
     wxSize clientSize = GetClientSize();
-    int barHeight = clientSize.GetHeight(); // Use our own height
-    int sysButtonY = (barHeight - m_buttonWidth) / 2;
+    
+    int buttonWidth = 40; 
+    int buttonHeight = 30;
+    
+    int sysButtonY = (clientSize.GetHeight() - buttonHeight) / 2;
     if (sysButtonY < 0) sysButtonY = 0;
-    int sysButtonEffectiveHeight = wxMin(m_buttonWidth, barHeight);
 
     // Calculate rects based on our client size, anchored to the right
     int currentX = clientSize.GetWidth();
 
-    currentX -= m_buttonWidth;
-    m_closeButtonRect = wxRect(currentX, sysButtonY, m_buttonWidth, sysButtonEffectiveHeight);
+    currentX -= buttonWidth;
+    m_closeButtonRect = wxRect(currentX, sysButtonY, buttonWidth, buttonHeight);
     
     currentX -= m_buttonSpacing;
-    currentX -= m_buttonWidth;
-    m_maximizeButtonRect = wxRect(currentX, sysButtonY, m_buttonWidth, sysButtonEffectiveHeight);
+    currentX -= buttonWidth;
+    m_maximizeButtonRect = wxRect(currentX, sysButtonY, buttonWidth, buttonHeight);
 
     currentX -= m_buttonSpacing;
-    currentX -= m_buttonWidth;
-    m_minimizeButtonRect = wxRect(currentX, sysButtonY, m_buttonWidth, sysButtonEffectiveHeight);
+    currentX -= buttonWidth;
+    m_minimizeButtonRect = wxRect(currentX, sysButtonY, buttonWidth, buttonHeight);
     
     // Note: The SetButtonRects in the header was perhaps misleading.
     // This control will draw its buttons within its own bounds, right-aligned.
@@ -112,22 +120,25 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     // This makes SetButtonRects(ext, ext, ext) less critical for passing specific sub-rects
     // and more about signaling that FlatUIBar has updated our overall size.
     wxSize currentSize = GetClientSize();
-    int currentButtonY = (currentSize.GetHeight() - m_buttonWidth) / 2;
+    
+    int currentButtonHeight = 30;
+    int currentButtonWidth = 40;
+    
+    int currentButtonY = (currentSize.GetHeight() - currentButtonHeight) / 2;
     if (currentButtonY < 0) currentButtonY = 0;
-    int currentButtonHeight = wxMin(m_buttonWidth, currentSize.GetHeight());
     
     int xPos = currentSize.GetWidth(); // Start from the right edge
     
-    xPos -= m_buttonWidth;
-    m_closeButtonRect = wxRect(xPos, currentButtonY, m_buttonWidth, currentButtonHeight);
+    xPos -= currentButtonWidth;
+    m_closeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
     
     xPos -= m_buttonSpacing;
-    xPos -= m_buttonWidth;
-    m_maximizeButtonRect = wxRect(xPos, currentButtonY, m_buttonWidth, currentButtonHeight);
+    xPos -= currentButtonWidth;
+    m_maximizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
     
     xPos -= m_buttonSpacing;
-    xPos -= m_buttonWidth;
-    m_minimizeButtonRect = wxRect(xPos, currentButtonY, m_buttonWidth, currentButtonHeight);
+    xPos -= currentButtonWidth;
+    m_minimizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
 
     wxFrame* topFrame = GetTopLevelFrame();
     bool isMaximized = topFrame ? topFrame->IsMaximized() : false;

@@ -2,14 +2,23 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
+#include <filesystem>
 
 Logger::Logger() : logCtrl(nullptr) {
     logFile.open("app.log", std::ios::out | std::ios::app);
     if (!logFile.is_open()) {
+        std::cerr << "Error: Failed to open log file 'app.log'" << std::endl;
         throw std::runtime_error("Failed to open log file");
     }
-    // Default to only ERR level
-    allowedLogLevels = { LogLevel::ERR };
+    allowedLogLevels = { LogLevel::ERR, LogLevel::WRN, LogLevel::DBG, LogLevel::INF };
+    
+    std::time_t now = std::time(nullptr);
+    std::tm* timeinfo = std::localtime(&now);
+    char timestamp[20];
+    std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", timeinfo);
+    
+    logFile << "[" << timestamp << "] [INF] [Logger] Logger initialized, output file: app.log" << std::endl;
+    logFile.flush();
 }
 
 Logger::~Logger() {
@@ -66,10 +75,17 @@ bool Logger::ShouldLog(LogLevel level) const {
     return allowedLogLevels.find(level) != allowedLogLevels.end();
 }
 
-void Logger::Log(LogLevel level, const std::string& message, const std::string& context) {
+void Logger::Log(LogLevel level, const std::string& message, const std::string& context, 
+                 const std::string& file, int line) {
     if (!ShouldLog(level)) return; // Skip if level is not allowed
 
-    if (!logFile.is_open()) return;
+    if (!logFile.is_open()) {
+        logFile.open("app.log", std::ios::out | std::ios::app);
+        if (!logFile.is_open()) {
+            std::cerr << "Error: Failed to open log file for writing" << std::endl;
+            return;
+        }
+    }
 
     std::time_t now = std::time(nullptr);
     std::tm* timeinfo = std::localtime(&now);
@@ -85,10 +101,18 @@ void Logger::Log(LogLevel level, const std::string& message, const std::string& 
     }
 
     std::string contextStr = context.empty() ? "" : "[" + context + "] ";
+    
+    std::string fileInfo;
+    if (!file.empty()) {
+        std::string filename = std::filesystem::path(file).filename().string();
+        fileInfo = " (" + filename + ":" + std::to_string(line) + ")";
+    }
 
-    std::string logMessage = "[" + std::string(timestamp) + "] [" + levelStr + "] " + contextStr + message;
+    std::string logMessage = "[" + std::string(timestamp) + "] [" + levelStr + "] " + 
+                             contextStr + message + fileInfo;
+    
     logFile << logMessage << std::endl;
-    std::cout << "Logger: level=" << levelStr << ", message=" << logMessage << std::endl;
+    std::cout << "Logger: " << logMessage << std::endl;
     logFile.flush();
 
     if (isShuttingDown || !logCtrl || !logCtrl->IsShown()) {

@@ -1,4 +1,5 @@
 #include "config/Coin3DConfig.h"
+#include "config/ConfigManager.h"
 #include "logger/Logger.h"
 
 Coin3DConfig& Coin3DConfig::getInstance() {
@@ -8,7 +9,7 @@ Coin3DConfig& Coin3DConfig::getInstance() {
 
 void Coin3DConfig::initialize(ConfigManager& configManager) {
     this->configManager = &configManager;
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Coin3D configuration initialized", "Coin3DConfig");
+    LOG_INF("Coin3D configuration initialized", "Coin3DConfig");
 }
 
 std::string Coin3DConfig::getSceneGraphPath() const {

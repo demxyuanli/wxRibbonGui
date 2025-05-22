@@ -10,6 +10,8 @@
 #include <string>            // For std::to_string
 #include <numeric>           // For std::accumulate if calculating total tab width
 #include <wx/dcbuffer.h>     // For wxAutoBufferedPaintDC
+#include <wx/timer.h>        // For wxTimer instead of wxCallAfter
+#include <logger/Logger.h>     // For wxGraphicsContext
 
 // Height of the entire FlatUIBar strip
 
@@ -83,14 +85,45 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
     }
+    
+    // Ensure the initial page can be activated and displayed after all pages are added
+    Bind(wxEVT_SHOW, [this](wxShowEvent& event) {
+        if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
+            // Use timer instead of wxCallAfter
+            wxTimer* timer = new wxTimer(this);
+            Bind(wxEVT_TIMER, [this, timer](wxTimerEvent&) {
+                if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+                    FlatUIPage* currentPage = m_pages[m_activePage];
+                    currentPage->SetActive(true);
+                    currentPage->Show();
+                    
+                    wxSize barClientSize = GetClientSize();
+                    int barStripHeight = GetBarHeight();
+                    currentPage->SetPosition(wxPoint(0, barStripHeight));
+                    
+                    int pageHeight = barClientSize.GetHeight() - barStripHeight;
+                    if (pageHeight < 0) {
+                        pageHeight = 0;
+                    }
+                    
+                    currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
+                    currentPage->Layout();
+                    currentPage->Refresh();
+                    
+                    UpdateElementPositionsAndSizes(GetClientSize());
+                    Refresh();
+                }
+                delete timer; // Clean up the timer
+            }, timer->GetId());
+            
+            timer->StartOnce(50); // 50ms delay
+        }
+        event.Skip();
+    });
 }
 
 FlatUIBar::~FlatUIBar()
 {
-    // Child components (m_homeSpace, etc.) are wxWindows and will be deleted by wxWidgets 
-    // when this FlatUIBar (their parent) is destroyed.
-    for (auto page : m_pages)
-        delete page; // Content pages are explicitly managed
 }
 
 // --- Configuration Method Implementations ---
@@ -122,81 +155,68 @@ void FlatUIBar::AddPage(FlatUIPage* page)
     
     if (m_pages.size() == 1) {
         m_activePage = 0;
+        // Ensure the first page is properly activated
+        page->SetActive(true);
+    } else {
+        // Non-first pages are inactive by default
+        page->SetActive(false);
     } 
     
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
         
-        wxLogDebug("Added page '%s', total pages: %zu, active page: %zu", 
-                  page->GetLabel(), m_pages.size(), m_activePage);
+        LOG_INF("Added page '" + page->GetLabel().ToStdString() + "', total pages: " + std::to_string(m_pages.size()) + ", active page: " + std::to_string(m_activePage), "FlatUIBar");
     }
 }
 
 void FlatUIBar::SetActivePage(size_t index)
 {
-    if (index < m_pages.size() && index != m_activePage)
-    {
-        if (m_activePage < m_pages.size() && m_pages[m_activePage])
-        {
+    if (index >= m_pages.size() || index == m_activePage)
+        return;
+
+    LOG_INF("Setting active page to index: " + std::to_string(index), "FlatUIBar");
+
+    // Deactivate the previously active page
+    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+        m_pages[m_activePage]->SetActive(false);
             m_pages[m_activePage]->Hide();
         }
+
         m_activePage = index;
-        if (m_pages[m_activePage])
-        {
-            FlatUIPage* page = m_pages[m_activePage];
             
+    // Activate the new page
+    FlatUIPage* currentPage = m_pages[m_activePage];
+    if (currentPage) {
+        // Set the page position and size
             wxSize barClientSize = GetClientSize();
             int barStripHeight = GetBarHeight();
-            page->SetPosition(wxPoint(0, barStripHeight));
+        currentPage->SetPosition(wxPoint(0, barStripHeight));
             
             int pageHeight = barClientSize.GetHeight() - barStripHeight;
             if (pageHeight < 0) {
                 pageHeight = 0;
-            }
-            
-            page->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-            
-            page->Show();
-            
-            page->Layout();
-            
-            wxVector<FlatUIPanel*>& panels = page->GetPanels();
-            for (auto panel : panels) {
-                if (panel) {
-                    panel->SetMinSize(wxSize(100, 100));
-                    panel->Layout();
-                    panel->Refresh();
-                }
-            }
-            
-            page->Refresh();
         }
         
-        if (IsShown()) Refresh(); 
-    }
-    else if (index < m_pages.size() && index == m_activePage)
-    { 
-        if (m_pages[m_activePage] && !m_pages[m_activePage]->IsShown()) 
-        {
-            FlatUIPage* page = m_pages[m_activePage];
-            
-            page->Show();
-            
-            wxSize barClientSize = GetClientSize();
-            int barStripHeight = GetBarHeight();
-            int pageHeight = barClientSize.GetHeight() - barStripHeight;
-            if (pageHeight < 0) pageHeight = 0;
-            
-            page->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-            
-            page->Layout();
-            
-            page->Refresh();
-        }
+        currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
         
-        if (IsShown()) Refresh();
-    }
+        // Make the page visible before setting it active to ensure layout calculations work
+        currentPage->Show();
+        
+        // Activate the page and ensure all panels become visible
+        currentPage->SetActive(true);
+        
+        // Force layout update to ensure proper positioning
+        currentPage->Layout();
+        currentPage->Refresh();
+        
+        // Log activation for debugging
+        LOG_DBG("Page activated: " + currentPage->GetLabel().ToStdString() +
+            ", Panels: " + std::to_string(currentPage->GetPanels().size()),
+            "FlatUIBar");
+        }
+    
+    Refresh();
 }
 
 size_t FlatUIBar::GetPageCount() const { return m_pages.size(); }
@@ -246,7 +266,7 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
 void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 {
     if (!m_homeSpace || !m_systemButtons || !m_functionSpace || !m_profileSpace) {
-        wxLogDebug("FlatUIBar::UpdateElementPositionsAndSizes - one or more child components are null.");
+        LOG_DBG("FlatUIBar::UpdateElementPositionsAndSizes - one or more child components are null.","FlatUIBar");
         return; // Components not ready
     }
 
@@ -262,7 +282,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
     m_homeSpace->SetPosition(wxPoint(currentX, elementY));
     m_homeSpace->SetSize(homeActualWidth, barStripHeight);
-    
+   
     if (homeActualWidth > 0) {
         m_homeSpace->Show(true);
         currentX += homeActualWidth + ELEMENT_SPACING;
@@ -282,7 +302,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
     bool tabFuncSpacerVisible = m_tabFunctionSpacer && m_tabFunctionSpacer->IsShown();
     bool tabFuncSpacerAutoExpand = tabFuncSpacerVisible && m_tabFunctionSpacer->GetAutoExpand();
-    
+
     bool funcProfileSpacerVisible = m_functionProfileSpacer && m_functionProfileSpacer->IsShown();
     bool funcProfileSpacerAutoExpand = funcProfileSpacerVisible && m_functionProfileSpacer->GetAutoExpand();
 
@@ -408,10 +428,10 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                         reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
                     } else {
                         reservedWidth += ELEMENT_SPACING;
-                    }
-                }
             }
-            
+        }
+    }
+    
             availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
             
             int tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
@@ -503,7 +523,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         if (tabsWidth > 0) {
             m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
             currentX += tabsWidth;
-        } else {
+    } else {
             m_tabAreaRect = wxRect();
         }
         
@@ -516,11 +536,11 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
         
         if (funcSpaceIsEffectivelyVisible) {
-            m_functionSpace->SetPosition(wxPoint(currentX, elementY));
+        m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
-        } else {
+    } else {
             m_functionSpace->Show(false);
         }
         
@@ -539,16 +559,16 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
         
         if (profileSpaceIsEffectivelyVisible) {
-            m_profileSpace->SetPosition(wxPoint(currentX, elementY));
+        m_profileSpace->SetPosition(wxPoint(currentX, elementY));
             m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
             m_profileSpace->Show(true);
             currentX += profileRequestedWidth;
-        } else {
+    } else {
             m_profileSpace->Show(false);
         }
     }
     if (sysButtonsWidth > 0) {
-        m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - BAR_PADDING - sysButtonsWidth, elementY));
+         m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - BAR_PADDING - sysButtonsWidth, elementY));
         m_systemButtons->SetSize(sysButtonsWidth, barStripHeight);
         m_systemButtons->Show(true);
     } else {
@@ -563,11 +583,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         int pageHeight = barClientSz.GetHeight() - barStripHeight;
         if (pageHeight < 0) {
             pageHeight = 0;
-            wxLogDebug("Warning: Page height calculated as negative, adjusted to 0.");
+            LOG_DBG("Warning: Page height calculated as negative, adjusted to 0.", "FlatUIBar");
         }
         currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
         
-        if (!currentPage->IsShown()) {
+        // Ensure the active page is correctly activated and displayed
+        currentPage->SetActive(true);
+        if (!currentPage->IsShown()) { 
             currentPage->Show();
         }
         
@@ -575,8 +597,11 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         currentPage->Refresh();
     }
     for (size_t i = 0; i < m_pages.size(); ++i) {
-        if (i != m_activePage && m_pages[i] && m_pages[i]->IsShown()) {
+        if (i != m_activePage && m_pages[i]) {
+            m_pages[i]->SetActive(false);
+            if (m_pages[i]->IsShown()) {
             m_pages[i]->Hide();
+            }
         }
     }
 
@@ -708,12 +733,11 @@ void FlatUIBar::OnMouseDown(wxMouseEvent& evt)
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {
     wxSize newSize = GetClientSize();
-    wxLogDebug("FlatUIBar::OnSize - New size: (%d, %d)", newSize.GetWidth(), newSize.GetHeight());
+    LOG_DBG("FlatUIBar::OnSize - New size: (" + std::to_string(newSize.GetWidth()) + ", " + std::to_string(newSize.GetHeight()) + ")", "FlatUIBar");
     
     // Ensure bar height is not less than required minimum
     if (newSize.GetHeight() < GetBarHeight()) {
-        wxLogDebug("Warning: FlatUIBar height(%d) is less than required minimum height(%d)", 
-                   newSize.GetHeight(), GetBarHeight());
+        LOG_DBG("Warning: FlatUIBar height(" + std::to_string(newSize.GetHeight()) + ") is less than required minimum height(" + std::to_string(GetBarHeight()) + ")", "FlatUIBar");
     }
     
     UpdateElementPositionsAndSizes(newSize);
@@ -748,10 +772,10 @@ void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator, bool dragFla
         m_tabFunctionSpacer->SetDrawSeparator(drawSeparator);
         m_tabFunctionSpacer->SetShowDragFlag(dragFlag);
         m_tabFunctionSpacer->Show();
-        wxLogDebug("FlatUIBar: Show TabFunctionSpacer，Width=%d", width);
+        LOG_INF("FlatUIBar: Show TabFunctionSpacer，Width=" + std::to_string(width), "FlatUIBar");
     } else {
         m_tabFunctionSpacer->Hide();
-        wxLogDebug("FlatUIBar: Hidden TabFunctionSpacer");
+        LOG_INF("FlatUIBar: Hidden TabFunctionSpacer", "FlatUIBar");
     }
     
     if (IsShown()) {
@@ -773,10 +797,10 @@ void FlatUIBar::SetFunctionProfileSpacer(int width, bool drawSeparator, bool dra
         m_functionProfileSpacer->SetDrawSeparator(drawSeparator);
         m_functionProfileSpacer->SetShowDragFlag(dragFlag);
         m_functionProfileSpacer->Show();
-        wxLogDebug("FlatUIBar: Show FunctionProfileSpacer，Width=%d", width);
+        LOG_INF("FlatUIBar: Show FunctionProfileSpacer，Width=" + std::to_string(width), "FlatUIBar");
     } else {
         m_functionProfileSpacer->Hide();
-        wxLogDebug("FlatUIBar: Hidden FunctionProfileSpacer");
+        LOG_INF("FlatUIBar: Hidden FunctionProfileSpacer", "FlatUIBar");
     }
     
     if (IsShown()) {

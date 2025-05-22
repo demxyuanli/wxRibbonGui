@@ -19,19 +19,19 @@ ConfigManager& ConfigManager::getInstance() {
 
 bool ConfigManager::initialize(const std::string& configFilePath) {
     if (initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::WRN, "Configuration manager already initialized", "ConfigManager");
+        LOG_WRN("Configuration manager already initialized", "ConfigManager");
         return true;
     }
 
     // Use provided config file path if available
     if (!configFilePath.empty()) {
         this->configFilePath = configFilePath;
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Using provided config file path: " + this->configFilePath, "ConfigManager");
+        LOG_INF("Using provided config file path: " + this->configFilePath, "ConfigManager");
     }
     else {
         // Otherwise, find the config file
         this->configFilePath = findConfigFile();
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file path: " + (this->configFilePath.empty() ? "none" : this->configFilePath), "ConfigManager");
+        LOG_INF("Found config file path: " + (this->configFilePath.empty() ? "none" : this->configFilePath), "ConfigManager");
     }
 
     // Create a new config file if none found
@@ -46,16 +46,16 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
         }
 
         this->configFilePath = (configDir + wxFileName::GetPathSeparator() + "config.ini").ToStdString();
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Created new config file path: " + this->configFilePath, "ConfigManager");
+        LOG_INF("Created new config file path: " + this->configFilePath, "ConfigManager");
     }
 
     // Verify file exists and is readable
     if (!wxFileExists(this->configFilePath)) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Config file does not exist: " + this->configFilePath, "ConfigManager");
+        LOG_ERR("Config file does not exist: " + this->configFilePath, "ConfigManager");
         // Create an empty config file
         wxFFile file(this->configFilePath, "w");
         if (!file.IsOpened()) {
-            Logger::getLogger().Log(Logger::LogLevel::ERR, "Failed to create config file: " + this->configFilePath, "ConfigManager");
+            LOG_ERR("Failed to create config file: " + this->configFilePath, "ConfigManager");
             return false;
         }
         file.Close();
@@ -64,7 +64,7 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
         // Check if file is readable
         wxFFile file(this->configFilePath, "r");
         if (!file.IsOpened()) {
-            Logger::getLogger().Log(Logger::LogLevel::ERR, "Config file is not readable: " + this->configFilePath, "ConfigManager");
+            LOG_ERR("Config file is not readable: " + this->configFilePath, "ConfigManager");
             return false;
         }
         file.Close();
@@ -76,7 +76,7 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
         wxCONFIG_USE_LOCAL_FILE);
 
     initialized = true;
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Configuration manager initialized successfully, config file: " + this->configFilePath, "ConfigManager");
+    LOG_INF("Configuration manager initialized successfully, config file: " + this->configFilePath, "ConfigManager");
 
     // Initialize Logger configuration
     LoggerConfig::getInstance().initialize(*this);
@@ -95,7 +95,7 @@ std::string ConfigManager::findConfigFile() {
 
     wxString configPath = currentDir + wxFileName::GetPathSeparator() + "config.ini";
     if (wxFileExists(configPath)) {
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file in current directory: " + configPath.ToStdString(), "ConfigManager");
+        LOG_INF("Found config file in current directory: " + configPath.ToStdString(), "ConfigManager");
         return configPath.ToStdString();
     }
 
@@ -104,30 +104,30 @@ std::string ConfigManager::findConfigFile() {
     wxString appName = exeDir.GetName();
     configPath = userConfigDir + wxFileName::GetPathSeparator() + appName + wxFileName::GetPathSeparator() + "config.ini";
     if (wxFileExists(configPath)) {
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Found config file in user config directory: " + configPath.ToStdString(), "ConfigManager");
+        LOG_INF("Found config file in user config directory: " + configPath.ToStdString(), "ConfigManager");
         return configPath.ToStdString();
     }
 
-    Logger::getLogger().Log(Logger::LogLevel::WRN, "No config file found in current or user config directory", "ConfigManager");
+    LOG_WRN("No config file found in current or user config directory", "ConfigManager");
     return "";
 }
 
 std::string ConfigManager::getString(const std::string& section, const std::string& key, const std::string& defaultValue) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return defaultValue;
     }
 
     wxString value;
     fileConfig->SetPath("/" + wxString(section));
     bool success = fileConfig->Read(wxString(key), &value, wxString(defaultValue));
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Reading config [" + section + "][" + key + "]: " + (success ? value.ToStdString() : "default: " + defaultValue), "ConfigManager");
+    LOG_INF("Reading config [" + section + "][" + key + "]: " + (success ? value.ToStdString() : "default: " + defaultValue), "ConfigManager");
     return value.ToStdString();
 }
 
 int ConfigManager::getInt(const std::string& section, const std::string& key, int defaultValue) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return defaultValue;
     }
 
@@ -139,7 +139,7 @@ int ConfigManager::getInt(const std::string& section, const std::string& key, in
 
 double ConfigManager::getDouble(const std::string& section, const std::string& key, double defaultValue) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return defaultValue;
     }
 
@@ -151,7 +151,7 @@ double ConfigManager::getDouble(const std::string& section, const std::string& k
 
 bool ConfigManager::getBool(const std::string& section, const std::string& key, bool defaultValue) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return defaultValue;
     }
 
@@ -163,7 +163,7 @@ bool ConfigManager::getBool(const std::string& section, const std::string& key, 
 
 void ConfigManager::setString(const std::string& section, const std::string& key, const std::string& value) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return;
     }
 
@@ -173,7 +173,7 @@ void ConfigManager::setString(const std::string& section, const std::string& key
 
 void ConfigManager::setInt(const std::string& section, const std::string& key, int value) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return;
     }
 
@@ -183,7 +183,7 @@ void ConfigManager::setInt(const std::string& section, const std::string& key, i
 
 void ConfigManager::setDouble(const std::string& section, const std::string& key, double value) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return;
     }
 
@@ -193,7 +193,7 @@ void ConfigManager::setDouble(const std::string& section, const std::string& key
 
 void ConfigManager::setBool(const std::string& section, const std::string& key, bool value) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return;
     }
 
@@ -203,7 +203,7 @@ void ConfigManager::setBool(const std::string& section, const std::string& key, 
 
 bool ConfigManager::save() {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return false;
     }
 
@@ -212,7 +212,7 @@ bool ConfigManager::save() {
 
 bool ConfigManager::reload() {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return false;
     }
 
@@ -230,7 +230,7 @@ std::vector<std::string> ConfigManager::getSections() {
     std::vector<std::string> sections;
 
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return sections;
     }
 
@@ -249,7 +249,7 @@ std::vector<std::string> ConfigManager::getKeys(const std::string& section) {
     std::vector<std::string> keys;
 
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager");
         return keys;
     }
 

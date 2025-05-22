@@ -1,7 +1,9 @@
 #include "language/LanguageManager.h"
+#include "logger/Logger.h"
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
 #include <wx/fileconf.h>
+#include <wx/dir.h>
 
 LanguageManager::LanguageManager() : initialized(false) {
 }
@@ -16,54 +18,34 @@ LanguageManager& LanguageManager::getInstance() {
 
 bool LanguageManager::initialize(const std::string& langFilePath) {
     if (initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::WRN, "Language manager already initialized", "LanguageManager");
+        LOG_WRN("Language manager already initialized", "LanguageManager");
         return true;
     }
 
-    // If a language file path is provided, use it
-    if (!langFilePath.empty()) {
-        this->langFilePath = langFilePath;
-    }
-    else {
-        // Otherwise try to find the language file for the default language
-        this->langFilePath = findLanguageFile("en");
-    }
+    // Find language file based on the provided path or default location
+    this->langFilePath = langFilePath.empty() ? findDefaultLanguageFile() : langFilePath;
 
-    // If no language file is found, create a default one
-    if (this->langFilePath.empty()) {
-        // Create language file in user configuration directory
-        wxString userConfigDir = wxStandardPaths::Get().GetUserConfigDir();
-        wxFileName exeFile(wxStandardPaths::Get().GetExecutablePath());
-        wxString appName = exeFile.GetName();
-
-        wxString langDir = userConfigDir + wxFileName::GetPathSeparator() + appName + wxFileName::GetPathSeparator() + "languages";
-        if (!wxDirExists(langDir)) {
-            wxMkdir(langDir);
+    // Load the language file
+    if (!this->langFilePath.empty()) {
+        if (!wxFileExists(this->langFilePath)) {
+            // If file doesn't exist, try to find it in common locations
+            wxString defaultPath = findDefaultLanguageFile();
+            if (defaultPath.empty() || !wxFileExists(defaultPath)) {
+                LOG_ERR("Failed to load default language file", "LanguageManager");
+                return false;
+            }
+            this->langFilePath = defaultPath.ToStdString();
         }
-
-        this->langFilePath = (langDir + wxFileName::GetPathSeparator() + "en.ini").ToStdString();
-
-        // Create a default language file
-        wxFileConfig langConfig(wxEmptyString, wxEmptyString, this->langFilePath, wxEmptyString, wxCONFIG_USE_LOCAL_FILE);
-        langConfig.SetPath("/General");
-        langConfig.Write("LanguageName", "English");
-        langConfig.Flush();
-    }
-
-    // Load the default language
-    if (!loadLanguageFile("en")) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Failed to load default language file", "LanguageManager");
-        return false;
     }
 
     initialized = true;
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Language manager initialized successfully, language file: " + this->langFilePath, "LanguageManager");
+    LOG_INF("Language manager initialized successfully, language file: " + this->langFilePath, "LanguageManager");
     return true;
 }
 
 std::string LanguageManager::getText(const std::string& key, const std::string& defaultValue) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Language manager not initialized", "LanguageManager");
+        LOG_ERR("Language manager not initialized", "LanguageManager");
         return defaultValue;
     }
 
@@ -77,7 +59,7 @@ std::string LanguageManager::getText(const std::string& key, const std::string& 
 
 bool LanguageManager::setLanguage(const std::string& langCode) {
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Language manager not initialized", "LanguageManager");
+        LOG_ERR("Language manager not initialized", "LanguageManager");
         return false;
     }
 
@@ -94,6 +76,11 @@ bool LanguageManager::setLanguage(const std::string& langCode) {
 }
 
 std::string LanguageManager::getCurrentLanguage() const {
+    if (!initialized) {
+        LOG_ERR("Language manager not initialized", "LanguageManager");
+        return "en";
+    }
+
     return currentLangCode;
 }
 
@@ -101,7 +88,7 @@ std::vector<std::pair<std::string, std::string>> LanguageManager::getAvailableLa
     std::vector<std::pair<std::string, std::string>> languages;
 
     if (!initialized) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Language manager not initialized", "LanguageManager");
+        LOG_ERR("Language manager not initialized", "LanguageManager");
         return languages;
     }
 
@@ -141,7 +128,7 @@ std::vector<std::pair<std::string, std::string>> LanguageManager::getAvailableLa
 bool LanguageManager::loadLanguageFile(const std::string& langCode) {
     std::string filePath = findLanguageFile(langCode);
     if (filePath.empty()) {
-        Logger::getLogger().Log(Logger::LogLevel::ERR, "Language file not found for language code: " + langCode, "LanguageManager");
+        LOG_ERR("Language file not found for language code: " + langCode, "LanguageManager");
         return false;
     }
 
@@ -197,4 +184,49 @@ std::string LanguageManager::findLanguageFile(const std::string& langCode) {
     }
 
     return "";
+}
+
+std::string LanguageManager::findDefaultLanguageFile() {
+    // Look for language files in common locations
+
+    // 1. Check application directory
+    wxString exePath = wxStandardPaths::Get().GetExecutablePath();
+    wxFileName exeDir(exePath);
+    wxString appDir = exeDir.GetPath();
+    wxString langPath = appDir + wxFileName::GetPathSeparator() + "lang";
+
+    if (wxDirExists(langPath)) {
+        wxArrayString langFiles;
+        wxDir::GetAllFiles(langPath, &langFiles, "*.lang", wxDIR_FILES);
+        if (!langFiles.IsEmpty()) {
+            // Find language file for the current system language
+            wxString sysLang = wxLocale::GetLanguageName(wxLocale::GetSystemLanguage());
+            for (size_t i = 0; i < langFiles.Count(); ++i) {
+                wxFileName fn(langFiles[i]);
+                if (fn.GetName().Lower() == sysLang.Lower()) {
+                    return langFiles[i].ToStdString();
+                }
+            }
+            // Return first language file if no matching language file is found
+            return langFiles[0].ToStdString();
+        }
+    }
+
+    // 2. Check user configuration directory
+    wxString userConfigDir = wxStandardPaths::Get().GetUserConfigDir();
+    wxString appName = exeDir.GetName();
+    langPath = userConfigDir + wxFileName::GetPathSeparator() + appName + wxFileName::GetPathSeparator() + "lang";
+
+    if (wxDirExists(langPath)) {
+        wxArrayString langFiles;
+        wxDir::GetAllFiles(langPath, &langFiles, "*.lang", wxDIR_FILES);
+        if (!langFiles.IsEmpty()) {
+            return langFiles[0].ToStdString();
+        }
+    }
+
+    // No language file found
+    wxString langCode = wxLocale::GetLanguageName(wxLocale::GetSystemLanguage());
+    LOG_ERR("Language file not found for language code: " + langCode.ToStdString(), "LanguageManager");
+    return std::string();
 }

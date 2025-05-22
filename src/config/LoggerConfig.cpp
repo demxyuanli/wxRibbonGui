@@ -11,9 +11,9 @@ LoggerConfig& LoggerConfig::getInstance() {
 
 void LoggerConfig::initialize(ConfigManager& configManager) {
     std::string logLevelStr = configManager.getString("Logger", "LogLevel", "WRN");
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Reading LogLevel from config: " + logLevelStr, "LoggerConfig");
+    LOG_INF("Reading LogLevel from config: " + logLevelStr, "LoggerConfig");
     configureLoggerLevels(logLevelStr);
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Logger levels set to: " + logLevelStr, "LoggerConfig");
+    LOG_INF("Logger levels set to: " + logLevelStr, "LoggerConfig");
 }
 
 void LoggerConfig::configureLoggerLevels(const std::string& logLevelStr) {
@@ -45,7 +45,7 @@ void LoggerConfig::configureLoggerLevels(const std::string& logLevelStr) {
             logLevels.insert(Logger::LogLevel::INF);
         }
         else if (level != "ERR") { 
-            Logger::getLogger().Log(Logger::LogLevel::WRN, "Unknown log level in config: " + level, "LoggerConfig");
+            LOG_WRN("Unknown log level in config: " + level, "LoggerConfig");
         }
     }
 
@@ -53,11 +53,11 @@ void LoggerConfig::configureLoggerLevels(const std::string& logLevelStr) {
         logLevels.insert(Logger::LogLevel::WRN);
         logLevels.insert(Logger::LogLevel::DBG);
         logLevels.insert(Logger::LogLevel::INF);
-        Logger::getLogger().Log(Logger::LogLevel::INF, "Using default log level: WRN", "LoggerConfig");
+        LOG_INF("Using default log level: WRN", "LoggerConfig");
     }
 
     isSingleLevel = (logLevelStr.find(',') == std::string::npos);
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Parsed log levels count: " + std::to_string(logLevels.size()) + ", isSingleLevel: " + (isSingleLevel ? "true" : "false"), "LoggerConfig");
+    LOG_INF("Parsed log levels count: " + std::to_string(logLevels.size()) + ", isSingleLevel: " + (isSingleLevel ? "true" : "false"), "LoggerConfig");
 
     // Log parsed levels
     std::string levelsStr;
@@ -66,7 +66,7 @@ void LoggerConfig::configureLoggerLevels(const std::string& logLevelStr) {
     if (logLevels.count(Logger::LogLevel::DBG)) levelsStr += "DBG ";
     if (logLevels.count(Logger::LogLevel::INF)) levelsStr += "INF ";
     
-    Logger::getLogger().Log(Logger::LogLevel::INF, "Active log levels: " + (levelsStr.empty() ? "none" : levelsStr), "LoggerConfig");
+    LOG_INF("Active log levels: " + (levelsStr.empty() ? "none" : levelsStr), "LoggerConfig");
 
     // Set log levels in Logger
     Logger::getLogger().SetLogLevels(logLevels, isSingleLevel);
