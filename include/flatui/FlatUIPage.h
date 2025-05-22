@@ -16,6 +16,8 @@ public:
     FlatUIPage(wxWindow* parent, const wxString& label);
     virtual ~FlatUIPage();
 
+    void InitializeLayout();
+
     void AddPanel(FlatUIPanel* panel);
 
     wxString GetLabel() const { return m_label; }

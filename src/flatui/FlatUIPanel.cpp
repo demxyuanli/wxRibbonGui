@@ -64,6 +64,35 @@ void FlatUIPanel::OnTimer(wxTimerEvent& event)
     }
 }
 
+void FlatUIPanel::UpdatePanelSize()
+{
+    Freeze();
+    wxEventBlocker blocker(this, wxEVT_SIZE);
+
+    // Temporarily show hidden controls to compute sizes
+    bool wasHidden = !IsShown();
+    if (wasHidden)
+        Show();
+
+    RecalculateBestSize();
+    Layout();
+
+    if (wasHidden)
+        Hide();
+
+    wxWindow* parent = GetParent();
+    if (parent) {
+        FlatUIPage* page = dynamic_cast<FlatUIPage*>(parent);
+        if (page) {
+            page->RecalculatePageHeight();
+        }
+        parent->Layout();
+    }
+
+    Refresh(false);
+    Thaw();
+}
+
 void FlatUIPanel::ResizeChildControls(int width, int height)
 {
     if (m_sizer) {
@@ -106,7 +135,12 @@ void FlatUIPanel::RecalculateBestSize()
         int totalHeight = 0;
 
         for (auto buttonBar : m_buttonBars) {
-            if (buttonBar && buttonBar->IsShown()) {
+            if (buttonBar) {
+                // Ensure button bar is laid out
+                bool wasHidden = !buttonBar->IsShown();
+                if (wasHidden)
+                    buttonBar->Show();
+
                 wxSize barSize = buttonBar->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     totalWidth += barSize.GetWidth() + controlSpacing;
@@ -116,11 +150,19 @@ void FlatUIPanel::RecalculateBestSize()
                     totalWidth = wxMax(totalWidth, barSize.GetWidth());
                     totalHeight += barSize.GetHeight() + controlSpacing;
                 }
+
+                if (wasHidden)
+                    buttonBar->Hide();
             }
         }
 
         for (auto gallery : m_galleries) {
-            if (gallery && gallery->IsShown()) {
+            if (gallery) {
+                // Ensure gallery is laid out
+                bool wasHidden = !gallery->IsShown();
+                if (wasHidden)
+                    gallery->Show();
+
                 wxSize gallerySize = gallery->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     totalWidth += gallerySize.GetWidth() + controlSpacing;
@@ -130,6 +172,9 @@ void FlatUIPanel::RecalculateBestSize()
                     totalWidth = wxMax(totalWidth, gallerySize.GetWidth());
                     totalHeight += gallerySize.GetHeight() + controlSpacing;
                 }
+
+                if (wasHidden)
+                    gallery->Hide();
             }
         }
 

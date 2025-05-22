@@ -60,12 +60,7 @@ public:
     void SetLabel(const wxString& label);
     
     // Force recalculation of panel size based on child controls
-    void UpdatePanelSize() {
-        // Use the existing class timer
-        if (m_resizeTimer.IsRunning())
-            m_resizeTimer.Stop();
-        m_resizeTimer.StartOnce(50);
-    }
+    void UpdatePanelSize();
 
     void OnPaint(wxPaintEvent& evt); // Keep if specific OnPaint is needed, otherwise wxControl default
     

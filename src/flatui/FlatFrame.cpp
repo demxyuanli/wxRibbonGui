@@ -133,15 +133,7 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     m_ribbon->AddPage(page1);
 
     FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
-    FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxVERTICAL);
-
-    panel3->SetPanelBackgroundColour(wxColour(60, 60, 60));
-    panel3->SetBorderStyle(PanelBorderStyle::MEDIUM);
-    panel3->SetBorderColour(wxColour(100, 100, 100));
-    panel3->SetHeaderStyle(PanelHeaderStyle::TOP);
-    panel3->SetHeaderColour(wxColour(80, 80, 80));
-    panel3->SetHeaderTextColour(wxColour(220, 220, 220));
-
+    FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
     FlatUIButtonBar* buttonBar3 = new FlatUIButtonBar(panel3);
     buttonBar3->AddButton(wxID_COPY, "Copy", wxArtProvider::GetBitmap(wxART_COPY, wxART_BUTTON));
     buttonBar3->AddButton(wxID_PASTE, "Paste", wxArtProvider::GetBitmap(wxART_PASTE, wxART_BUTTON));
@@ -158,7 +150,7 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     m_ribbon->AddPage(page3);
 
     FlatUIPage* page4 = new FlatUIPage(m_ribbon, "View");
-    FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxVERTICAL);
+    FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
     FlatUIButtonBar* buttonBar4 = new FlatUIButtonBar(panel4);
     buttonBar4->AddButton(wxID_FIND, "Find", wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON));
     buttonBar4->AddButton(wxID_SELECTALL, "SelectAll", wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_BUTTON)); // Consider appropriate icon

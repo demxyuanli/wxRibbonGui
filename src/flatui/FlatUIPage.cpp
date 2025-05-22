@@ -71,6 +71,7 @@ void FlatUIPage::OnSize(wxSizeEvent& evt)
         "FlatUIPage::OnSize");
 
     if (m_sizer) {
+        wxEventBlocker blocker(this, wxEVT_SIZE);
         RecalculatePageHeight();
         Layout();
     }
@@ -87,24 +88,27 @@ void FlatUIPage::RecalculatePageHeight()
 
     isRecalculating = true;
 
+    Freeze();
+
     if (m_panels.empty()) {
         SetMinSize(wxSize(100, 100));
         if (m_sizer) {
             m_sizer->SetDimension(0, 0, 100, 100);
         }
         isRecalculating = false;
+        Thaw();
         return;
     }
-
-    Freeze();
 
     int maxHeight = 0;
     int totalWidth = 0;
     int spacing = 5;
 
     for (auto panel : m_panels) {
-        if (!panel || !panel->IsShown()) continue;
+        if (!panel) continue;
 
+        // Ensure panel is laid out even if page is hidden
+        panel->UpdatePanelSize();
         wxSize panelBestSize = panel->GetBestSize();
         totalWidth += panelBestSize.GetWidth() + spacing;
         maxHeight = wxMax(maxHeight, panelBestSize.GetHeight());
@@ -164,12 +168,22 @@ void FlatUIPage::AddPanel(FlatUIPanel* panel)
         "FlatUIPage");
 
     panel->Show();
-    panel->Layout();
+    panel->UpdatePanelSize();
 
     RecalculatePageHeight();
-
     Layout();
     Refresh(false);
 
+    Thaw();
+}
+
+void FlatUIPage::InitializeLayout()
+{
+    Freeze();
+    for (auto panel : m_panels) {
+        panel->UpdatePanelSize();
+    }
+    RecalculatePageHeight();
+    Layout();
     Thaw();
 }
