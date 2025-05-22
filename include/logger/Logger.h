@@ -12,7 +12,8 @@ public:
 
     static Logger& getLogger();
     void SetOutputCtrl(wxTextCtrl* ctrl);
-    void Log(LogLevel level, const std::string& message, const std::string& context = "");
+    void Log(LogLevel level, const std::string& message, const std::string& context = "", 
+             const std::string& file = "", int line = 0);
     void Shutdown();
     void SetLogLevels(const std::set<LogLevel>& levels, bool isSingleLevel); // Set allowed log levels
     bool ShouldLog(LogLevel level) const; // Check if a level should be logged
@@ -29,5 +30,10 @@ private:
     std::set<LogLevel> allowedLogLevels; // Set of allowed log levels
     bool isSingleLevelMode = false; // True for single-level mode (log level and above)
 };
+
+#define LOG_INF(message, context) Logger::getLogger().Log(Logger::LogLevel::INF, message, context, __FILE__, __LINE__)
+#define LOG_DBG(message, context) Logger::getLogger().Log(Logger::LogLevel::DBG, message, context, __FILE__, __LINE__)
+#define LOG_WRN(message, context) Logger::getLogger().Log(Logger::LogLevel::WRN, message, context, __FILE__, __LINE__)
+#define LOG_ERR(message, context) Logger::getLogger().Log(Logger::LogLevel::ERR, message, context, __FILE__, __LINE__)
 
 #endif

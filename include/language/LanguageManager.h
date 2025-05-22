@@ -34,6 +34,7 @@ private:
     bool loadLanguageFile(const std::string& langCode);
 
     std::string findLanguageFile(const std::string& langCode);
+    std::string findDefaultLanguageFile();
 
     std::string currentLangCode;
     std::string langFilePath;

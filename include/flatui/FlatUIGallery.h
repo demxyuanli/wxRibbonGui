@@ -17,8 +17,7 @@ public:
     size_t GetItemCount() const { return m_items.size(); }
 
     void OnMouseDown(wxMouseEvent& evt);
-
-
+    void OnSize(wxSizeEvent& evt);
     void OnPaint(wxPaintEvent& evt);
 
 private:

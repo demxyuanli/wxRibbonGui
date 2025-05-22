@@ -6,13 +6,7 @@
 #include "flatui/FlatUIBar.h" 
 
 
-enum {
-    ID_Menu_NewProject_MainFrame = wxID_HIGHEST + 100,
-    ID_Menu_OpenProject_MainFrame,
-    ID_Menu_RecentFiles_MainFrame,
-    ID_UserProfile,         
-    ID_SearchExecute         
-};
+enum {    ID_Menu_NewProject_MainFrame = wxID_HIGHEST + 100,    ID_Menu_OpenProject_MainFrame,    ID_Menu_RecentFiles_MainFrame,    ID_UserProfile,             ID_SearchExecute,    ID_ShowUIHierarchy         };
 
 // Enum to represent window edges/corners for resizing
 enum class ResizeMode {
@@ -46,9 +40,13 @@ public:
     void OnSearchTextEnter(wxCommandEvent& event);
     void OnUserProfile(wxCommandEvent& event);
     void OnSettings(wxCommandEvent& event);
+    void OnShowUIHierarchy(wxCommandEvent& event);
 
     void OnStartupTimer(wxTimerEvent& event);
     void DebugUIHierarchy(wxWindow* window = nullptr, int depth = 0);
+    
+    // Public method to show UI hierarchy
+    void ShowUIHierarchy();
 
 private:
     // Helper methods for resizing

@@ -9,10 +9,10 @@
 class FlatUIBar;
 class FlatUIPanel;
 
-class FlatUIPage : public wxWindow
+class FlatUIPage : public wxControl
 {
 public:
-    // Constructor takes a wxWindow* parent (更通用的父窗口类型)
+    // Constructor takes a wxWindow* parent 
     FlatUIPage(wxWindow* parent, const wxString& label);
     virtual ~FlatUIPage();
 
@@ -23,13 +23,18 @@ public:
     wxVector<FlatUIPanel*>& GetPanels() { return m_panels; }
     const wxVector<FlatUIPanel*>& GetPanels() const { return m_panels; }
 
+    void SetActive(bool active) { m_isActive = active; }
+    bool IsActive() const { return m_isActive; }
+    void RecalculatePageHeight(); // Declare the method
+
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
 
 private:
     wxString m_label;
     wxVector<FlatUIPanel*> m_panels;
-    wxBoxSizer* m_sizer;  // 添加sizer成员变量用于页面布局
+    wxBoxSizer* m_sizer;
+    bool m_isActive; 
 };
 
 #endif // FLATUIPAGE_H 

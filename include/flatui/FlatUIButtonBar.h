@@ -22,6 +22,7 @@ public:
 
     void OnPaint(wxPaintEvent& evt);
     void OnMouseDown(wxMouseEvent& evt);
+    void OnSize(wxSizeEvent& evt);
 
 private:
     struct ButtonInfo

@@ -25,7 +25,7 @@ private:
     wxWindow* m_childControl; // The actual functional control (e.g., search bar)
     int m_spaceWidth;         // Desired width for this space
 
-    static const int DEFAULT_WIDTH = 150; // Default width if not specified
+    static const int DEFAULT_WIDTH = 270; // Default width if not specified
 };
 
 #endif // FLATUI_FUNCTION_SPACE_H 
