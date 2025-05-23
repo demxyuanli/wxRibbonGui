@@ -26,7 +26,8 @@ enum class PanelHeaderStyle {
     NONE,    
     TOP,     
     LEFT,      
-    EMBEDDED   
+    EMBEDDED,  
+    BOTTOM_CENTERED // Header at the bottom, text centered
 };
 
 class FlatUIPanel : public wxControl

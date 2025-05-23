@@ -5,14 +5,18 @@
 #include "flatui/FlatUIGallery.h" 
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUIHomeSpace.h"
+#include "flatui/FlatUIHomeMenu.h"
 #include "flatui/FlatUIFunctionSpace.h"
 #include "flatui/FlatUIProfileSpace.h"
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUICustomControl.h"
+#include "flatui/FlatUIConstants.h"
 
 #ifdef __WXMSW__
 #include <windows.h>
 #endif
+
+// These are now defined in FlatFrame.h as enum members.
 
 FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size, wxBORDER_NONE)
@@ -23,50 +27,47 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     // Get standard height of the bar strip (top bar)
     int barHeight = FlatUIBar::GetBarHeight();
     // Give enough total height when creating, actual page size will be calculated in SetSize
-    m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 2));
+    m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 3));
+
+    // Font for the entire ribbon and its direct custom children
+    wxFont defaultFont = GetFlatUIDefaultFont();
 
     m_ribbon->SetDoubleBuffered(true);
 
-    wxMenu* welmenu = new wxMenu;
-    welmenu->Append(ID_Menu_NewProject_MainFrame, "&New Project...\tCtrl-N");
-    welmenu->AppendSeparator();
-    welmenu->Append(ID_ShowUIHierarchy, "Show UI &Hierarchy\tCtrl-H");
-    welmenu->AppendSeparator();
-    welmenu->Append(wxID_EXIT, "E&xit\tAlt-X");
-
-    m_ribbon->SetHomeButtonMenu(welmenu);
     m_ribbon->SetHomeButtonWidth(30);
+
+    FlatUIHomeSpace* homeSpace = m_ribbon->GetHomeSpace(); // Assuming GetHomeSpace() exists and returns the correct parent
+    if (homeSpace) {
+        FlatUIHomeMenu* homeMenu = new FlatUIHomeMenu(homeSpace, this); // parent is homeSpace, event sink is this FlatFrame
+        homeMenu->AddMenuItem("&New Project...\tCtrl-N", ID_Menu_NewProject_MainFrame);
+        homeMenu->AddSeparator();
+        homeMenu->AddMenuItem("Show UI &Hierarchy\tCtrl-H", ID_ShowUIHierarchy);
+        // Fixed items (Settings, About, Exit) are added by BuildMenuLayout itself
+        homeMenu->BuildMenuLayout(); 
+        homeSpace->SetHomeMenu(homeMenu); // Let HomeSpace know about its menu
+    } else {
+        // Handle error: HomeSpace not available
+        wxLogError("FlatUIHomeSpace is not available to attach the menu.");
+    }
 
     wxPanel* searchPanel = new wxPanel(m_ribbon);
     wxBoxSizer* searchSizer = new wxBoxSizer(wxHORIZONTAL);
 
     m_searchCtrl = new wxSearchCtrl(searchPanel, wxID_ANY, wxEmptyString,
         wxDefaultPosition, wxSize(240, -1), wxTE_PROCESS_ENTER);
+    m_searchCtrl->SetFont(defaultFont);
     m_searchCtrl->ShowSearchButton(true);
     m_searchCtrl->ShowCancelButton(true);
     wxBitmapButton* searchButton = new wxBitmapButton(searchPanel, ID_SearchExecute,
-        wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON));
+        wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON, wxSize(16, 16)));
 
     searchSizer->Add(m_searchCtrl, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
     searchSizer->Add(searchButton, 0, wxALIGN_CENTER_VERTICAL);
     searchPanel->SetSizer(searchSizer);
+    // It's good practice to set font on containers too if they might draw something or for consistency
+    searchPanel->SetFont(defaultFont);
 
     m_ribbon->SetFunctionSpaceControl(searchPanel, 270);
-
-    wxPanel* profilePanel = new wxPanel(m_ribbon);
-    wxBoxSizer* profileSizer = new wxBoxSizer(wxHORIZONTAL);
-
-    wxBitmapButton* userButton = new wxBitmapButton(profilePanel, ID_UserProfile,
-        wxArtProvider::GetBitmap(wxART_HELP_SIDE_PANEL, wxART_BUTTON));
-
-    wxBitmapButton* settingsButton = new wxBitmapButton(profilePanel, wxID_PREFERENCES,
-        wxArtProvider::GetBitmap(wxART_EXECUTABLE_FILE, wxART_BUTTON));
-
-    profileSizer->Add(userButton, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-    profileSizer->Add(settingsButton, 0, wxALIGN_CENTER_VERTICAL);
-    profilePanel->SetSizer(profileSizer);
-
-    m_ribbon->SetProfileSpaceControl(profilePanel, 60);
 
     m_ribbon->SetTabFunctionSpacer(15, false);
     m_ribbon->SetTabFunctionSpacerAutoExpand(true);
@@ -75,7 +76,9 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     m_ribbon->SetFunctionProfileSpacerAutoExpand(false);
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
+    // page1 will inherit font from m_ribbon or should have it set in its own constructor if needed for direct drawing
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);
+    panel1->SetFont(defaultFont); // Set font for panels
 
     //panel1->SetPanelBackgroundColour(wxColour(245, 245, 245));
     //panel1->SetBorderStyle(PanelBorderStyle::THIN);
@@ -86,8 +89,9 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 
     // Create button bar for Home page with explicit width
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
-    buttonBar1->AddButton(wxID_OPEN, "Open", wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_BUTTON));
-    buttonBar1->AddButton(wxID_SAVE, "Save", wxArtProvider::GetBitmap(wxART_FILE_SAVE, wxART_BUTTON));
+    // buttonBar1 font already set in its constructor
+    buttonBar1->AddButton(wxID_OPEN, "Open", wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar1->AddButton(wxID_SAVE, "Save", wxArtProvider::GetBitmap(wxART_FILE_SAVE, wxART_BUTTON, wxSize(16, 16)));
 
     wxMenu* fileMenu = new wxMenu;
     fileMenu->Append(ID_Menu_NewProject_MainFrame, "&New Project...\tCtrl-N");
@@ -97,20 +101,21 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     fileMenu->AppendSubMenu(recentFilesMenu, "Recent &Files");
     fileMenu->AppendSeparator();
 
-    buttonBar1->AddButton(wxID_ANY, "File Menu", wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_BUTTON), fileMenu);
+    buttonBar1->AddButton(wxID_ANY, "File Menu", wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_BUTTON, wxSize(16, 16)), fileMenu);
 
     panel1->AddButtonBar(buttonBar1, 0, wxEXPAND | wxALL, 5);
 
     FlatUIGallery* gallery1 = new FlatUIGallery(panel1);
-    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER), wxID_ANY);
-    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER), wxID_ANY);
-    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER), wxID_ANY);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
     panel1->AddGallery(gallery1, 0, wxEXPAND | wxALL, 5);
     
 
     page1->AddPanel(panel1);
 
     FlatUIPanel* panel2 = new FlatUIPanel(page1, "SecondPanel", wxHORIZONTAL);
+    panel2->SetFont(defaultFont);
     //panel2->SetPanelBackgroundColour(wxColour(240, 245, 250));
     //panel2->SetBorderStyle(PanelBorderStyle::THIN);
     //panel2->SetBorderColour(wxColour(0, 0, 150));
@@ -119,14 +124,15 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     //panel2->SetHeaderTextColour(wxColour(0, 0, 150));
 
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
-    buttonBar2->AddButton(wxID_HELP, "Help", wxArtProvider::GetBitmap(wxART_HELP, wxART_BUTTON));
-    buttonBar2->AddButton(wxID_INFO, "Info", wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_BUTTON));
+    // buttonBar2 font set in constructor
+    buttonBar2->AddButton(wxID_HELP, "Help", wxArtProvider::GetBitmap(wxART_HELP, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar2->AddButton(wxID_INFO, "Info", wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_BUTTON, wxSize(16, 16)));
     panel2->AddButtonBar(buttonBar2, 0, wxEXPAND | wxALL, 5);
 
     FlatUIGallery* gallery2 = new FlatUIGallery(panel2);
-    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_HELP, wxART_OTHER), wxID_ANY);
-    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER), wxID_ANY);
-    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER), wxID_ANY);
+    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_HELP, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery2->AddItem(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
     panel2->AddGallery(gallery2, 0, wxEXPAND | wxALL, 5);
 
     page1->AddPanel(panel2);
@@ -134,15 +140,17 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 
     FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
     FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
+    panel3->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar3 = new FlatUIButtonBar(panel3);
-    buttonBar3->AddButton(wxID_COPY, "Copy", wxArtProvider::GetBitmap(wxART_COPY, wxART_BUTTON));
-    buttonBar3->AddButton(wxID_PASTE, "Paste", wxArtProvider::GetBitmap(wxART_PASTE, wxART_BUTTON));
+    // buttonBar3 font set in constructor
+    buttonBar3->AddButton(wxID_COPY, "Copy", wxArtProvider::GetBitmap(wxART_COPY, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar3->AddButton(wxID_PASTE, "Paste", wxArtProvider::GetBitmap(wxART_PASTE, wxART_BUTTON, wxSize(16, 16)));
     panel3->AddButtonBar(buttonBar3);
 
     FlatUIGallery* gallery3 = new FlatUIGallery(panel3);
-    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER), wxID_ANY);
-    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER), wxID_ANY);
-    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER), wxID_ANY);
+    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery3->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
     panel3->AddGallery(gallery3, 0, wxEXPAND | wxALL, 5);
 
 
@@ -151,23 +159,29 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 
     FlatUIPage* page4 = new FlatUIPage(m_ribbon, "View");
     FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
+    panel4->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar4 = new FlatUIButtonBar(panel4);
-    buttonBar4->AddButton(wxID_FIND, "Find", wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON));
-    buttonBar4->AddButton(wxID_SELECTALL, "SelectAll", wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_BUTTON)); // Consider appropriate icon
+    // buttonBar4 font set in constructor
+    buttonBar4->AddButton(wxID_FIND, "Find", wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar4->AddButton(wxID_SELECTALL, "SelectAll", wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_BUTTON, wxSize(16, 16))); // Consider appropriate icon
     panel4->AddButtonBar(buttonBar4);
     page4->AddPanel(panel4);
     m_ribbon->AddPage(page4);
 
     FlatUIPage* page5 = new FlatUIPage(m_ribbon, "Help");
     FlatUIPanel* panel5 = new FlatUIPanel(page5, "HelpPanel", wxVERTICAL);
+    panel5->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar5 = new FlatUIButtonBar(panel5);
-    buttonBar5->AddButton(wxID_ABOUT, "About", wxArtProvider::GetBitmap(wxART_WX_LOGO, wxART_BUTTON));
-    buttonBar5->AddButton(wxID_STOP, "Stop", wxArtProvider::GetBitmap(wxART_STOP, wxART_BUTTON));
+    // buttonBar5 font set in constructor
+    buttonBar5->AddButton(wxID_ABOUT, "About", wxArtProvider::GetBitmap(wxART_WX_LOGO, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar5->AddButton(wxID_STOP, "Stop", wxArtProvider::GetBitmap(wxART_STOP, wxART_BUTTON, wxSize(16, 16)));
     panel5->AddButtonBar(buttonBar5);
     page5->AddPanel(panel5);
     m_ribbon->AddPage(page5);
 
     m_messageOutput = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    // Optionally set font for messageOutput if needed, though it's separate from the ribbon
+    // m_messageOutput->SetFont(defaultFont);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     // Allow ribbon to occupy a proportion of vertical space, not just using minimum height
@@ -178,7 +192,7 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     Layout();
 
     // Explicitly set ribbon size to ensure it has enough space to display content
-    int ribbonMinHeight = FlatUIBar::GetBarHeight() * 5; // Give adequate height
+    int ribbonMinHeight = FlatUIBar::GetBarHeight() * 3; // Give adequate height
     m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
     m_ribbon->InvalidateBestSize();
     Layout(); // Force layout update
@@ -541,7 +555,9 @@ void FlatFrame::OnMenuOpenProject(wxCommandEvent& event)
 
 void FlatFrame::OnMenuExit(wxCommandEvent& event)
 {
-    Close(true);
+    // No need to specifically manage homeMenu here anymore,
+    // as wxPopupWindow lifecycle is tied to its parent (HomeSpace, then Ribbon, then Frame)
+    Close(true); // This will destroy FlatFrame and its children, including HomeSpace and the popup menu.
 }
 
 void FlatFrame::OnStartupTimer(wxTimerEvent& event)

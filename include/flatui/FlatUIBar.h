@@ -17,7 +17,9 @@ class FlatUISpacerControl;
 class FlatUIBar : public wxControl
 {
 public:
-    static const int FLATUI_BAR_HEIGHT = 30;
+    // FLATUI_BAR_HEIGHT is now FLATUI_BAR_RENDER_HEIGHT in FlatUIConstants.h for paint calcs.
+    // The GetBarHeight() static method remains important for overall height logic.
+    // static const int FLATUI_BAR_HEIGHT = 30; // Removed, use constant from FlatUIConstants.h for rendering logic
     
     FlatUIBar(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
     virtual ~FlatUIBar();
@@ -48,10 +50,15 @@ public:
 
     static int GetBarHeight(); // Renamed from GetTabAreaHeight for clarity
 
+    // Override to provide best size hint
+    virtual wxSize DoGetBestSize() const override;
+
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
     void OnMouseDown(wxMouseEvent& evt); // Will primarily handle tab clicks now
     // OnMouseMove and OnMouseLeave might be less relevant here if sub-controls handle their own hover
+
+    FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
 
 private:
     // --- Child Component Controls ---
@@ -71,12 +78,12 @@ private:
     wxRect m_tabAreaRect; // Stores the calculated rectangle for drawing tabs
     
     // --- Configuration for direct Tab drawing by FlatUIBar ---
-    static const int TAB_PADDING = 10; 
-    static const int TAB_SPACING = 1;
+    // static const int TAB_PADDING = 10; // Removed
+    // static const int TAB_SPACING = 1;  // Removed
     
     // --- General Layout Constants (can be adjusted) ---
-    static const int ELEMENT_SPACING = 5; // General spacing between different major sections
-    static const int BAR_PADDING = 2;     // Padding at the very left/right of the bar itself
+    // static const int ELEMENT_SPACING = 5; // Removed
+    // static const int BAR_PADDING = 2;     // Removed
 
     // --- Helper methods ---
     void UpdateElementPositionsAndSizes(const wxSize& barSize);

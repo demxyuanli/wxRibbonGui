@@ -90,18 +90,17 @@ void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxStri
     wxColour btnTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
     wxColour hoverBgColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
     wxColour hoverTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
-    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR); // Inherit from parent (FlatUIBar)
+    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
 
     if (isClose) {
         dc.SetBrush(hover ? wxColour(232, 17, 35) : normalBgColour);
-        dc.SetPen(hover ? wxColour(232, 17, 35) : *wxGREY_PEN);
         dc.SetTextForeground(hover ? *wxWHITE : btnTextColour);
     }
     else {
         dc.SetBrush(hover ? hoverBgColour : normalBgColour);
-        dc.SetPen(*wxGREY_PEN);
         dc.SetTextForeground(hover ? hoverTextColour : btnTextColour);
     }
+    dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(rect);
     
     wxSize textSize = dc.GetTextExtent(symbol);

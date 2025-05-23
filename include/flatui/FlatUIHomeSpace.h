@@ -3,15 +3,16 @@
 
 #include <wx/wx.h>
 
+class FlatUIHomeMenu; // Forward declaration
+
 class FlatUIHomeSpace : public wxControl
 {
 public:
     FlatUIHomeSpace(wxWindow* parent, wxWindowID id = wxID_ANY);
     virtual ~FlatUIHomeSpace();
 
-    void SetMenu(wxMenu* menu);
-    void SetIcon(const wxBitmap& icon);
-    void SetButtonWidth(int width) { m_buttonWidth = width; Refresh(); }
+    void SetIcon(const wxBitmap& icon = wxNullBitmap);
+    void SetButtonWidth(int width) { m_buttonWidth = width; Refresh(); InvalidateBestSize(); }
     int GetButtonWidth() const { return m_buttonWidth; }
 
     void OnPaint(wxPaintEvent& evt);
@@ -20,13 +21,17 @@ public:
     void OnMouseLeave(wxMouseEvent& evt);
 
     void CalculateButtonRect(const wxSize& controlSize);
+    void OnHomeMenuClosed(FlatUIHomeMenu* closedMenu); // Method to be called by FlatUIHomeMenu
+
+    void SetHomeMenu(FlatUIHomeMenu* menu);
+    FlatUIHomeMenu* GetActiveHomeMenu() const { return m_activeHomeMenu; }
 
 private:
-    wxMenu* m_menu;         // The dropdown menu, owned by caller
-    wxBitmap m_icon;        // Icon for the button
-    wxRect m_buttonRect;    // Clickable area, calculated in OnPaint or OnSize
-    bool m_hover;         // True if mouse is over the button
-    int m_buttonWidth;    // Width of the home button area
+    wxBitmap m_icon;
+    wxRect m_buttonRect;
+    bool m_hover;
+    int m_buttonWidth;
+    FlatUIHomeMenu* m_activeHomeMenu; // Pointer to the active menu
     static const int DEFAULT_BUTTON_WIDTH = 30;
 };
 

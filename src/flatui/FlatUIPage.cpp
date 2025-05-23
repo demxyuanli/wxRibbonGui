@@ -1,4 +1,5 @@
 #include "flatui/FlatUIPage.h"
+#include "flatui/FlatUIConstants.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUIPanel.h"
 #include "flatui/FlatUIBar.h"
@@ -8,8 +9,10 @@
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     : wxControl(parent, wxID_ANY), m_label(label), m_isActive(false)
 {
+    SetFont(GetFlatUIDefaultFont());
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetBackgroundColour(FLATUI_DEFAULT_BG_COLOUR);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -18,8 +21,6 @@ FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
         ::SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_COMPOSITED);
     }
 #endif
-
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
 
     m_sizer = new wxBoxSizer(wxHORIZONTAL);
     SetSizer(m_sizer);
@@ -41,21 +42,31 @@ FlatUIPage::~FlatUIPage()
 void FlatUIPage::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
+    wxSize size = GetSize();
 
-    dc.SetBackground(wxColour(245, 245, 245));
+    dc.SetBackground(FLATUI_DEFAULT_BG_COLOUR);
     dc.Clear();
 
-    dc.SetPen(wxPen(*wxBLACK, 1));
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(0, 0, GetSize().GetWidth(), GetSize().GetHeight());
+    // Ribbon style: Page typically doesn't have its own prominent border distinct from the active tab
+    // or panel borders within it. A very subtle bottom line might be okay.
+    // For now, let's remove the explicit border drawing here, relying on panel borders if any.
 
-    dc.SetTextForeground(*wxBLACK);
-    dc.SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
-    dc.DrawText(GetLabel(), 10, 5);
+    // dc.SetPen(wxPen(FLATUI_DEFAULT_BG_COLOUR, 1)); // Was drawing top, left, bottom in bg color
+    // dc.DrawLine(0, 0, size.GetWidth(), 0); // Top
+    // dc.DrawLine(0, 0, 0, size.GetHeight()); // Left
+    // dc.DrawLine(0, size.GetHeight() - 1, size.GetWidth(), size.GetHeight() - 1); // Bottom
+    // dc.SetPen(wxPen(FLATUI_DEFAULT_BORDER_COLOUR, 1)); // Was drawing right border
+    // dc.DrawLine(size.GetWidth() - 1, 0, size.GetWidth() - 1, size.GetHeight()); // Right
+
+    // Ribbon style: Remove the page label drawing from within the page itself.
+    // The label is shown on the tab in FlatUIBar.
+    // dc.SetTextForeground(*wxBLACK);
+    // dc.SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+    // dc.DrawText(GetLabel(), 0, 0);
 
     LOG_DBG("Page painted: " + GetLabel().ToStdString() +
-        ", Size: (" + std::to_string(GetSize().GetWidth()) +
-        ", " + std::to_string(GetSize().GetHeight()) + ")",
+        ", Size: (" + std::to_string(size.GetWidth()) +
+        ", " + std::to_string(size.GetHeight()) + ")",
         "FlatUIPage::OnPaint");
 
     evt.Skip();
@@ -91,35 +102,37 @@ void FlatUIPage::RecalculatePageHeight()
     Freeze();
 
     if (m_panels.empty()) {
-        SetMinSize(wxSize(100, 100));
+        wxSize defaultSize(100, 100);
+        SetMinSize(defaultSize);
         if (m_sizer) {
-            m_sizer->SetDimension(0, 0, 100, 100);
+            m_sizer->SetDimension(0, 0, defaultSize.GetWidth(), defaultSize.GetHeight());
         }
+        LOG_INF("RecalculatePageHeight: Empty page " + GetLabel().ToStdString() +
+            ", Set default size: (100,100)", "FlatUIPage");
         isRecalculating = false;
         Thaw();
         return;
     }
 
+    bool wasHidden = !IsShown();
+    if (wasHidden)
+        Show();
+
     int maxHeight = 0;
     int totalWidth = 0;
-    int spacing = 5;
 
     for (auto panel : m_panels) {
         if (!panel) continue;
 
-        // Ensure panel is laid out even if page is hidden
         panel->UpdatePanelSize();
         wxSize panelBestSize = panel->GetBestSize();
-        totalWidth += panelBestSize.GetWidth() + spacing;
+        totalWidth += panelBestSize.GetWidth();
         maxHeight = wxMax(maxHeight, panelBestSize.GetHeight());
-    }
 
-    if (totalWidth > 0) {
-        totalWidth -= spacing;
+        LOG_DBG("Panel " + panel->GetLabel().ToStdString() +
+            " Best Size: (" + std::to_string(panelBestSize.GetWidth()) +
+            "," + std::to_string(panelBestSize.GetHeight()) + ")", "FlatUIPage");
     }
-
-    totalWidth += 10;
-    maxHeight += 20;
 
     wxSize newMinSize(totalWidth, maxHeight);
     SetMinSize(newMinSize);
@@ -128,16 +141,20 @@ void FlatUIPage::RecalculatePageHeight()
         m_sizer->SetDimension(0, 0, totalWidth, maxHeight);
     }
 
-    LOG_INF("RecalculatePageHeight: Calculated height: " + std::to_string(maxHeight) +
-        ", Total width: " + std::to_string(totalWidth), "FlatUIPage");
+    LOG_INF("RecalculatePageHeight: Page " + GetLabel().ToStdString() +
+        ", Calculated size: (" + std::to_string(totalWidth) +
+        "," + std::to_string(maxHeight) + ")", "FlatUIPage");
+
+    if (wasHidden)
+        Hide();
 
     wxWindow* parent = GetParent();
     if (parent) {
         parent->Layout();
     }
 
-    Thaw();
     isRecalculating = false;
+    Thaw();
 }
 
 void FlatUIPage::AddPanel(FlatUIPanel* panel)
@@ -151,10 +168,11 @@ void FlatUIPage::AddPanel(FlatUIPanel* panel)
         SetSizer(boxSizer);
     }
 
+    panel->UpdatePanelSize();
     wxSize minSize = panel->GetBestSize();
     panel->SetMinSize(minSize);
 
-    boxSizer->Add(panel, 0, wxALL, 5);
+    boxSizer->Add(panel, 0, wxALL, 0);
 
     wxSize pageSizeForLog = GetSize();
     wxSize panelSizeForLog = panel->GetSize();
@@ -168,8 +186,6 @@ void FlatUIPage::AddPanel(FlatUIPanel* panel)
         "FlatUIPage");
 
     panel->Show();
-    panel->UpdatePanelSize();
-
     RecalculatePageHeight();
     Layout();
     Refresh(false);
@@ -180,10 +196,15 @@ void FlatUIPage::AddPanel(FlatUIPanel* panel)
 void FlatUIPage::InitializeLayout()
 {
     Freeze();
+    wxEventBlocker blocker(this, wxEVT_SIZE);
     for (auto panel : m_panels) {
         panel->UpdatePanelSize();
     }
     RecalculatePageHeight();
     Layout();
     Thaw();
+
+    LOG_INF("Initialized layout for page: " + GetLabel().ToStdString() +
+        ", Size: (" + std::to_string(GetSize().GetWidth()) +
+        "," + std::to_string(GetSize().GetHeight()) + ")", "FlatUIPage");
 }

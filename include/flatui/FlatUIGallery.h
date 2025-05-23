@@ -20,6 +20,9 @@ public:
     void OnSize(wxSizeEvent& evt);
     void OnPaint(wxPaintEvent& evt);
 
+protected:
+    wxSize DoGetBestSize() const override;
+
 private:
     struct ItemInfo
     {

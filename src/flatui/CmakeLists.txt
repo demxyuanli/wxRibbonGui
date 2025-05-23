@@ -11,5 +11,6 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUISystemButtons.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIEventManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUISpacerControl.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIHomeMenu.cpp
     PARENT_SCOPE
 )
