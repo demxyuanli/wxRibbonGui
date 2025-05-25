@@ -5,8 +5,10 @@
 #include <wx/srchctrl.h>  
 #include "flatui/FlatUIBar.h" 
 
+// Forward declaration
+class FlatUIHomeMenu;
 
-enum {    ID_Menu_NewProject_MainFrame = wxID_HIGHEST + 100,    ID_Menu_OpenProject_MainFrame,    ID_Menu_RecentFiles_MainFrame,    ID_UserProfile,             ID_SearchExecute,    ID_ShowUIHierarchy         };
+enum { ID_Menu_NewProject_MainFrame = wxID_HIGHEST + 100, ID_Menu_OpenProject_MainFrame, ID_Menu_RecentFiles_MainFrame, ID_UserProfile, ID_SearchExecute, ID_ShowUIHierarchy, ID_Menu_PrintLayout_MainFrame };
 
 // Enum to represent window edges/corners for resizing
 enum class ResizeMode {
@@ -35,7 +37,7 @@ public:
     void OnMenuNewProject(wxCommandEvent& event);
     void OnMenuOpenProject(wxCommandEvent& event);
     void OnMenuExit(wxCommandEvent& event);
-    
+
     void OnSearchExecute(wxCommandEvent& event);
     void OnSearchTextEnter(wxCommandEvent& event);
     void OnUserProfile(wxCommandEvent& event);
@@ -43,23 +45,32 @@ public:
     void OnShowUIHierarchy(wxCommandEvent& event);
 
     void OnStartupTimer(wxTimerEvent& event);
-    void DebugUIHierarchy(wxWindow* window = nullptr, int depth = 0);
-    
+
     // Public method to show UI hierarchy
     void ShowUIHierarchy();
+
+    // New public method for printing layout
+    void PrintUILayout(wxCommandEvent& event);
+    void LogUILayout(wxWindow* window = nullptr, int depth = 0);
+
+    // Methods for pseudo-maximization
+    bool IsPseudoMaximized() const { return m_isPseudoMaximized; }
+    void PseudoMaximize();
+    void RestoreFromPseudoMaximize();
 
 private:
     // Helper methods for resizing
     ResizeMode GetResizeModeForPosition(const wxPoint& clientPos);
     void UpdateCursorForResizeMode(ResizeMode mode);
-    
+
     void DrawRubberBand(const wxRect& rect);
     void EraseRubberBand();
 
     // UI Elements
     FlatUIBar* m_ribbon; // Example: if ribbon needs to be accessed by other methods
     wxTextCtrl* m_messageOutput;
-    wxSearchCtrl* m_searchCtrl; 
+    wxSearchCtrl* m_searchCtrl;
+    FlatUIHomeMenu* m_homeMenu; // Added pointer to the home menu
 
     // Member variables for custom dragging
     bool m_dragging = false;
@@ -70,9 +81,13 @@ private:
     ResizeMode m_resizeMode = ResizeMode::NONE;
     wxPoint m_resizeStartMouseScreenPos; // For window resize, initial mouse pos in screen coords
     wxRect m_resizeStartWindowRect;   // For window resize, initial window rect in screen coords
-    wxRect m_currentRubberBandRect;   
-    bool m_rubberBandVisible = false; 
+    wxRect m_currentRubberBandRect;
+    bool m_rubberBandVisible = false;
     int m_borderThreshold = 8;     // Pixels to detect border proximity
+
+    // Members for pseudo-maximization
+    bool m_isPseudoMaximized = false;
+    wxRect m_preMaximizeRect;
 };
 
 #endif // FLATFRAME_H 

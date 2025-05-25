@@ -40,12 +40,15 @@ public:
     void ShowAt(const wxPoint& pos, int contentHeight);
     virtual bool Close(bool force = true); // Keep for consistency, will mostly call Hide()
 
+    FlatFrame* GetEventSinkFrame() const { return m_eventSinkFrame; } // Getter for event sink frame
+
 protected:
     void OnPaint(wxPaintEvent& event);
     void OnKillFocus(wxFocusEvent& event);
     void OnActivate(wxActivateEvent& event);
     void OnMouseMotion(wxMouseEvent& event); // For hover effects on items
     void OnDismiss(); // wxPopupWindow specific for when it's dismissed
+    void OnMouseClickOutside(wxMouseEvent& event);
 
 private:
     FlatFrame* m_eventSinkFrame; // To send events to (renamed from m_parentFrame for clarity)

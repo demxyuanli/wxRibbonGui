@@ -1,4 +1,5 @@
 #include "flatui/FlatUISystemButtons.h"
+#include "flatui/FlatFrame.h"
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 
 FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
@@ -85,48 +86,59 @@ wxFrame* FlatUISystemButtons::GetTopLevelFrame() const
     return wxDynamicCast(topLevelWindow, wxFrame);
 }
 
-void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose, bool isMaximized)
+void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose, bool isMaximizedOrPseudo)
 {
     wxColour btnTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
     wxColour hoverBgColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
     wxColour hoverTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
+    // Use parent's background for normal state to blend in
     wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
 
     if (isClose) {
         dc.SetBrush(hover ? wxColour(232, 17, 35) : normalBgColour);
         dc.SetTextForeground(hover ? *wxWHITE : btnTextColour);
-    }
-    else {
+    } else {
         dc.SetBrush(hover ? hoverBgColour : normalBgColour);
         dc.SetTextForeground(hover ? hoverTextColour : btnTextColour);
     }
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(rect);
     
-    wxSize textSize = dc.GetTextExtent(symbol);
-    int textY = rect.GetY() + (rect.GetHeight() - textSize.GetHeight()) / 2;
-    if (symbol == "_") textY = rect.GetY() + (rect.GetHeight() - textSize.GetHeight()) / 4; // Lower minimize slightly
+    wxString actualSymbol = symbol;
+    if (!isClose && isMaximizedOrPseudo && symbol == wxString(wchar_t(0x2610))) { // Maximize symbol
+        actualSymbol = wxString(wchar_t(0x2750)); // Restore symbol (two vertical bars)
+    } else if (!isClose && !isMaximizedOrPseudo && symbol == wxString(wchar_t(0x2750))) { // Restore symbol, but frame is not maximized
+         actualSymbol = wxString(wchar_t(0x2610)); // Maximize symbol (empty square)
+    }
 
-    dc.DrawText(symbol, rect.GetX() + (rect.GetWidth() - textSize.GetWidth()) / 2, textY);
+    wxFont currentFont = dc.GetFont();
+    // Ensure a specific font for symbols if default font doesn't render them well
+    // For instance, Arial Unicode MS or Segoe UI Symbol
+    // currentFont.SetFaceName("Segoe UI Symbol"); // Example
+    dc.SetFont(currentFont);
+
+    wxSize textSize = dc.GetTextExtent(actualSymbol);
+    int textY = rect.GetY() + (rect.GetHeight() - textSize.GetHeight()) / 2;
+    // Specific adjustment for minimize button if needed
+    if (symbol == "_") textY = rect.GetY() + (rect.GetHeight() - textSize.GetHeight()) / 4; 
+
+    dc.DrawText(actualSymbol, rect.GetX() + (rect.GetWidth() - textSize.GetWidth()) / 2, textY);
 }
 
 void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
-    dc.Clear(); // Clear our own background
+    // GetParent()->GetBackgroundColour() might be better for the true parent bg
+    dc.SetBackground(GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR));
+    dc.Clear();
     
-    // Recalculate button rects based on current client size every paint, ensures responsiveness
-    // This makes SetButtonRects(ext, ext, ext) less critical for passing specific sub-rects
-    // and more about signaling that FlatUIBar has updated our overall size.
     wxSize currentSize = GetClientSize();
-    
     int currentButtonHeight = 30;
-    int currentButtonWidth = 40;
-    
+    int currentButtonWidth = 40; 
     int currentButtonY = (currentSize.GetHeight() - currentButtonHeight) / 2;
     if (currentButtonY < 0) currentButtonY = 0;
     
-    int xPos = currentSize.GetWidth(); // Start from the right edge
+    int xPos = currentSize.GetWidth(); 
     
     xPos -= currentButtonWidth;
     m_closeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
@@ -139,11 +151,12 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     xPos -= currentButtonWidth;
     m_minimizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
 
-    wxFrame* topFrame = GetTopLevelFrame();
-    bool isMaximized = topFrame ? topFrame->IsMaximized() : false;
+    FlatFrame* topFrame = wxDynamicCast(GetTopLevelFrame(), FlatFrame);
+    bool isEffectivelyMaximized = topFrame ? topFrame->IsPseudoMaximized() : false;
 
     PaintButton(dc, m_minimizeButtonRect, "_", m_minimizeButtonHover);
-    PaintButton(dc, m_maximizeButtonRect, isMaximized ? wxString(wchar_t(0x2750)) : wxString(wchar_t(0x2610)), m_maximizeButtonHover, false, isMaximized);
+    // Pass the correct symbol based on whether it *should* be restore or maximize
+    PaintButton(dc, m_maximizeButtonRect, isEffectivelyMaximized ? wxString(wchar_t(0x2750)) : wxString(wchar_t(0x2610)), m_maximizeButtonHover, false, isEffectivelyMaximized);
     PaintButton(dc, m_closeButtonRect, "X", m_closeButtonHover, true);
 }
 
@@ -155,7 +168,7 @@ void FlatUISystemButtons::OnMouseDown(wxMouseEvent& evt)
 
 void FlatUISystemButtons::HandleSystemButtonAction(const wxPoint& pos, wxMouseEvent& evt) 
 {
-    wxFrame* frame = GetTopLevelFrame();
+    FlatFrame* frame = wxDynamicCast(GetTopLevelFrame(), FlatFrame); // Cast to FlatFrame
     if (!frame) { evt.Skip(); return; }
 
     bool handled = false;
@@ -164,10 +177,12 @@ void FlatUISystemButtons::HandleSystemButtonAction(const wxPoint& pos, wxMouseEv
         handled = true;
     }
     else if (m_maximizeButtonRect.Contains(pos)) {
-        if (frame->IsMaximized())
-            frame->Restore();
-        else
-            frame->Maximize();
+        if (frame->IsPseudoMaximized()) {
+            frame->RestoreFromPseudoMaximize();
+        } else {
+            frame->PseudoMaximize();
+        }
+        Refresh(); // Refresh to update button symbol
         handled = true;
     }
     else if (m_minimizeButtonRect.Contains(pos)) {
@@ -176,11 +191,10 @@ void FlatUISystemButtons::HandleSystemButtonAction(const wxPoint& pos, wxMouseEv
     }
     
     if (handled) {
-        SetFocus(); // Keep focus or manage as needed
-        evt.Skip(false); // Event consumed
-    }
-    else {
-        evt.Skip(); // Event not for us
+        // SetFocus(); // Usually not needed, and can steal focus undesirably
+        evt.Skip(false); 
+    } else {
+        evt.Skip(); 
     }
 }
 

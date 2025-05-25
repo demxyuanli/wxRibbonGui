@@ -49,6 +49,10 @@ public:
     void SetBorderColour(const wxColour& colour);
     wxColour GetBorderColour() const { return m_borderColour; }
     
+    // Panel border configuration
+    void SetPanelBorderWidths(int top, int bottom, int left, int right);
+    void GetPanelBorderWidths(int& top, int& bottom, int& left, int& right) const;
+    
     void SetHeaderStyle(PanelHeaderStyle style);
     PanelHeaderStyle GetHeaderStyle() const { return m_headerStyle; }
     
@@ -57,6 +61,12 @@ public:
     
     void SetHeaderTextColour(const wxColour& colour);
     wxColour GetHeaderTextColour() const { return m_headerTextColour; }
+    
+    // Header border configuration
+    void SetHeaderBorderWidths(int top, int bottom, int left, int right);
+    void GetHeaderBorderWidths(int& top, int& bottom, int& left, int& right) const;
+    void SetHeaderBorderColour(const wxColour& colour);
+    wxColour GetHeaderBorderColour() const { return m_headerBorderColour; }
     
     void SetLabel(const wxString& label);
     
@@ -85,10 +95,24 @@ private:
     
     wxColour m_bgColour;            
     PanelBorderStyle m_borderStyle;  
-    wxColour m_borderColour;        
+    wxColour m_borderColour;
+    
+    // Panel border properties
+    int m_panelBorderTop;
+    int m_panelBorderBottom;
+    int m_panelBorderLeft;
+    int m_panelBorderRight;
+    
     PanelHeaderStyle m_headerStyle; 
     wxColour m_headerColour;         
     wxColour m_headerTextColour;
+    
+    // Header border properties
+    int m_headerBorderTop;
+    int m_headerBorderBottom;
+    int m_headerBorderLeft;
+    int m_headerBorderRight;
+    wxColour m_headerBorderColour;
     
     // Class level timer for size updates
     wxTimer m_resizeTimer;

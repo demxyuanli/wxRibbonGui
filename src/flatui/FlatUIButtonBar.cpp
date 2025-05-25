@@ -4,6 +4,7 @@
 #include "flatui/FlatUIEventManager.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
+#include <wx/graphics.h>
 
 // Calculate this one if needed, or ensure it's derived correctly where used
 constexpr int FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING = (FLATUI_BUTTONBAR_TARGET_HEIGHT - FLATUI_BUTTONBAR_ICON_SIZE) / 2;
@@ -14,13 +15,32 @@ constexpr int ICON_TEXT_BELOW_SPACING = 1;        // Space between icon and text
 
 FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     : wxControl(parent, wxID_ANY),
-      m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE) // Default display style
+      m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE), // Default display style
+      m_buttonStyle(ButtonStyle::DEFAULT),
+      m_buttonBorderStyle(ButtonBorderStyle::SOLID),
+      m_buttonBgColour(FLATUI_BUTTONBAR_DEFAULT_BG_COLOUR),
+      m_buttonHoverBgColour(FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR),
+      m_buttonPressedBgColour(FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR),
+      m_buttonTextColour(FLATUI_BUTTONBAR_DEFAULT_TEXT_COLOUR),
+      m_buttonBorderColour(FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR),
+      m_barBgColour(FLATUI_BUTTONBAR_PANEL_BG_COLOUR),
+      m_barBorderColour(FLATUI_BUTTONBAR_PANEL_BORDER_COLOUR),
+      m_buttonBorderWidth(FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH),
+      m_buttonCornerRadius(FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS),
+      m_buttonSpacing(FLATUI_BUTTONBAR_SPACING),
+      m_buttonHorizontalPadding(FLATUI_BUTTONBAR_HORIZONTAL_PADDING),
+      m_buttonVerticalPadding(FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING),
+      m_barBorderWidth(0),
+      m_hoverEffectsEnabled(true),
+      m_hoveredButtonIndex(-1)
 {
     SetFont(GetFlatUIDefaultFont());
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetMinSize(wxSize(FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN * 2, FLATUI_BUTTONBAR_TARGET_HEIGHT)); 
     Bind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, this);
+    Bind(wxEVT_MOTION, &FlatUIButtonBar::OnMouseMove, this);
+    Bind(wxEVT_LEAVE_WINDOW, &FlatUIButtonBar::OnMouseLeave, this);
     Bind(wxEVT_SIZE, &FlatUIButtonBar::OnSize, this);
     // TODO: Add EVT_MOTION and EVT_LEAVE_WINDOW for hover effects if desired later
 }
@@ -44,20 +64,20 @@ void FlatUIButtonBar::RecalculateLayout()
         switch (m_displayStyle) {
             case ButtonDisplayStyle::ICON_ONLY:
                 if (button.icon.IsOk()) {
-                    buttonWidth = iconWidth + 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = iconWidth + 2 * m_buttonHorizontalPadding;
                 } else { // Fallback if no icon, show text or be very small
-                    buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Minimal width
+                    buttonWidth = 2 * m_buttonHorizontalPadding; // Minimal width
                 }
                 break;
             case ButtonDisplayStyle::TEXT_ONLY:
                 if (!button.label.empty()) {
-                    buttonWidth = textSize.GetWidth() + 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = textSize.GetWidth() + 2 * m_buttonHorizontalPadding;
                 } else { // Fallback if no text
-                    buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Minimal width
+                    buttonWidth = 2 * m_buttonHorizontalPadding; // Minimal width
                 }
                 break;
             case ButtonDisplayStyle::ICON_TEXT_BELOW:
-                buttonWidth = FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Left padding
+                buttonWidth = m_buttonHorizontalPadding; // Left padding
                 if (button.icon.IsOk() && !button.label.empty()) {
                     buttonWidth += wxMax(iconWidth, textSize.GetWidth());
                 } else if (button.icon.IsOk()) {
@@ -67,29 +87,29 @@ void FlatUIButtonBar::RecalculateLayout()
                 } else {
                     // Neither icon nor text
                 }
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Right padding
+                buttonWidth += m_buttonHorizontalPadding; // Right padding
                 break;
             case ButtonDisplayStyle::ICON_TEXT_BESIDE:
             default: // Default to ICON_TEXT_BESIDE
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Left padding
+                buttonWidth += m_buttonHorizontalPadding; // Left padding
                 if (button.icon.IsOk()) {
                     buttonWidth += iconWidth;
                 }
                 if (!button.label.empty()) {
                     if (button.icon.IsOk()) {
-                        buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Space between icon and text
+                        buttonWidth += m_buttonHorizontalPadding; // Space between icon and text
                     }
                     buttonWidth += textSize.GetWidth();
                 }
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Right padding
+                buttonWidth += m_buttonHorizontalPadding; // Right padding
                 break;
         }
-        if (buttonWidth == 0) buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Ensure a minimal clickable area
+        if (buttonWidth == 0) buttonWidth = 2 * m_buttonHorizontalPadding; // Ensure a minimal clickable area
 
         button.rect = wxRect(currentX, 0, buttonWidth, FLATUI_BUTTONBAR_TARGET_HEIGHT);
         currentX += buttonWidth;
         if (&button != &m_buttons.back()) { 
-            currentX += FLATUI_BUTTONBAR_SPACING;
+            currentX += m_buttonSpacing;
         }
     }
     currentX += FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN; 
@@ -160,20 +180,20 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
         switch (m_displayStyle) {
             case ButtonDisplayStyle::ICON_ONLY:
                 if (button.icon.IsOk()) {
-                    buttonWidth = iconWidth + 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = iconWidth + 2 * m_buttonHorizontalPadding;
                 } else {
-                    buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = 2 * m_buttonHorizontalPadding;
                 }
                 break;
             case ButtonDisplayStyle::TEXT_ONLY:
                 if (!button.label.empty()) {
-                    buttonWidth = textSize.GetWidth() + 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = textSize.GetWidth() + 2 * m_buttonHorizontalPadding;
                 } else {
-                    buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                    buttonWidth = 2 * m_buttonHorizontalPadding;
                 }
                 break;
             case ButtonDisplayStyle::ICON_TEXT_BELOW:
-                buttonWidth = FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Left padding
+                buttonWidth = m_buttonHorizontalPadding; // Left padding
                 if (button.icon.IsOk() && !button.label.empty()) {
                     buttonWidth += wxMax(iconWidth, textSize.GetWidth());
                 } else if (button.icon.IsOk()) {
@@ -183,28 +203,28 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
                 } else {
                     // Neither icon nor text
                 }
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Right padding
+                buttonWidth += m_buttonHorizontalPadding; // Right padding
                 break;
             case ButtonDisplayStyle::ICON_TEXT_BESIDE:
             default:
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                buttonWidth += m_buttonHorizontalPadding;
                 if (button.icon.IsOk()) {
                     buttonWidth += iconWidth;
                 }
                 if (!button.label.empty()) {
                     if (button.icon.IsOk()) {
-                        buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                        buttonWidth += m_buttonHorizontalPadding;
                     }
                     buttonWidth += textSize.GetWidth();
                 }
-                buttonWidth += FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
+                buttonWidth += m_buttonHorizontalPadding;
                 break;
         }
-        if (buttonWidth == 0) buttonWidth = 2 * FLATUI_BUTTONBAR_HORIZONTAL_PADDING; // Minimal width
+        if (buttonWidth == 0) buttonWidth = 2 * m_buttonHorizontalPadding; // Minimal width
 
         totalWidth += buttonWidth;
         if (i < m_buttons.size() - 1) { 
-            totalWidth += FLATUI_BUTTONBAR_SPACING;
+            totalWidth += m_buttonSpacing;
         }
     }
     totalWidth += FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN; 
@@ -223,8 +243,15 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
     wxSize controlSize = GetSize(); 
 
     // Background of the bar itself
-    dc.SetBackground(FLATUI_PRIMARY_CONTENT_BG_COLOUR); // Use consistent BG color
+    dc.SetBackground(m_barBgColour);
     dc.Clear();
+
+    // Draw border for the bar
+    if (m_barBorderWidth > 0) {
+        dc.SetPen(wxPen(m_barBorderColour, m_barBorderWidth));
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.DrawRectangle(0, 0, controlSize.GetWidth(), controlSize.GetHeight());
+    }
 
     if (m_buttons.empty() && IsShown()) { // Only draw placeholder if shown and empty
         dc.SetTextForeground(wxColour(120, 120, 120)); // Lighter grey for placeholder
@@ -239,87 +266,210 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
 
     dc.SetFont(GetFont()); // Ensure correct font is used for text measurements and drawing
 
-    for (const auto& button : m_buttons) {
-        wxRect buttonRect = button.rect; 
-        wxSize textSize = dc.GetTextExtent(button.label);
-        int iconHeight = button.icon.IsOk() ? button.icon.GetHeight() : 0;
-        int iconWidth = button.icon.IsOk() ? button.icon.GetWidth() : 0;
+    for (size_t i = 0; i < m_buttons.size(); ++i) {
+        DrawButton(dc, m_buttons[i], i);
+    }
+}
 
-        // Optional: Draw button background for hover/press (not implemented yet)
-        // if (button.hovered) { ... }
+void FlatUIButtonBar::DrawButton(wxDC& dc, const ButtonInfo& button, int index)
+{
+    wxRect buttonRect = button.rect; 
+    bool isHovered = (m_hoverEffectsEnabled && index == m_hoveredButtonIndex);
+    bool isPressed = button.pressed;
+    
+    // Draw button background
+    if (m_buttonStyle != ButtonStyle::GHOST || isHovered || isPressed) {
+        DrawButtonBackground(dc, buttonRect, isHovered, isPressed);
+    }
+    
+    // Draw button border
+    if (m_buttonStyle == ButtonStyle::OUTLINED || 
+        m_buttonStyle == ButtonStyle::RAISED ||
+        (m_buttonStyle == ButtonStyle::DEFAULT && (isHovered || isPressed))) {
+        DrawButtonBorder(dc, buttonRect, isHovered, isPressed);
+    }
+    
+    // Draw button content
+    wxSize textSize = dc.GetTextExtent(button.label);
+    int iconHeight = button.icon.IsOk() ? button.icon.GetHeight() : 0;
+    int iconWidth = button.icon.IsOk() ? button.icon.GetWidth() : 0;
 
-        switch (m_displayStyle) {
-            case ButtonDisplayStyle::ICON_ONLY:
-                if (button.icon.IsOk()) {
-                    int iconX = buttonRect.GetLeft() + (buttonRect.GetWidth() - iconWidth) / 2;
-                    int iconY = buttonRect.GetTop() + (buttonRect.GetHeight() - iconHeight) / 2;
-                    dc.DrawBitmap(button.icon, iconX, iconY, true);
-                }
-                break;
-            case ButtonDisplayStyle::TEXT_ONLY:
-                if (!button.label.empty()) {
-                    int textX = buttonRect.GetLeft() + (buttonRect.GetWidth() - textSize.GetWidth()) / 2;
-                    int textY = buttonRect.GetTop() + (buttonRect.GetHeight() - textSize.GetHeight()) / 2;
-                    dc.SetTextForeground(*wxBLACK);
-                    dc.DrawText(button.label, textX, textY);
-                }
-                break;
-            case ButtonDisplayStyle::ICON_TEXT_BELOW:
-            {
-                int currentY = buttonRect.GetTop() + ICON_TEXT_BELOW_TOP_MARGIN;
-                if (button.icon.IsOk()) {
-                    int iconX = buttonRect.GetLeft() + (buttonRect.GetWidth() - iconWidth) / 2;
-                    dc.DrawBitmap(button.icon, iconX, currentY, true);
-                    currentY += iconHeight + ICON_TEXT_BELOW_SPACING;
-                }
-                if (!button.label.empty()) {
-                    int textX = buttonRect.GetLeft() + (buttonRect.GetWidth() - textSize.GetWidth()) / 2;
-                    // Ensure text is not drawn outside buttonRect if it's too tall
-                    if (currentY + textSize.GetHeight() <= buttonRect.GetBottom()) {
-                         dc.SetTextForeground(*wxBLACK);
-                         dc.DrawText(button.label, textX, currentY);
-                    }
+    dc.SetTextForeground(m_buttonTextColour);
+    
+    switch (m_displayStyle) {
+        case ButtonDisplayStyle::ICON_ONLY:
+            if (button.icon.IsOk()) {
+                int iconX = buttonRect.GetLeft() + (buttonRect.GetWidth() - iconWidth) / 2;
+                int iconY = buttonRect.GetTop() + (buttonRect.GetHeight() - iconHeight) / 2;
+                dc.DrawBitmap(button.icon, iconX, iconY, true);
+            }
+            break;
+        case ButtonDisplayStyle::TEXT_ONLY:
+            if (!button.label.empty()) {
+                int textX = buttonRect.GetLeft() + (buttonRect.GetWidth() - textSize.GetWidth()) / 2;
+                int textY = buttonRect.GetTop() + (buttonRect.GetHeight() - textSize.GetHeight()) / 2;
+                dc.DrawText(button.label, textX, textY);
+            }
+            break;
+        case ButtonDisplayStyle::ICON_TEXT_BELOW:
+        {
+            int currentY = buttonRect.GetTop() + ICON_TEXT_BELOW_TOP_MARGIN;
+            if (button.icon.IsOk()) {
+                int iconX = buttonRect.GetLeft() + (buttonRect.GetWidth() - iconWidth) / 2;
+                dc.DrawBitmap(button.icon, iconX, currentY, true);
+                currentY += iconHeight + ICON_TEXT_BELOW_SPACING;
+            }
+            if (!button.label.empty()) {
+                int textX = buttonRect.GetLeft() + (buttonRect.GetWidth() - textSize.GetWidth()) / 2;
+                // Ensure text is not drawn outside buttonRect if it's too tall
+                if (currentY + textSize.GetHeight() <= buttonRect.GetBottom()) {
+                     dc.DrawText(button.label, textX, currentY);
                 }
             }
-                break;
-            case ButtonDisplayStyle::ICON_TEXT_BESIDE:
-            default:
-            {
-                int currentX = buttonRect.GetLeft() + FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
-                if (button.icon.IsOk()) {
-                    int iconY = buttonRect.GetTop() + (buttonRect.GetHeight() - iconHeight) / 2; 
-                    dc.DrawBitmap(button.icon, currentX, iconY, true);
-                    currentX += iconWidth;
-                }
-                if (!button.label.empty()) {
-                    if (button.icon.IsOk()) { 
-                        currentX += FLATUI_BUTTONBAR_HORIZONTAL_PADDING;
-                    }
-                    dc.SetTextForeground(*wxBLACK); 
-                    int textY = buttonRect.GetTop() + (buttonRect.GetHeight() - textSize.GetHeight()) / 2;
-                    dc.DrawText(button.label, currentX, textY);
-                }
-            }
-                break;
         }
-        
-        // Draw Dropdown arrow if it's a dropdown button (common for all styles)
-        if (button.isDropDown) {
-            // Position arrow consistently at the right edge, vertically centered.
-            // The button.rect.GetRight() is the exclusive end, so subtract arrow width and padding.
-            int arrowWidth = 5; // Approximate width of the arrow glyph
-            int arrowHeight = 3; // Approximate height of the arrow glyph
-            int arrowX = button.rect.GetRight() - FLATUI_BUTTONBAR_HORIZONTAL_PADDING - arrowWidth;
-            int arrowY = buttonRect.GetTop() + (buttonRect.GetHeight() - arrowHeight) / 2;
-            wxPoint points[3];
-            points[0] = wxPoint(arrowX, arrowY);
-            points[1] = wxPoint(arrowX + arrowWidth, arrowY);
-            points[2] = wxPoint(arrowX + (arrowWidth / 2), arrowY + arrowHeight);
-            dc.SetBrush(*wxBLACK_BRUSH); 
-            dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.DrawPolygon(3, points);
+            break;
+        case ButtonDisplayStyle::ICON_TEXT_BESIDE:
+        default:
+        {
+            int currentX = buttonRect.GetLeft() + m_buttonHorizontalPadding;
+            if (button.icon.IsOk()) {
+                int iconY = buttonRect.GetTop() + (buttonRect.GetHeight() - iconHeight) / 2; 
+                dc.DrawBitmap(button.icon, currentX, iconY, true);
+                currentX += iconWidth;
+            }
+            if (!button.label.empty()) {
+                if (button.icon.IsOk()) { 
+                    currentX += m_buttonHorizontalPadding;
+                }
+                int textY = buttonRect.GetTop() + (buttonRect.GetHeight() - textSize.GetHeight()) / 2;
+                dc.DrawText(button.label, currentX, textY);
+            }
+        }
+            break;
+    }
+    
+    // Draw Dropdown arrow if it's a dropdown button (common for all styles)
+    if (button.isDropDown) {
+        // Position arrow consistently at the right edge, vertically centered.
+        // The button.rect.GetRight() is the exclusive end, so subtract arrow width and padding.
+        int arrowWidth = 5; // Approximate width of the arrow glyph
+        int arrowHeight = 3; // Approximate height of the arrow glyph
+        int arrowX = button.rect.GetRight() - m_buttonHorizontalPadding - arrowWidth;
+        int arrowY = buttonRect.GetTop() + (buttonRect.GetHeight() - arrowHeight) / 2;
+        wxPoint points[3];
+        points[0] = wxPoint(arrowX, arrowY);
+        points[1] = wxPoint(arrowX + arrowWidth, arrowY);
+        points[2] = wxPoint(arrowX + (arrowWidth / 2), arrowY + arrowHeight);
+        dc.SetBrush(wxBrush(m_buttonTextColour)); 
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.DrawPolygon(3, points);
+    }
+}
+
+void FlatUIButtonBar::DrawButtonBackground(wxDC& dc, const wxRect& rect, bool isHovered, bool isPressed)
+{
+    wxColour bgColour = m_buttonBgColour;
+    if (isPressed && m_hoverEffectsEnabled) {
+        bgColour = m_buttonPressedBgColour;
+    } else if (isHovered && m_hoverEffectsEnabled) {
+        bgColour = m_buttonHoverBgColour;
+    }
+    
+    dc.SetBrush(wxBrush(bgColour));
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    
+    if (m_buttonStyle == ButtonStyle::PILL || 
+        (m_buttonBorderStyle == ButtonBorderStyle::ROUNDED && m_buttonCornerRadius > 0)) {
+        // Draw rounded rectangle
+        dc.DrawRoundedRectangle(rect, m_buttonCornerRadius);
+    } else {
+        dc.DrawRectangle(rect);
+    }
+    
+    // Add shadow effect for RAISED style
+    if (m_buttonStyle == ButtonStyle::RAISED && !isPressed) {
+        wxColour shadowColour = bgColour.ChangeLightness(70);
+        dc.SetPen(wxPen(shadowColour, 1));
+        dc.DrawLine(rect.GetLeft() + 1, rect.GetBottom(), 
+                   rect.GetRight(), rect.GetBottom());
+        dc.DrawLine(rect.GetRight(), rect.GetTop() + 1, 
+                   rect.GetRight(), rect.GetBottom());
+    }
+}
+
+void FlatUIButtonBar::DrawButtonBorder(wxDC& dc, const wxRect& rect, bool isHovered, bool isPressed)
+{
+    wxColour borderColour = m_buttonBorderColour;
+    if (isHovered && m_hoverEffectsEnabled) {
+        borderColour = borderColour.ChangeLightness(80);
+    }
+    wxRect innerRect = rect;
+    switch (m_buttonBorderStyle) {
+        case ButtonBorderStyle::SOLID:
+            dc.SetPen(wxPen(borderColour, m_buttonBorderWidth));
+            break;
+        case ButtonBorderStyle::DASHED:
+            dc.SetPen(wxPen(borderColour, m_buttonBorderWidth, wxPENSTYLE_SHORT_DASH));
+            break;
+        case ButtonBorderStyle::DOTTED:
+            dc.SetPen(wxPen(borderColour, m_buttonBorderWidth, wxPENSTYLE_DOT));
+            break;
+        case ButtonBorderStyle::DOUBLE:
+        {
+            // Draw double border
+            dc.SetPen(wxPen(borderColour, 1));
+            dc.DrawRectangle(rect);
+            innerRect.Deflate(2);
+            dc.DrawRectangle(innerRect);
+            return;
+        }
+        case ButtonBorderStyle::ROUNDED:
+            dc.SetPen(wxPen(borderColour, m_buttonBorderWidth));
+            break;
+    }
+    
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    
+    if (m_buttonStyle == ButtonStyle::PILL || 
+        (m_buttonBorderStyle == ButtonBorderStyle::ROUNDED && m_buttonCornerRadius > 0)) {
+        dc.DrawRoundedRectangle(rect, m_buttonCornerRadius);
+    } else {
+        dc.DrawRectangle(rect);
+    }
+}
+
+void FlatUIButtonBar::OnMouseMove(wxMouseEvent& evt)
+{
+    if (!m_hoverEffectsEnabled) {
+        evt.Skip();
+        return;
+    }
+    
+    wxPoint pos = evt.GetPosition();
+    int oldHoveredIndex = m_hoveredButtonIndex;
+    m_hoveredButtonIndex = -1;
+    
+    for (size_t i = 0; i < m_buttons.size(); ++i) {
+        if (m_buttons[i].rect.Contains(pos)) {
+            m_hoveredButtonIndex = i;
+            break;
         }
     }
+    
+    if (oldHoveredIndex != m_hoveredButtonIndex) {
+        Refresh();
+    }
+    
+    evt.Skip();
+}
+
+void FlatUIButtonBar::OnMouseLeave(wxMouseEvent& evt)
+{
+    if (m_hoveredButtonIndex != -1) {
+        m_hoveredButtonIndex = -1;
+        Refresh();
+    }
+    evt.Skip();
 }
 
 void FlatUIButtonBar::OnMouseDown(wxMouseEvent& evt)
@@ -348,4 +498,113 @@ void FlatUIButtonBar::OnSize(wxSizeEvent& evt)
 {
     Refresh();
     evt.Skip();
+}
+
+// Style configuration method implementations
+void FlatUIButtonBar::SetButtonStyle(ButtonStyle style)
+{
+    if (m_buttonStyle != style) {
+        m_buttonStyle = style;
+        Refresh();
+    }
+}
+
+void FlatUIButtonBar::SetButtonBorderStyle(ButtonBorderStyle style)
+{
+    if (m_buttonBorderStyle != style) {
+        m_buttonBorderStyle = style;
+        Refresh();
+    }
+}
+
+void FlatUIButtonBar::SetButtonBackgroundColour(const wxColour& colour)
+{
+    m_buttonBgColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonHoverBackgroundColour(const wxColour& colour)
+{
+    m_buttonHoverBgColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonPressedBackgroundColour(const wxColour& colour)
+{
+    m_buttonPressedBgColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonTextColour(const wxColour& colour)
+{
+    m_buttonTextColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonBorderColour(const wxColour& colour)
+{
+    m_buttonBorderColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonBorderWidth(int width)
+{
+    m_buttonBorderWidth = width;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonCornerRadius(int radius)
+{
+    m_buttonCornerRadius = radius;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetButtonSpacing(int spacing)
+{
+    if (m_buttonSpacing != spacing) {
+        m_buttonSpacing = spacing;
+        RecalculateLayout();
+    }
+}
+
+void FlatUIButtonBar::SetButtonPadding(int horizontal, int vertical)
+{
+    if (m_buttonHorizontalPadding != horizontal || m_buttonVerticalPadding != vertical) {
+        m_buttonHorizontalPadding = horizontal;
+        m_buttonVerticalPadding = vertical;
+        RecalculateLayout();
+    }
+}
+
+void FlatUIButtonBar::GetButtonPadding(int& horizontal, int& vertical) const
+{
+    horizontal = m_buttonHorizontalPadding;
+    vertical = m_buttonVerticalPadding;
+}
+
+void FlatUIButtonBar::SetBarBackgroundColour(const wxColour& colour)
+{
+    m_barBgColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetBarBorderColour(const wxColour& colour)
+{
+    m_barBorderColour = colour;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetBarBorderWidth(int width)
+{
+    m_barBorderWidth = width;
+    Refresh();
+}
+
+void FlatUIButtonBar::SetHoverEffectsEnabled(bool enabled)
+{
+    if (m_hoverEffectsEnabled != enabled) {
+        m_hoverEffectsEnabled = enabled;
+        m_hoveredButtonIndex = -1;
+        Refresh();
+    }
 }

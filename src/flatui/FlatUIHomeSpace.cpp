@@ -105,37 +105,33 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
     {
         if (m_activeHomeMenu) { 
             if (m_activeHomeMenu->IsShown()) {
-                // m_activeHomeMenu->Close(true); // Close will call Hide and notify us
-                m_activeHomeMenu->Hide(); // Simply hide it, OnDismiss or Close will handle notification
+                m_activeHomeMenu->Hide(); 
                 m_hover = false; 
                 Refresh();
-                // evt.Skip(false); // Usually popups handle mouse events fully
                 return; 
             } else {
-                // wxWindow* topLevelParent = wxGetTopLevelParent(this);
-                // FlatFrame* flatFrame = dynamic_cast<FlatFrame*>(topLevelParent);
-                // We don't need flatFrame here anymore as menu size/height calculation might be simpler
-                // or done within ShowAt or based on BuildMenuLayout.
-
                 wxPoint menuPos = ClientToScreen(wxPoint(0, m_buttonRect.GetBottom()));
                 
-                // Determine contentHeight. This might need adjustment.
-                // For now, let's use a fixed height or a pre-calculated one.
-                // The height could also be determined by the menu itself after BuildMenuLayout.
-                int menuContentHeight = 300; // Example fixed height
-                // If FlatFrame is needed for height calc:
-                // FlatFrame* flatFrame = static_cast<FlatUIHomeMenu*>(m_activeHomeMenu)->GetEventSinkFrame(); // Assuming a getter
-                // if(flatFrame) { /* calc height */ }
+                int menuContentHeight = 300; // Default height
+                FlatFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
+                if (mainFrame) {
+                    int frameHeight = mainFrame->GetClientSize().GetHeight();
+                    menuContentHeight = frameHeight - 30;
+                    if (menuContentHeight < 50) { // Ensure a minimum height
+                        menuContentHeight = 50;
+                    }
+                } else {
+                    wxLogWarning("Could not get main frame to calculate menu height.");
+                }
                                 
                 m_activeHomeMenu->ShowAt(menuPos, menuContentHeight);
                 m_hover = false; 
                 Refresh();
-                // evt.Skip(false);
                 return;
             }
         }
     }
-    evt.Skip(); // If click was not on button, skip to allow other processing
+    evt.Skip(); 
 }
 
 void FlatUIHomeSpace::OnMouseMove(wxMouseEvent& evt)

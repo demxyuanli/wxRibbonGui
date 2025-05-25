@@ -11,6 +11,9 @@
 #include <numeric>           // For std::accumulate if calculating total tab width
 #include <wx/dcbuffer.h>     // For wxAutoBufferedPaintDC
 #include <wx/timer.h>        // For wxTimer instead of wxCallAfter
+#include <wx/graphics.h>     // For wxGraphicsContext
+#include <wx/dcmemory.h>     // For wxMemoryDC
+#include <wx/dcclient.h>     // For wxClientDC, wxPaintDC
 #include <logger/Logger.h>     // For wxGraphicsContext
 #include "flatui/FlatUIConstants.h" // Include for font constants
 
@@ -23,14 +26,30 @@ int FlatUIBar::GetBarHeight()
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
-    : wxControl(parent, id, pos, size, style | wxFULL_REPAINT_ON_RESIZE), 
-      m_activePage(0), // Initialize m_activePage first
-      m_homeSpace(nullptr),
+    : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
+      m_activePage(0), 
+      m_homeSpace(nullptr), 
       m_functionSpace(nullptr),
       m_profileSpace(nullptr),
       m_systemButtons(nullptr),
       m_tabFunctionSpacer(nullptr),
-      m_functionProfileSpacer(nullptr)
+      m_functionProfileSpacer(nullptr),
+      m_tabStyle(TabStyle::DEFAULT),
+      m_tabBorderStyle(TabBorderStyle::SOLID),
+      m_tabBorderTop(2),      // Default for DEFAULT style
+      m_tabBorderBottom(0),
+      m_tabBorderLeft(1),
+      m_tabBorderRight(1),
+      m_tabCornerRadius(5),   // Default corner radius
+      m_tabBorderColour(FLATUI_BAR_TAB_BORDER_COLOUR),
+      m_tabBorderTopColour(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR),
+      m_tabBorderBottomColour(FLATUI_BAR_TAB_BORDER_COLOUR),
+      m_tabBorderLeftColour(FLATUI_BAR_TAB_BORDER_COLOUR),
+      m_tabBorderRightColour(FLATUI_BAR_TAB_BORDER_COLOUR),
+      m_activeTabBgColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR),
+      m_activeTabTextColour(FLATUI_BAR_ACTIVE_TEXT_COLOUR),
+      m_inactiveTabTextColour(FLATUI_BAR_INACTIVE_TEXT_COLOUR),
+      m_barTopMargin(5)  // Default top margin of 5 pixels
 {
     SetFont(GetFlatUIDefaultFont());
 
@@ -102,9 +121,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
                     
                     wxSize barClientSize = GetClientSize();
                     int barStripHeight = GetBarHeight();
-                    currentPage->SetPosition(wxPoint(0, barStripHeight));
+                    currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
                     
-                    int pageHeight = barClientSize.GetHeight() - barStripHeight;
+                    int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
                     if (pageHeight < 0) {
                         pageHeight = 0;
                     }
@@ -132,7 +151,7 @@ FlatUIBar::~FlatUIBar()
 wxSize FlatUIBar::DoGetBestSize() const
 {
     wxSize bestSize(0, 0);
-    bestSize.SetHeight(GetBarHeight()); // Start with the height of the tab bar itself
+    bestSize.SetHeight(GetBarHeight() + m_barTopMargin); // Include top margin
 
     // Add the height of the active page, if any
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
@@ -156,9 +175,9 @@ wxSize FlatUIBar::DoGetBestSize() const
         }
     }
     
-    // Ensure minimum height is at least the bar height
-    if (bestSize.GetHeight() < GetBarHeight()) {
-        bestSize.SetHeight(GetBarHeight());
+    // Ensure minimum height is at least the bar height plus margin
+    if (bestSize.GetHeight() < (GetBarHeight() + m_barTopMargin)) {
+        bestSize.SetHeight(GetBarHeight() + m_barTopMargin);
     }
 
     return bestSize;
@@ -229,9 +248,9 @@ void FlatUIBar::SetActivePage(size_t index)
         // Set the page position and size
             wxSize barClientSize = GetClientSize();
             int barStripHeight = GetBarHeight();
-        currentPage->SetPosition(wxPoint(0, barStripHeight));
+        currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
             
-            int pageHeight = barClientSize.GetHeight() - barStripHeight;
+            int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
             if (pageHeight < 0) {
                 pageHeight = 0;
         }
@@ -311,7 +330,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     wxClientDC dc(this); 
     int currentX = FLATUI_BAR_BAR_PADDING;
     int barStripHeight = GetBarHeight();
-    int elementY = 0;
+    int elementY = m_barTopMargin;  // Use top margin instead of 0
 
     // 1. HomeSpace
     int homeActualWidth = 0; 
@@ -472,7 +491,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     
             availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
             
-            int tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
+            int tabsWidth = 0;
+            if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
+                tabsWidth = availableWidthForTabs; // It takes all available tab space
+            } else { // Multiple pages, or no pages needing width
+                tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
+            }
+            tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
             
             if (tabsWidth > 0) {
                 m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
@@ -556,7 +581,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         
         availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
         
-        int tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
+        int tabsWidth = 0;
+        if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
+            tabsWidth = availableWidthForTabs; // It takes all available tab space
+        } else { // Multiple pages, or no pages needing width
+            tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
+        }
+        tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
         
         if (tabsWidth > 0) {
             m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
@@ -616,9 +647,9 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     {
         FlatUIPage* currentPage = m_pages[m_activePage];
         
-        currentPage->SetPosition(wxPoint(0, barStripHeight));
+        currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
         
-        int pageHeight = barClientSz.GetHeight() - barStripHeight;
+        int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
         if (pageHeight < 0) {
             pageHeight = 0;
             LOG_DBG("Warning: Page height calculated as negative, adjusted to 0.", "FlatUIBar");
@@ -671,7 +702,7 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
 
 void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffsetInOut)
 {
-    int tabYPos = 0; 
+    int tabYPos = m_barTopMargin;  // Use top margin
     int barEffectiveHeight = GetBarHeight(); 
     int initialXOffset = currentXOffsetInOut;
 
@@ -694,31 +725,88 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
 
         if (i == m_activePage)
         {
-            dc.SetBrush(wxBrush(FLATUI_PRIMARY_CONTENT_BG_COLOUR)); 
-            dc.SetTextForeground(FLATUI_BAR_ACTIVE_TEXT_COLOUR); 
+            dc.SetBrush(wxBrush(m_activeTabBgColour)); 
+            dc.SetTextForeground(m_activeTabTextColour); 
             
-            // Fill background of active tab (excluding the 2px top border for now)
-            // We'll draw a slightly smaller rect for fill, then draw borders around it.
-            // Or, fill all then draw borders on top. Let's try fill all then specific borders.
-            dc.SetPen(*wxTRANSPARENT_PEN); // No pen for the main fill
-            dc.DrawRectangle(tabRect.x, tabRect.y + 2, tabRect.width, tabRect.height - 2); // Fill below top border
-
-            // Draw 2px top border
-            dc.SetPen(wxPen(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR, 2));
-            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + 1, 
-                        tabRect.GetRight() +1 , tabRect.GetTop() + 1); // +1 for right coord to cover full width
-
-            // Draw 1px left border
-            dc.SetPen(wxPen(FLATUI_BAR_TAB_BORDER_COLOUR, 1));
-            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + 2, 
-                        tabRect.GetLeft(), tabRect.GetBottom());
-
-            // Draw 1px right border
-            dc.SetPen(wxPen(FLATUI_BAR_TAB_BORDER_COLOUR, 1));
-            dc.DrawLine(tabRect.GetRight(), tabRect.GetTop() + 2, 
-                        tabRect.GetRight(), tabRect.GetBottom());
-            
-            // No bottom border to blend with page
+            // Draw tab based on style
+            switch (m_tabStyle) {
+                case TabStyle::DEFAULT:
+                    // Fill background of active tab (excluding the top border)
+                    dc.SetPen(*wxTRANSPARENT_PEN);
+                    dc.DrawRectangle(tabRect.x, tabRect.y + m_tabBorderTop, tabRect.width, tabRect.height - m_tabBorderTop);
+                    
+                    // Draw borders based on border style
+                    if (m_tabBorderStyle == TabBorderStyle::SOLID) {
+                        // Use simple line drawing for solid borders
+                        if (m_tabBorderTop > 0) {
+                            dc.SetPen(wxPen(m_tabBorderTopColour, m_tabBorderTop));
+                            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop/2, 
+                                       tabRect.GetRight() + 1, tabRect.GetTop() + m_tabBorderTop/2);
+                        }
+                        if (m_tabBorderLeft > 0) {
+                            dc.SetPen(wxPen(m_tabBorderLeftColour, m_tabBorderLeft));
+                            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop, 
+                                       tabRect.GetLeft(), tabRect.GetBottom());
+                        }
+                        if (m_tabBorderRight > 0) {
+                            dc.SetPen(wxPen(m_tabBorderRightColour, m_tabBorderRight));
+                            dc.DrawLine(tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop, 
+                                       tabRect.GetRight(), tabRect.GetBottom());
+                        }
+                    } else {
+                        // Use DrawTabBorder for other border styles
+                        DrawTabBorder(dc, tabRect, true);
+                    }
+                    break;
+                    
+                case TabStyle::UNDERLINE:
+                    // No background fill for underline style
+                    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                    dc.SetPen(*wxTRANSPARENT_PEN);
+                    
+                    // Draw bottom border only
+                    if (m_tabBorderBottom > 0) {
+                        dc.SetPen(wxPen(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR, m_tabBorderBottom));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom() - m_tabBorderBottom/2, 
+                                   tabRect.GetRight() + 1, tabRect.GetBottom() - m_tabBorderBottom/2);
+                    }
+                    break;
+                    
+                case TabStyle::BUTTON:
+                    // Fill background
+                    dc.SetPen(*wxTRANSPARENT_PEN);
+                    dc.DrawRectangle(tabRect);
+                    
+                    // Draw all borders
+                    dc.SetPen(wxPen(m_tabBorderColour, 1));
+                    if (m_tabBorderTop > 0) {
+                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderTop));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(), 
+                                   tabRect.GetRight() + 1, tabRect.GetTop());
+                    }
+                    if (m_tabBorderBottom > 0) {
+                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderBottom));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom(), 
+                                   tabRect.GetRight() + 1, tabRect.GetBottom());
+                    }
+                    if (m_tabBorderLeft > 0) {
+                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderLeft));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(), 
+                                   tabRect.GetLeft(), tabRect.GetBottom() + 1);
+                    }
+                    if (m_tabBorderRight > 0) {
+                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderRight));
+                        dc.DrawLine(tabRect.GetRight(), tabRect.GetTop(), 
+                                   tabRect.GetRight(), tabRect.GetBottom() + 1);
+                    }
+                    break;
+                    
+                case TabStyle::FLAT:
+                    // No background, no borders, only text color changes
+                    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                    dc.SetPen(*wxTRANSPARENT_PEN);
+                    break;
+            }
         }
         else // Inactive Tab
         {
@@ -726,10 +814,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
             // No border
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
             dc.SetPen(*wxTRANSPARENT_PEN);
-            // We still need to draw something if we want the bar background to show, 
-            // or just rely on text drawing.
-            // dc.DrawRectangle(tabRect); // This would draw with transparent pen/brush over bar bg
-            dc.SetTextForeground(FLATUI_BAR_INACTIVE_TEXT_COLOUR); 
+            dc.SetTextForeground(m_inactiveTabTextColour); 
         }
         
         dc.DrawText(label, currentXOffsetInOut + FLATUI_BAR_TAB_PADDING, tabYPos + (barEffectiveHeight - labelSize.GetHeight()) / 2); 
@@ -897,4 +982,355 @@ void FlatUIBar::SetFunctionProfileSpacerAutoExpand(bool autoExpand)
             Refresh();
         }
     }
+}
+
+void FlatUIBar::AddSpaceSeparator(SpacerLocation location, int width, bool drawSeparator, bool canDrag, bool autoExpand)
+{
+    FlatUISpacerControl** targetSpacer = nullptr;
+    wxString logLocation;
+    
+    switch(location) {
+        case SPACER_TAB_FUNCTION:
+            targetSpacer = &m_tabFunctionSpacer;
+            logLocation = "TabFunction";
+            break;
+        case SPACER_FUNCTION_PROFILE:
+            targetSpacer = &m_functionProfileSpacer;
+            logLocation = "FunctionProfile";
+            break;
+        default:
+            LOG_ERR("FlatUIBar::AddSpaceSeparator - Invalid location specified", "FlatUIBar");
+            return;
+    }
+    
+    if (!*targetSpacer) {
+        *targetSpacer = new FlatUISpacerControl(this, width);
+        (*targetSpacer)->SetCanDragWindow(canDrag);
+        (*targetSpacer)->SetDoubleBuffered(true);
+    }
+    
+    if (width > 0) {
+        (*targetSpacer)->SetSpacerWidth(width);
+        (*targetSpacer)->SetDrawSeparator(drawSeparator);
+        (*targetSpacer)->SetShowDragFlag(canDrag);
+        (*targetSpacer)->SetAutoExpand(autoExpand);
+        (*targetSpacer)->Show();
+        LOG_INF("FlatUIBar: Show " + logLocation.ToStdString() + " Spacer, Width=" + std::to_string(width) + ", AutoExpand=" + (autoExpand ? "true" : "false"), "FlatUIBar");
+    } else {
+        (*targetSpacer)->Hide();
+        LOG_INF("FlatUIBar: Hidden " + logLocation.ToStdString() + " Spacer", "FlatUIBar");
+    }
+    
+    if (IsShown()) {
+        UpdateElementPositionsAndSizes(GetClientSize());
+        Refresh();
+    }
+}
+
+void FlatUIBar::SetTabStyle(TabStyle style)
+{
+    m_tabStyle = style;
+    
+    // Set default border widths based on style
+    switch (style) {
+        case TabStyle::DEFAULT:
+            m_tabBorderTop = 2;
+            m_tabBorderBottom = 0;
+            m_tabBorderLeft = 1;
+            m_tabBorderRight = 1;
+            break;
+        case TabStyle::UNDERLINE:
+            m_tabBorderTop = 0;
+            m_tabBorderBottom = 2;
+            m_tabBorderLeft = 0;
+            m_tabBorderRight = 0;
+            break;
+        case TabStyle::BUTTON:
+            m_tabBorderTop = 1;
+            m_tabBorderBottom = 1;
+            m_tabBorderLeft = 1;
+            m_tabBorderRight = 1;
+            break;
+        case TabStyle::FLAT:
+            m_tabBorderTop = 0;
+            m_tabBorderBottom = 0;
+            m_tabBorderLeft = 0;
+            m_tabBorderRight = 0;
+            break;
+    }
+    
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderWidths(int top, int bottom, int left, int right)
+{
+    m_tabBorderTop = top;
+    m_tabBorderBottom = bottom;
+    m_tabBorderLeft = left;
+    m_tabBorderRight = right;
+    Refresh();
+}
+
+void FlatUIBar::GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const
+{
+    top = m_tabBorderTop;
+    bottom = m_tabBorderBottom;
+    left = m_tabBorderLeft;
+    right = m_tabBorderRight;
+}
+
+void FlatUIBar::SetTabBorderColour(const wxColour& colour)
+{
+    m_tabBorderColour = colour;
+    // Also update individual border colors for backward compatibility
+    m_tabBorderTopColour = colour;
+    m_tabBorderBottomColour = colour;
+    m_tabBorderLeftColour = colour;
+    m_tabBorderRightColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetActiveTabBackgroundColour(const wxColour& colour)
+{
+    m_activeTabBgColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetActiveTabTextColour(const wxColour& colour)
+{
+    m_activeTabTextColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetInactiveTabTextColour(const wxColour& colour)
+{
+    m_inactiveTabTextColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderStyle(TabBorderStyle style)
+{
+    m_tabBorderStyle = style;
+    Refresh();
+}
+
+void FlatUIBar::SetTabCornerRadius(int radius)
+{
+    m_tabCornerRadius = radius;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderTopColour(const wxColour& colour)
+{
+    m_tabBorderTopColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderBottomColour(const wxColour& colour)
+{
+    m_tabBorderBottomColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderLeftColour(const wxColour& colour)
+{
+    m_tabBorderLeftColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderRightColour(const wxColour& colour)
+{
+    m_tabBorderRightColour = colour;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderTopWidth(int width)
+{
+    m_tabBorderTop = width;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderBottomWidth(int width)
+{
+    m_tabBorderBottom = width;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderLeftWidth(int width)
+{
+    m_tabBorderLeft = width;
+    Refresh();
+}
+
+void FlatUIBar::SetTabBorderRightWidth(int width)
+{
+    m_tabBorderRight = width;
+    Refresh();
+}
+
+void FlatUIBar::SetBarTopMargin(int margin)
+{
+    m_barTopMargin = margin;
+    if (IsShown()) {
+        UpdateElementPositionsAndSizes(GetClientSize());
+        Refresh();
+    }
+}
+
+void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)
+{
+    // For SOLID style, it's handled in PaintTabs directly
+    if (m_tabBorderStyle == TabBorderStyle::SOLID) {
+        return;
+    }
+    
+    // Try to get the actual DC type and create appropriate graphics context
+    wxGraphicsContext* gc = nullptr;
+    
+    if (wxPaintDC* paintDC = dynamic_cast<wxPaintDC*>(&dc)) {
+        gc = wxGraphicsContext::Create(*paintDC);
+    } else if (wxClientDC* clientDC = dynamic_cast<wxClientDC*>(&dc)) {
+        gc = wxGraphicsContext::Create(*clientDC);
+    } else if (wxMemoryDC* memDC = dynamic_cast<wxMemoryDC*>(&dc)) {
+        gc = wxGraphicsContext::Create(*memDC);
+    } else if (wxWindowDC* winDC = dynamic_cast<wxWindowDC*>(&dc)) {
+        gc = wxGraphicsContext::Create(*winDC);
+    } else if (wxAutoBufferedPaintDC* bufferedDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
+        // wxAutoBufferedPaintDC derives from wxMemoryDC or wxPaintDC
+        gc = wxGraphicsContext::Create(*bufferedDC);
+    } else {
+        // If we can't determine the DC type, try creating from the window
+        wxWindow* win = dc.GetWindow();
+        if (win) {
+            gc = wxGraphicsContext::Create(win);
+        }
+    }
+    
+    if (!gc) return;
+    
+    // Use individual border colors
+    wxColour topColour = isActive ? m_tabBorderTopColour : m_tabBorderColour;
+    wxColour bottomColour = m_tabBorderBottomColour;
+    wxColour leftColour = m_tabBorderLeftColour;
+    wxColour rightColour = m_tabBorderRightColour;
+    
+    switch (m_tabBorderStyle) {
+        case TabBorderStyle::DASHED:
+            {
+                if (m_tabBorderTop > 0) {
+                    wxPen dashedPen(topColour, m_tabBorderTop, wxPENSTYLE_SHORT_DASH);
+                    gc->SetPen(dashedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+                }
+                if (m_tabBorderBottom > 0) {
+                    wxPen dashedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_SHORT_DASH);
+                    gc->SetPen(dashedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+                if (m_tabBorderLeft > 0) {
+                    wxPen dashedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_SHORT_DASH);
+                    gc->SetPen(dashedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+                }
+                if (m_tabBorderRight > 0) {
+                    wxPen dashedPen(rightColour, m_tabBorderRight, wxPENSTYLE_SHORT_DASH);
+                    gc->SetPen(dashedPen);
+                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+            }
+            break;
+            
+        case TabBorderStyle::DOTTED:
+            {
+                if (m_tabBorderTop > 0) {
+                    wxPen dottedPen(topColour, m_tabBorderTop, wxPENSTYLE_DOT);
+                    gc->SetPen(dottedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+                }
+                if (m_tabBorderBottom > 0) {
+                    wxPen dottedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_DOT);
+                    gc->SetPen(dottedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+                if (m_tabBorderLeft > 0) {
+                    wxPen dottedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_DOT);
+                    gc->SetPen(dottedPen);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+                }
+                if (m_tabBorderRight > 0) {
+                    wxPen dottedPen(rightColour, m_tabBorderRight, wxPENSTYLE_DOT);
+                    gc->SetPen(dottedPen);
+                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+            }
+            break;
+            
+        case TabBorderStyle::DOUBLE:
+            {
+                int gap = 2; // Gap between double lines
+                if (m_tabBorderTop > 0) {
+                    gc->SetPen(wxPen(topColour, 1));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + gap, tabRect.GetRight(), tabRect.GetTop() + gap);
+                }
+                if (m_tabBorderBottom > 0) {
+                    gc->SetPen(wxPen(bottomColour, 1));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom() - gap, tabRect.GetRight(), tabRect.GetBottom() - gap);
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+                if (m_tabBorderLeft > 0) {
+                    gc->SetPen(wxPen(leftColour, 1));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+                    gc->StrokeLine(tabRect.GetLeft() + gap, tabRect.GetTop(), tabRect.GetLeft() + gap, tabRect.GetBottom());
+                }
+                if (m_tabBorderRight > 0) {
+                    gc->SetPen(wxPen(rightColour, 1));
+                    gc->StrokeLine(tabRect.GetRight() - gap, tabRect.GetTop(), tabRect.GetRight() - gap, tabRect.GetBottom());
+                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+                }
+            }
+            break;
+            
+        case TabBorderStyle::GROOVE:
+        case TabBorderStyle::RIDGE:
+            {
+                // For groove/ridge effect, use two colors
+                wxColour lightColour = topColour.ChangeLightness(150);
+                wxColour darkColour = topColour.ChangeLightness(50);
+                
+                if (m_tabBorderStyle == TabBorderStyle::RIDGE) {
+                    // Swap colors for ridge effect
+                    wxColour temp = lightColour;
+                    lightColour = darkColour;
+                    darkColour = temp;
+                }
+                
+                if (m_tabBorderTop > 0 && isActive) {
+                    gc->SetPen(wxPen(darkColour, m_tabBorderTop/2));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+                    gc->SetPen(wxPen(lightColour, m_tabBorderTop/2));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop/2, tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop/2);
+                }
+                if (m_tabBorderLeft > 0) {
+                    gc->SetPen(wxPen(darkColour, m_tabBorderLeft/2));
+                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+                    gc->SetPen(wxPen(lightColour, m_tabBorderLeft/2));
+                    gc->StrokeLine(tabRect.GetLeft() + m_tabBorderLeft/2, tabRect.GetTop(), tabRect.GetLeft() + m_tabBorderLeft/2, tabRect.GetBottom());
+                }
+            }
+            break;
+            
+        case TabBorderStyle::ROUNDED:
+            {
+                gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+                gc->SetPen(wxPen(topColour, wxMax(wxMax(m_tabBorderTop, m_tabBorderBottom), 
+                                               wxMax(m_tabBorderLeft, m_tabBorderRight))));
+                wxGraphicsPath path = gc->CreatePath();
+                path.AddRoundedRectangle(tabRect.x, tabRect.y, tabRect.width, tabRect.height, m_tabCornerRadius);
+                gc->StrokePath(path);
+            }
+            break;
+    }
+    
+    delete gc;
 }

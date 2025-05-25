@@ -5,9 +5,11 @@
 #include <wx/stattext.h>
 #include <wx/bmpbuttn.h>
 #include <wx/sizer.h>
+#include <wx/settings.h>
 
 wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupWindow)
     EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
+    EVT_KILL_FOCUS(FlatUIHomeMenu::OnKillFocus)
 wxEND_EVENT_TABLE()
 
 FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatFrame* eventSinkFrame)
@@ -198,11 +200,23 @@ void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight)
 {
     SetPosition(pos);
     SetSize(wxSize(MENU_WIDTH, contentHeight));
-    wxPopupWindow::Show();
+    wxPopupWindow::Show(); // Using Show as Popup() caused issues
+    
+    // Try to set focus to the popup window itself.
+    // It's important that the window is visible and able to receive focus.
+    if (IsShownOnScreen()) { // Check if it's actually on screen
+        SetFocus(); // Equivalent to this->SetFocus()
+    } else {
+        // If not shown on screen immediately, SetFocus might fail.
+        // This could indicate a deeper issue or a need to defer SetFocus.
+        wxLogDebug(wxT("FlatUIHomeMenu::ShowAt - Window not shown on screen when trying to SetFocus."));
+    }
 }
 
 bool FlatUIHomeMenu::Close(bool force)
 {
+    if (!IsShown()) return false;
+
     Hide();
     wxWindow* parent = GetParent();
     if (parent) {
@@ -216,12 +230,36 @@ bool FlatUIHomeMenu::Close(bool force)
 
 void FlatUIHomeMenu::OnDismiss()
 {
-    Hide();
-    wxWindow* parent = GetParent();
-    if (parent) {
-        FlatUIHomeSpace* ownerHomeSpace = dynamic_cast<FlatUIHomeSpace*>(parent);
-        if (ownerHomeSpace) {
-            ownerHomeSpace->OnHomeMenuClosed(this);
+    if (IsShown()) {
+        Close(); 
+    }
+}
+
+void FlatUIHomeMenu::OnKillFocus(wxFocusEvent& event)
+{
+    // Get the window that is receiving focus
+    wxWindow* newFocus = event.GetWindow();
+
+    // Check if the new focus window is this popup itself or one of its children.
+    // If focus moves to a child of the popup, we don't want to close it.
+    bool focusStillInside = (newFocus == this);
+    if (!focusStillInside && newFocus) {
+        wxWindow* parent = newFocus->GetParent();
+        while(parent) {
+            if (parent == this) {
+                focusStillInside = true;
+                break;
+            }
+            parent = parent->GetParent();
         }
     }
+
+    if (!focusStillInside) {
+        wxLogDebug(wxT("FlatUIHomeMenu::OnKillFocus - Focus moved outside. Closing menu."));
+        Close(); // Use our existing Close method which also notifies HomeSpace
+    } else {
+        wxLogDebug(wxT("FlatUIHomeMenu::OnKillFocus - Focus moved to self or child."));
+    }
+    
+    event.Skip(); // Important to allow default processing too
 } 

@@ -12,6 +12,7 @@ bool MainApplication::OnInit()
     LOG_INF("Starting application", "MainApplication");
     
     FlatFrame* frame = new FlatFrame("FlatUI Demo", wxPoint(50, 50), wxSize(800, 600)); // Initial size hint
+
     LOG_DBG("Frame created with initial size: " + 
             std::to_string(frame->GetSize().GetWidth()) + "x" + 
             std::to_string(frame->GetSize().GetHeight()), "MainApplication");

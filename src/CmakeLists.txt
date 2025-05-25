@@ -1,4 +1,5 @@
 set(MAINAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/MainApplication.cpp
+    #${CMAKE_CURRENT_SOURCE_DIR}/MainFrame.cpp
     PARENT_SCOPE
 )
