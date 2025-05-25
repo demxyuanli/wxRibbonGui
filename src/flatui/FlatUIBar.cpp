@@ -38,9 +38,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
       m_tabBorderStyle(TabBorderStyle::SOLID),
       m_tabBorderTop(2),      // Default for DEFAULT style
       m_tabBorderBottom(0),
-      m_tabBorderLeft(1),
-      m_tabBorderRight(1),
-      m_tabCornerRadius(5),   // Default corner radius
+      m_tabBorderLeft(0),
+      m_tabBorderRight(0),
+      m_tabCornerRadius(0),   // Default corner radius
       m_tabBorderColour(FLATUI_BAR_TAB_BORDER_COLOUR),
       m_tabBorderTopColour(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR),
       m_tabBorderBottomColour(FLATUI_BAR_TAB_BORDER_COLOUR),
@@ -49,7 +49,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
       m_activeTabBgColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR),
       m_activeTabTextColour(FLATUI_BAR_ACTIVE_TEXT_COLOUR),
       m_inactiveTabTextColour(FLATUI_BAR_INACTIVE_TEXT_COLOUR),
-      m_barTopMargin(5)  // Default top margin of 5 pixels
+      m_barTopMargin(2)  // Default top margin of 5 pixels
 {
     SetFont(GetFlatUIDefaultFont());
 
@@ -1036,8 +1036,8 @@ void FlatUIBar::SetTabStyle(TabStyle style)
         case TabStyle::DEFAULT:
             m_tabBorderTop = 2;
             m_tabBorderBottom = 0;
-            m_tabBorderLeft = 1;
-            m_tabBorderRight = 1;
+            m_tabBorderLeft = 0;
+            m_tabBorderRight = 01;
             break;
         case TabStyle::UNDERLINE:
             m_tabBorderTop = 0;
@@ -1052,7 +1052,7 @@ void FlatUIBar::SetTabStyle(TabStyle style)
             m_tabBorderRight = 1;
             break;
         case TabStyle::FLAT:
-            m_tabBorderTop = 0;
+            m_tabBorderTop = 1;
             m_tabBorderBottom = 0;
             m_tabBorderLeft = 0;
             m_tabBorderRight = 0;

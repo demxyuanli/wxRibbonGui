@@ -1,5 +1,5 @@
 #include "flatui/FlatUISystemButtons.h"
-#include "flatui/FlatFrame.h"
+#include "flatui/FlatUIFrame.h"
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 
 FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
@@ -151,7 +151,7 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     xPos -= currentButtonWidth;
     m_minimizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
 
-    FlatFrame* topFrame = wxDynamicCast(GetTopLevelFrame(), FlatFrame);
+    FlatUIFrame* topFrame = wxDynamicCast(GetTopLevelFrame(), FlatUIFrame);
     bool isEffectivelyMaximized = topFrame ? topFrame->IsPseudoMaximized() : false;
 
     PaintButton(dc, m_minimizeButtonRect, "_", m_minimizeButtonHover);
@@ -168,7 +168,7 @@ void FlatUISystemButtons::OnMouseDown(wxMouseEvent& evt)
 
 void FlatUISystemButtons::HandleSystemButtonAction(const wxPoint& pos, wxMouseEvent& evt) 
 {
-    FlatFrame* frame = wxDynamicCast(GetTopLevelFrame(), FlatFrame); // Cast to FlatFrame
+    FlatUIFrame* frame = wxDynamicCast(GetTopLevelFrame(), FlatUIFrame); // Cast to FlatFrame
     if (!frame) { evt.Skip(); return; }
 
     bool handled = false;
@@ -217,6 +217,7 @@ void FlatUISystemButtons::OnMouseMove(wxMouseEvent& evt)
 
     if (needsRefresh) {
         Refresh();
+        Update(); 
     }
     evt.Skip(); 
 }
@@ -230,6 +231,7 @@ void FlatUISystemButtons::OnMouseLeave(wxMouseEvent& evt)
 
     if (needsRefresh) {
         Refresh();
+        Update();
     }
     evt.Skip();
 } 

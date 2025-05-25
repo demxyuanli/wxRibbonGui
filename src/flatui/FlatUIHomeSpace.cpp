@@ -3,7 +3,7 @@
 #include <wx/settings.h> // For system colours
 #include "flatui/FlatUIConstants.h" // Include for color constants
 #include "flatui/FlatUIHomeMenu.h" // For the custom menu
-#include "flatui/FlatFrame.h"       // To get parent FlatFrame and content height
+#include "flatui/FlatUIFrame.h"       // To get parent FlatFrame and content height
 #include "flatui/FlatUIBar.h"         // To get FlatUIBar height
 
 // Known menu item IDs from FlatFrame (or define them in a shared constants header)
@@ -113,10 +113,10 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
                 wxPoint menuPos = ClientToScreen(wxPoint(0, m_buttonRect.GetBottom()));
                 
                 int menuContentHeight = 300; // Default height
-                FlatFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
+                FlatUIFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
                 if (mainFrame) {
                     int frameHeight = mainFrame->GetClientSize().GetHeight();
-                    menuContentHeight = frameHeight - 30;
+                    menuContentHeight = frameHeight - 39;
                     if (menuContentHeight < 50) { // Ensure a minimum height
                         menuContentHeight = 50;
                     }

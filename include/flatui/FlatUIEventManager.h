@@ -4,7 +4,7 @@
 #include <wx/wx.h>
 #include <functional> 
 
-class FlatFrame;
+class FlatUIFrame;
 class FlatUIBar;
 class FlatUIPage;
 class FlatUIPanel;
@@ -20,7 +20,7 @@ class FlatUIEventManager
 public:
     static FlatUIEventManager& getInstance();
     
-    void bindFrameEvents(FlatFrame* frame);
+    void bindFrameEvents(FlatUIFrame* frame);
     void bindBarEvents(FlatUIBar* bar);
     void bindPageEvents(FlatUIPage* page);
     void bindPanelEvents(FlatUIPanel* panel);

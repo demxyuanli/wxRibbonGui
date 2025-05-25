@@ -1,5 +1,6 @@
 set(FLATUI_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/FlatFrame.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BorderlessFrameLogic.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIButtonBar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIGallery.cpp

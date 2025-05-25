@@ -16,7 +16,7 @@ enum {
 
 FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
     : wxControl(parent, wxID_ANY), m_label(label), m_orientation(orientation),
-    m_bgColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR),
+    m_bgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
     m_borderStyle(PanelBorderStyle::NONE),
     m_borderColour(FLATUI_PANEL_BORDER_COLOUR),
     m_panelBorderTop(0),
@@ -525,7 +525,7 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
     }
 
     if (m_headerStyle != PanelHeaderStyle::NONE && !m_label.IsEmpty()) {
-        gc->SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL), m_headerTextColour);
+        gc->SetFont(GetFlatUIDefaultFont(), m_headerTextColour);
         wxDouble textWidth, textHeight;
         gc->GetTextExtent(m_label, &textWidth, &textHeight);
 

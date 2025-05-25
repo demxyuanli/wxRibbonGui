@@ -1,5 +1,5 @@
 set(MAINAPPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/MainApplication.cpp
-    #${CMAKE_CURRENT_SOURCE_DIR}/MainFrame.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatFrame.cpp
     PARENT_SCOPE
 )

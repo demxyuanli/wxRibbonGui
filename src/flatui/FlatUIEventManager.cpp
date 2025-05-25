@@ -1,5 +1,5 @@
 #include "flatui/FlatUIEventManager.h"
-#include "flatui/FlatFrame.h"
+#include "flatui/FlatUIFrame.h"
 #include "flatui/FlatUIBar.h"
 #include "flatui/FlatUIPage.h"
 #include "flatui/FlatUIPanel.h"
@@ -16,13 +16,13 @@ FlatUIEventManager& FlatUIEventManager::getInstance()
     return instance;
 }
 
-void FlatUIEventManager::bindFrameEvents(FlatFrame* frame)
+void FlatUIEventManager::bindFrameEvents(FlatUIFrame* frame)
 {
     if (!frame) return;
     
-    frame->Bind(wxEVT_LEFT_DOWN, &FlatFrame::OnLeftDown, frame);
-    frame->Bind(wxEVT_LEFT_UP, &FlatFrame::OnLeftUp, frame);
-    frame->Bind(wxEVT_MOTION, &FlatFrame::OnMotion, frame);
+    frame->Bind(wxEVT_LEFT_DOWN, &FlatUIFrame::OnLeftDown, frame);
+    frame->Bind(wxEVT_LEFT_UP, &FlatUIFrame::OnLeftUp, frame);
+    frame->Bind(wxEVT_MOTION, &FlatUIFrame::OnMotion, frame);
     
 }
 

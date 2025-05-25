@@ -6,7 +6,7 @@
 
 // Global default background color (light gray)
 // This will now be the primary content background for active tabs, panels, etc.
-const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(230, 230, 230); // Deeper light gray
+const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(240, 240, 2430); // Deeper light gray
 static const wxColour FLATUI_DEFAULT_BG_COLOUR(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
 
 // Global default border color (gray)
@@ -23,7 +23,7 @@ const int FLATUI_DEFAULT_FONT_SIZE = 6;
 const wxFontFamily FLATUI_DEFAULT_FONT_FAMILY = wxFONTFAMILY_SWISS;
 const wxFontStyle FLATUI_DEFAULT_FONT_STYLE = wxFONTSTYLE_NORMAL;
 const wxFontWeight FLATUI_DEFAULT_FONT_WEIGHT = wxFONTWEIGHT_NORMAL;
-static const wxString FLATUI_DEFAULT_FONT_FACE_NAME = wxS("Arial");
+static const wxString FLATUI_DEFAULT_FONT_FACE_NAME = wxS("Consolas");
 
 // Helper to get the default font
 static wxFont GetFlatUIDefaultFont()
@@ -33,8 +33,10 @@ static wxFont GetFlatUIDefaultFont()
 }
 
 // --- FlatUIBar Specific Colors ---
-const wxColour FLATUI_BAR_BACKGROUND_COLOUR(220, 225, 230); // Bar strip background
-// const wxColour FLATUI_BAR_ACTIVE_TAB_COLOUR(245, 245, 245); // Replaced by FLATUI_PRIMARY_CONTENT_BG_COLOUR
+const wxColour FLATUI_BAR_BACKGROUND_COLOUR(220, 220, 220); // Bar strip background
+const wxColour FLATUI_ACT_BAR_BACKGROUND_COLOUR(*wxWHITE); // Bar strip background
+// const wxColour FLATUI_BAR_ACTIVE_TAB_COLOUR(245, 245, 245); // Replaced by FLATU
+// I_PRIMARY_CONTENT_BG_COLOUR
 // const wxColour FLATUI_BAR_INACTIVE_TAB_COLOUR(205, 210, 215); // No longer used for fill
 const wxColour FLATUI_BAR_TAB_BORDER_COLOUR(170, 170, 170);     // For active tab left/right borders
 const wxColour FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR(180, 180, 180); // For active tab top border (2px)
@@ -51,9 +53,9 @@ const wxColour FLATUI_PANEL_HEADER_TEXT_COLOUR(*wxBLACK);
 
 // --- Sizes & Spacing ---
 // FlatUIBar
-const int FLATUI_BAR_RENDER_HEIGHT = 30; // Renamed from FLATUI_BAR_HEIGHT to avoid conflict with FlatUIBar::GetBarHeight() static method, used for rendering calculations.
+const int FLATUI_BAR_RENDER_HEIGHT = 26; // Renamed from FLATUI_BAR_HEIGHT to avoid conflict with FlatUIBar::GetBarHeight() static method, used for rendering calculations.
 const int FLATUI_BAR_TAB_PADDING = 10;
-const int FLATUI_BAR_TAB_SPACING = 1;
+const int FLATUI_BAR_TAB_SPACING = 0;
 const int FLATUI_BAR_ELEMENT_SPACING = 5;
 const int FLATUI_BAR_BAR_PADDING = 0; // Renamed from FLATUI_BAR_PADDING to avoid conflict with a potential variable
 

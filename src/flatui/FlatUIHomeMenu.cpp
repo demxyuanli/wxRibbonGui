@@ -1,25 +1,27 @@
 #include "flatui/FlatUIHomeMenu.h"
-#include "flatui/FlatFrame.h" // For m_parentFrame
+#include "flatui/FlatUIFrame.h" // For m_parentFrame
 #include "flatui/FlatUIConstants.h"
 #include "flatui/FlatUIHomeSpace.h" // Needed for dynamic_cast and OnHomeMenuClosed call
 #include <wx/stattext.h>
 #include <wx/bmpbuttn.h>
+#include <wx/artprov.h>
 #include <wx/sizer.h>
 #include <wx/settings.h>
 
-wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupWindow)
+wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupTransientWindow)
     EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
     EVT_KILL_FOCUS(FlatUIHomeMenu::OnKillFocus)
 wxEND_EVENT_TABLE()
 
-FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatFrame* eventSinkFrame)
-    : wxPopupWindow(parent, wxBORDER_NONE),
+FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame)
+    : wxPopupTransientWindow(parent, wxBORDER_NONE),
       m_eventSinkFrame(eventSinkFrame)
 {
     SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
 
     m_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     m_panel->SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+
     m_itemSizer = new wxBoxSizer(wxVERTICAL);
     m_panel->SetSizer(m_itemSizer);
 
@@ -165,17 +167,11 @@ void FlatUIHomeMenu::BuildMenuLayout()
 
 void FlatUIHomeMenu::OnPaint(wxPaintEvent& event)
 {
-    // This paint event is for m_panel now.
-    // Custom drawing of items would happen here if not using wxStaticText etc.
-    // For now, wxStaticText and wxStaticBitmap handle their own drawing.
     wxPaintDC dc(m_panel);
-    // If we wanted to draw items manually:
-    // int y_offset = 0;
-    // for (auto& itemInfo : m_menuItems) {
-    //    if (itemInfo.isSeparator) { /* draw separator */ y_offset += SEPARATOR_HEIGHT; }
-    //    else { /* draw item text/icon */ y_offset += ITEM_HEIGHT; }
-    //    itemInfo.rect = wxRect(0, y_offset - ITEM_HEIGHT, MENU_WIDTH, ITEM_HEIGHT); // Update rect for hit test
-    // }
+    int w, h;
+    m_panel->GetSize(&w, &h);
+    dc.SetPen(wxPen(FLATUI_BAR_TAB_BORDER_COLOUR, 1));
+    dc.DrawLine(w - 1, 0, w - 1, h);
 }
 
 void FlatUIHomeMenu::OnMouseMotion(wxMouseEvent& event)

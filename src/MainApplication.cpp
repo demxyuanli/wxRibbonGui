@@ -3,7 +3,7 @@
 #include "config/ConfigManager.h"
 #include "config/LoggerConfig.h"
 #include "logger/Logger.h"
-#include "flatui/FlatFrame.h"
+#include "FlatFrame.h"
 
 bool MainApplication::OnInit()
 {

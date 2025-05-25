@@ -1,0 +1,400 @@
+#include "FlatFrame.h"
+#include "flatui/FlatUIPanel.h"
+#include "flatui/FlatUIPage.h"
+#include "flatui/FlatUIButtonBar.h"
+#include "flatui/FlatUIGallery.h"
+#include "flatui/FlatUIEventManager.h"
+#include "flatui/FlatUIHomeSpace.h"
+#include "flatui/FlatUIHomeMenu.h"
+#include "flatui/FlatUIFunctionSpace.h"
+#include "flatui/FlatUIProfileSpace.h"
+#include "flatui/FlatUISystemButtons.h"
+#include "flatui/FlatUICustomControl.h"
+#include "flatui/FlatUIConstants.h"
+#include "flatui/UIHierarchyDebugger.h"
+#include <wx/display.h>
+#include "logger/Logger.h"
+#include <wx/aui/aui.h>
+#include <wx/dcbuffer.h>
+#include <wx/splitter.h>
+#include <wx/sizer.h>
+#include <string>
+
+#ifdef __WXMSW__
+#include <windows.h>
+#endif
+
+// These are now defined in FlatFrame.h as enum members.
+
+// Event table for FlatFrame specific events
+wxBEGIN_EVENT_TABLE(FlatFrame, FlatUIFrame) // Changed base class in macro
+    // Keep FlatFrame specific event bindings here
+    // Mouse events (OnLeftDown, OnLeftUp, OnMotion) are handled by PlatUIFrame's table 
+    // unless explicitly overridden and bound here with a different handler.
+    // If FlatFrame::OnLeftDown (etc.) are meant to override, they are called virtually by PlatUIFrame's handler.
+    // If they are completely different handlers for FlatFrame only, then they would need new EVT_LEFT_DOWN(FlatFrame::SpecificHandler)
+wxEND_EVENT_TABLE()
+
+FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
+    : FlatUIFrame(NULL, wxID_ANY, title, pos, size, wxBORDER_NONE), // Call base class constructor
+      m_ribbon(nullptr),
+      m_messageOutput(nullptr),
+      m_searchCtrl(nullptr),
+      m_homeMenu(nullptr)
+{
+    // PlatUIFrame::InitFrameStyle() is called by base constructor.
+    // FlatFrame specific UI initialization
+    InitializeUI(size);
+
+    // Event bindings specific to FlatFrame controls
+    auto& eventManager = FlatUIEventManager::getInstance();
+    eventManager.bindFrameEvents(this); // General frame events (close, etc.)
+
+    // Button events (Open, Save, etc. are specific to FlatFrame's UI)
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_OPEN);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_SAVE);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_COPY);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_PASTE);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_FIND);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_SELECTALL);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_ABOUT);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnButtonClick, wxID_STOP);
+
+    // Events for search, profile, settings (specific to FlatFrame's UI)
+    eventManager.bindButtonEvent(this, &FlatFrame::OnSearchExecute, ID_SearchExecute);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnUserProfile, ID_UserProfile);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnSettings, wxID_PREFERENCES);
+
+    if (m_searchCtrl) {
+        m_searchCtrl->Bind(wxEVT_COMMAND_TEXT_ENTER, &FlatFrame::OnSearchTextEnter, this);
+    }
+
+    // Menu events (specific to FlatFrame's menu items)
+    eventManager.bindMenuEvent(this, &FlatFrame::OnMenuNewProject, ID_Menu_NewProject_MainFrame);
+    eventManager.bindMenuEvent(this, &FlatFrame::OnMenuOpenProject, ID_Menu_OpenProject_MainFrame);
+    eventManager.bindMenuEvent(this, &FlatFrame::OnShowUIHierarchy, ID_ShowUIHierarchy);
+    eventManager.bindMenuEvent(this, &FlatFrame::PrintUILayout, ID_Menu_PrintLayout_MainFrame);
+    eventManager.bindMenuEvent(this, &FlatFrame::OnMenuExit, wxID_EXIT);
+
+    // Startup timer (could be base, but often specific UI needs to be ready)
+    wxTimer* startupTimer = new wxTimer(this);
+    this->Bind(wxEVT_TIMER, &FlatFrame::OnStartupTimer, this);
+    startupTimer->StartOnce(100); // Reduced for faster startup if UI is complex
+}
+
+FlatFrame::~FlatFrame()
+{
+    // m_homeMenu is a child window, wxWidgets handles its deletion.
+    // Other child controls (m_ribbon, m_messageOutput, m_searchCtrl) are also managed by wxWidgets.
+}
+
+void FlatFrame::InitializeUI(const wxSize& size)
+{
+    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_APPWORKSPACE));
+
+    int barHeight = FlatUIBar::GetBarHeight();
+    m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 3));
+    wxFont defaultFont = GetFlatUIDefaultFont();
+    m_ribbon->SetDoubleBuffered(true);
+    m_ribbon->SetTabStyle(FlatUIBar::TabStyle::DEFAULT);
+    m_ribbon->SetTabBorderColour(wxColour(200, 200, 200));
+    m_ribbon->SetActiveTabBackgroundColour(wxColour(255, 255, 255));
+    m_ribbon->SetActiveTabTextColour(wxColour(50, 50, 50));
+    m_ribbon->SetInactiveTabTextColour(wxColour(100, 100, 100));
+    m_ribbon->SetTabBorderStyle(FlatUIBar::TabBorderStyle::SOLID);
+    m_ribbon->SetTabBorderWidths(2, 0, 0, 0);
+    m_ribbon->SetTabBorderTopColour(wxColour(0, 120, 215));
+    m_ribbon->SetTabCornerRadius(0);
+    m_ribbon->SetHomeButtonWidth(30);
+
+    FlatUIHomeSpace* homeSpace = m_ribbon->GetHomeSpace();
+    if (homeSpace) {
+        m_homeMenu = new FlatUIHomeMenu(homeSpace, this);
+        m_homeMenu->AddMenuItem("&New Project...\tCtrl-N", ID_Menu_NewProject_MainFrame);
+        m_homeMenu->AddSeparator();
+        m_homeMenu->AddMenuItem("Show UI &Hierarchy\tCtrl-H", ID_ShowUIHierarchy);
+        m_homeMenu->AddSeparator();
+        m_homeMenu->AddMenuItem("Print Frame All wxCtr", ID_Menu_PrintLayout_MainFrame);
+        m_homeMenu->BuildMenuLayout();
+        homeSpace->SetHomeMenu(m_homeMenu);
+    }
+    else {
+        wxLogError("FlatUIHomeSpace is not available to attach the menu.");
+    }
+
+    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 15, false, true, true);
+
+    wxPanel* searchPanel = new wxPanel(m_ribbon);
+    wxBoxSizer* searchSizer = new wxBoxSizer(wxHORIZONTAL);
+    m_searchCtrl = new wxSearchCtrl(searchPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(240, -1), wxTE_PROCESS_ENTER);
+    m_searchCtrl->SetFont(defaultFont);
+    m_searchCtrl->ShowSearchButton(true);
+    m_searchCtrl->ShowCancelButton(true);
+    wxBitmapButton* searchButton = new wxBitmapButton(searchPanel, ID_SearchExecute, wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON, wxSize(16, 16)));
+    searchSizer->Add(m_searchCtrl, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
+    searchSizer->Add(searchButton, 0, wxALIGN_CENTER_VERTICAL);
+    searchPanel->SetSizer(searchSizer);
+    searchPanel->SetFont(defaultFont);
+    m_ribbon->SetFunctionSpaceControl(searchPanel, 270);
+
+    wxPanel* profilePanel = new wxPanel(m_ribbon);
+    wxBoxSizer* profileSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxBitmapButton* userButton = new wxBitmapButton(profilePanel, ID_UserProfile, wxArtProvider::GetBitmap(wxART_NEW, wxART_BUTTON, wxSize(16, 16)));
+    userButton->SetToolTip("User Profile");
+    wxBitmapButton* settingsButton = new wxBitmapButton(profilePanel, wxID_PREFERENCES, wxArtProvider::GetBitmap(wxART_EXECUTABLE_FILE, wxART_BUTTON, wxSize(16, 16)));
+    settingsButton->SetToolTip("Settings");
+    profileSizer->Add(userButton, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+    profileSizer->Add(settingsButton, 0, wxALIGN_CENTER_VERTICAL);
+    profilePanel->SetSizer(profileSizer);
+    m_ribbon->SetProfileSpaceControl(profilePanel, 50);
+
+    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 15, false, true, true);
+    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_FUNCTION_PROFILE, 60, false, true, false);
+
+    FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
+    FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);
+    panel1->SetFont(FLATUI_DEFAULT_FONT_FACE_NAME);
+    panel1->SetPanelBorderWidths(0, 0, 0, 1);
+    panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
+    panel1->SetHeaderColour(*wxWHITE);
+    panel1->SetHeaderTextColour(wxColour(60, 60, 60));
+    panel1->SetHeaderBorderWidths(1, 0, 0, 0);
+    panel1->SetHeaderBorderColour(wxColour(120, 120, 120));
+    FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
+    buttonBar1->AddButton(wxID_OPEN, "Open", wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar1->AddButton(wxID_SAVE, "Save", wxArtProvider::GetBitmap(wxART_FILE_SAVE, wxART_BUTTON, wxSize(16, 16)));
+    wxMenu* fileMenu = new wxMenu;
+    fileMenu->Append(ID_Menu_NewProject_MainFrame, "&New Project...\tCtrl-N");
+    fileMenu->Append(ID_Menu_OpenProject_MainFrame, "&Open Project...\tCtrl-O");
+    wxMenu* recentFilesMenu = new wxMenu;    recentFilesMenu->Append(wxID_ANY, "File1.txt");
+    recentFilesMenu->Append(wxID_ANY, "File2.cpp");
+    fileMenu->AppendSubMenu(recentFilesMenu, "Recent &Files");
+    fileMenu->AppendSeparator();
+    buttonBar1->AddButton(wxID_ANY, "File Menu", wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_BUTTON, wxSize(16, 16)), fileMenu);
+    panel1->AddButtonBar(buttonBar1, 0, wxEXPAND | wxALL, 5);
+    FlatUIGallery* gallery1 = new FlatUIGallery(panel1);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    gallery1->AddItem(wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
+    panel1->AddGallery(gallery1, 0, wxEXPAND | wxALL, 5);
+    page1->AddPanel(panel1);
+
+    FlatUIPanel* panel2 = new FlatUIPanel(page1, "SecondPanel", wxHORIZONTAL);
+    panel2->SetFont(FLATUI_DEFAULT_FONT_FACE_NAME);
+    panel2->SetPanelBorderWidths(0, 0, 0, 1);
+    panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
+    panel2->SetHeaderColour(*wxWHITE);
+    panel2->SetHeaderTextColour(wxColour(60, 60, 60));
+    panel2->SetHeaderBorderWidths(1, 0, 0, 0);
+    panel2->SetHeaderBorderColour(wxColour(120, 120, 120));
+    FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
+    buttonBar2->AddButton(wxID_HELP, "Help", wxArtProvider::GetBitmap(wxART_HELP, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar2->AddButton(wxID_INFO, "Info", wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_BUTTON, wxSize(16, 16)));
+    panel2->AddButtonBar(buttonBar2, 0, wxEXPAND | wxALL, 5);
+    page1->AddPanel(panel2);
+    m_ribbon->AddPage(page1);
+
+    FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
+    FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
+    FlatUIButtonBar* buttonBar3 = new FlatUIButtonBar(panel3);
+    buttonBar3->AddButton(wxID_COPY, "Copy", wxArtProvider::GetBitmap(wxART_COPY, wxART_BUTTON, wxSize(16,16)));
+    buttonBar3->AddButton(wxID_PASTE, "Paste", wxArtProvider::GetBitmap(wxART_PASTE, wxART_BUTTON, wxSize(16,16)));
+    panel3->AddButtonBar(buttonBar3);
+    page3->AddPanel(panel3);
+    m_ribbon->AddPage(page3);
+
+    FlatUIPage* page4 = new FlatUIPage(m_ribbon, "View");
+    FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
+    panel4->SetFont(defaultFont);
+    FlatUIButtonBar* buttonBar4 = new FlatUIButtonBar(panel4);
+    buttonBar4->AddButton(wxID_FIND, "Find", wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar4->AddButton(wxID_SELECTALL, "SelectAll", wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_BUTTON, wxSize(16, 16)));
+    panel4->AddButtonBar(buttonBar4);
+    page4->AddPanel(panel4);
+    m_ribbon->AddPage(page4);
+
+    FlatUIPage* page5 = new FlatUIPage(m_ribbon, "Help");
+    FlatUIPanel* panel5 = new FlatUIPanel(page5, "HelpPanel", wxVERTICAL);
+    panel5->SetFont(defaultFont);
+    FlatUIButtonBar* buttonBar5 = new FlatUIButtonBar(panel5);
+    buttonBar5->AddButton(wxID_ABOUT, "About", wxArtProvider::GetBitmap(wxART_WX_LOGO, wxART_BUTTON, wxSize(16, 16)));
+    buttonBar5->AddButton(wxID_STOP, "Stop", wxArtProvider::GetBitmap(wxART_STOP, wxART_BUTTON, wxSize(16, 16)));
+    panel5->AddButtonBar(buttonBar5);
+    page5->AddPanel(panel5);
+    m_ribbon->AddPage(page5);
+
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    mainSizer->Add(m_ribbon, 0, wxEXPAND | wxALL, 2);
+
+    wxPanel* messagePanel = new wxPanel(this, wxID_ANY);
+    messagePanel->SetBackgroundColour(this->GetBackgroundColour());
+    wxBoxSizer* messagePanelSizer = new wxBoxSizer(wxVERTICAL);
+    m_messageOutput = new wxTextCtrl(messagePanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    messagePanelSizer->Add(m_messageOutput, 1, wxEXPAND);
+    messagePanel->SetSizer(messagePanelSizer);
+    mainSizer->Add(messagePanel, 1, wxEXPAND | wxALL, 5);
+
+    SetSizer(mainSizer);
+    SetClientSize(size); // Default size
+    Layout();
+
+    int ribbonMinHeight = FlatUIBar::GetBarHeight() + FLATUI_PANEL_TARGET_HEIGHT + 10;
+    m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
+    m_ribbon->InvalidateBestSize();
+    Layout();
+}
+
+// Override OnLeftDown to prevent dragging if home menu is shown
+void FlatFrame::OnLeftDown(wxMouseEvent& event)
+{
+    if (m_homeMenu && m_homeMenu->IsShown()) {
+        event.Skip(); // Allow menu to handle event, prevent frame dragging/resizing
+        return;
+    }
+    // Call base class implementation for actual dragging/resizing logic
+    FlatUIFrame::OnLeftDown(event);
+}
+
+// Override OnMotion to prevent cursor changes if home menu is shown
+void FlatFrame::OnMotion(wxMouseEvent& event)
+{
+    if (m_homeMenu && m_homeMenu->IsShown()) {
+        SetCursor(wxCursor(wxCURSOR_ARROW)); // Ensure default cursor
+        event.Skip();
+        return;
+    }
+    // Call base class implementation for cursor updates and rubber banding
+    FlatUIFrame::OnMotion(event);
+}
+
+// OnLeftUp can often use the base class implementation directly if no special conditions
+// void FlatFrame::OnLeftUp(wxMouseEvent& event) { PlatUIFrame::OnLeftUp(event); }
+
+void FlatFrame::OnButtonClick(wxCommandEvent& event)
+{
+    wxString message;
+    switch (event.GetId())
+    {
+    case wxID_OPEN: message = "Open Clicked"; break;
+    case wxID_SAVE: message = "Save Clicked"; break;
+    case wxID_COPY: message = "Copy Clicked"; break;
+    case wxID_PASTE: message = "Paste Clicked"; break;
+    case wxID_FIND: message = "Find Clicked"; break;
+    case wxID_SELECTALL: message = "SelectAll Clicked"; break;
+    case wxID_ABOUT: message = "About Clicked"; break;
+    case wxID_STOP: message = "Stop Clicked"; break;
+    default: message = "Unknown Clicked"; break;
+    }
+    if (m_messageOutput) m_messageOutput->AppendText(message + "\n");
+}
+
+void FlatFrame::OnMenuNewProject(wxCommandEvent& event)
+{
+    if (m_messageOutput) m_messageOutput->AppendText("File Menu: New Project clicked\n");
+}
+
+void FlatFrame::OnMenuOpenProject(wxCommandEvent& event)
+{
+    if (m_messageOutput) m_messageOutput->AppendText("File Menu: Open Project clicked\n");
+}
+
+void FlatFrame::OnMenuExit(wxCommandEvent& event)
+{
+    Close(true);
+}
+
+void FlatFrame::OnStartupTimer(wxTimerEvent& event)
+{
+    // Example: Forcing a refresh on the first page of the ribbon
+    if (m_ribbon) {
+        m_ribbon->Refresh();
+        if (m_ribbon->GetPageCount() > 0) {
+            FlatUIPage* page = m_ribbon->GetPage(0);
+            if (page) {
+                page->Show();
+                page->Layout();
+                page->Refresh();
+                wxLogDebug("Force refreshed first page: %s", page->GetLabel());
+            }
+        }
+    }
+    // Initial UI Hierarchy debug log (optional)
+    // UIHierarchyDebugger debugger;
+    // debugger.PrintUIHierarchy(this);
+}
+
+void FlatFrame::OnSearchExecute(wxCommandEvent& event)
+{
+    if (!m_searchCtrl || !m_messageOutput) return;
+    wxString searchText = m_searchCtrl->GetValue();
+    if (!searchText.IsEmpty())
+    {
+        m_messageOutput->AppendText("Do Searching: " + searchText + "\n");
+    }
+    else
+    {
+        m_messageOutput->AppendText("Input Search Keys\n");
+    }
+}
+
+void FlatFrame::OnSearchTextEnter(wxCommandEvent& event)
+{
+    OnSearchExecute(event); // Simply call the other handler
+}
+
+void FlatFrame::OnUserProfile(wxCommandEvent& event)
+{
+    if (m_messageOutput) m_messageOutput->AppendText("Open User Profile\n");
+}
+
+void FlatFrame::OnSettings(wxCommandEvent& event)
+{
+    if (m_messageOutput) m_messageOutput->AppendText("Open Settings\n");
+}
+
+void FlatFrame::OnShowUIHierarchy(wxCommandEvent& event)
+{
+    ShowUIHierarchy();
+}
+
+void FlatFrame::ShowUIHierarchy()
+{
+    if (!m_messageOutput) return;
+    m_messageOutput->Clear();
+    m_messageOutput->AppendText("UI Hierarchy Debug:\n");
+
+    UIHierarchyDebugger debugger;
+    debugger.SetLogTextCtrl(m_messageOutput); // Direct log to our text control
+    debugger.PrintUIHierarchy(this);          // Debug this FlatFrame instance
+}
+
+void FlatFrame::PrintUILayout(wxCommandEvent& event)
+{
+    if (!m_messageOutput) return;
+    m_messageOutput->Clear();
+    m_messageOutput->AppendText("UI Layout Details:\n\n");
+
+    wxLog* oldLog = wxLog::SetActiveTarget(new wxLogTextCtrl(m_messageOutput));
+    LogUILayout(this); // Call inherited LogUILayout, starting from this FlatFrame instance
+    wxLog::SetActiveTarget(oldLog);
+    // The new wxLogTextCtrl is managed by wxWidgets or should be deleted if oldLog was not nullptr.
+    // For safety, and since wxLog::SetActiveTarget returns the *previous* active target,
+    // we should delete the one we created if it's different from the one we restored.
+    if (oldLog != wxLog::GetActiveTarget()) { 
+        // If oldLog was nullptr, wxLog::GetActiveTarget() will be our new wxLogTextCtrl.
+        // If oldLog was something else, we restored it, so our new one is no longer active target.
+        // This logic seems a bit off. The wxLogTextCtrl we created is owned by wxLog system until SetActiveTarget(oldLog).
+        // After restoring oldLog, the created wxLogTextCtrl should be deleted if we new'd it.
+        // However, wxLog::SetActiveTarget can take ownership. Let's assume it does for now,
+        // but typically you delete the logger you `new` unless ownership is clearly transferred.
+        // A safer approach: delete oldLog if it was our wxLogTextCtrl instance, but it is the *previous* one.
+        // The `new wxLogTextCtrl(m_messageOutput)` instance should be deleted after SetActiveTarget(oldLog)
+        // if oldLog is not that same instance. But wxWidgets might handle it.
+        // For now, let's keep it simple. wxWidgets usually handles deletion of log targets set this way.
+    }
+}
+
+// PseudoMaximize, RestoreFromPseudoMaximize, DrawRubberBand, EraseRubberBand,
+// GetResizeModeForPosition, UpdateCursorForResizeMode are now in PlatUIFrame.
+// LogUILayout is also in PlatUIFrame and called directly.
+

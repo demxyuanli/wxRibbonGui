@@ -10,7 +10,7 @@
 #include <wx/settings.h> // For system colours and metrics
 
 // Forward declare the main frame if events are sent back
-class FlatFrame; 
+class FlatUIFrame;
 class FlatUIHomeSpace; // Forward declare for OnHomeMenuClosed in derived class if needed by base
 
 // Structure for menu items
@@ -25,11 +25,11 @@ struct FlatHomeMenuItemInfo {
         : id(itemId), text(txt), icon(bmp), isSeparator(sep) {}
 };
 
-class FlatUIHomeMenu : public wxPopupWindow 
+class FlatUIHomeMenu : public wxPopupTransientWindow
 {
 public:
     // Constructor now takes its wxWindow parent and the FlatFrame for event sinking
-    FlatUIHomeMenu(wxWindow* parent, FlatFrame* eventSinkFrame);
+    FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame);
     virtual ~FlatUIHomeMenu();
 
     void AddMenuItem(const wxString& text, int id, const wxBitmap& icon = wxNullBitmap);
@@ -40,7 +40,7 @@ public:
     void ShowAt(const wxPoint& pos, int contentHeight);
     virtual bool Close(bool force = true); // Keep for consistency, will mostly call Hide()
 
-    FlatFrame* GetEventSinkFrame() const { return m_eventSinkFrame; } // Getter for event sink frame
+    FlatUIFrame* GetEventSinkFrame() const { return m_eventSinkFrame; } // Getter for event sink frame
 
 protected:
     void OnPaint(wxPaintEvent& event);
@@ -51,7 +51,7 @@ protected:
     void OnMouseClickOutside(wxMouseEvent& event);
 
 private:
-    FlatFrame* m_eventSinkFrame; // To send events to (renamed from m_parentFrame for clarity)
+    FlatUIFrame* m_eventSinkFrame; // To send events to (renamed from m_parentFrame for clarity)
     // m_ownerWindow is no longer needed as GetParent() from wxPopupWindow gives the wx parent
     wxPanel* m_panel;         // Main panel for content
     wxBoxSizer* m_itemSizer;  // Sizer for menu items

@@ -12,7 +12,7 @@ FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     SetFont(GetFlatUIDefaultFont());
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(FLATUI_DEFAULT_BG_COLOUR);
+    SetBackgroundColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -44,8 +44,16 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
     wxAutoBufferedPaintDC dc(this);
     wxSize size = GetSize();
 
-    dc.SetBackground(FLATUI_DEFAULT_BG_COLOUR);
+    dc.SetBackground(m_backgroundColour);
+
     dc.Clear();
+
+    dc.SetPen(wxPen(*wxBLUE, 1));
+
+    dc.DrawLine(0, 0, size.GetWidth(), 0);
+
+    dc.DrawLine(0, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
+
 
     // Ribbon style: Page typically doesn't have its own prominent border distinct from the active tab
     // or panel borders within it. A very subtle bottom line might be okay.
