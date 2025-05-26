@@ -14,7 +14,7 @@ constexpr int ICON_TEXT_BELOW_SPACING = 1;        // Space between icon and text
 // constexpr int ICON_TEXT_BELOW_BOTTOM_MARGIN = 2; // Bottom margin below text (derived if total height is fixed)
 
 FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
-    : wxControl(parent, wxID_ANY),
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
       m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE), // Default display style
       m_buttonStyle(ButtonStyle::DEFAULT),
       m_buttonBorderStyle(ButtonBorderStyle::SOLID),
@@ -36,7 +36,7 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
 {
     SetFont(GetFlatUIDefaultFont());
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetMinSize(wxSize(FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN * 2, FLATUI_BUTTONBAR_TARGET_HEIGHT)); 
+    SetMinSize(wxSize(FLATUI_BUTTONBAR_TARGET_HEIGHT * 2, FLATUI_BUTTONBAR_TARGET_HEIGHT));
     Bind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUIButtonBar::OnMouseMove, this);
@@ -60,6 +60,7 @@ void FlatUIButtonBar::RecalculateLayout()
         int buttonWidth = 0;
         wxSize textSize = dc.GetTextExtent(button.label);
         int iconWidth = button.icon.IsOk() ? button.icon.GetWidth() : 0;
+        int iconHeight = button.icon.IsOk() ? button.icon.GetHeight() : 0;
 
         switch (m_displayStyle) {
             case ButtonDisplayStyle::ICON_ONLY:
@@ -103,6 +104,9 @@ void FlatUIButtonBar::RecalculateLayout()
                 }
                 buttonWidth += m_buttonHorizontalPadding; // Right padding
                 break;
+        }
+        if (button.isDropDown) {
+            buttonWidth += m_buttonHorizontalPadding + 6; // Extra space for dropdown arrow
         }
         if (buttonWidth == 0) buttonWidth = 2 * m_buttonHorizontalPadding; // Ensure a minimal clickable area
 
@@ -245,13 +249,6 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
     // Background of the bar itself
     dc.SetBackground(FLATUI_ACT_BAR_BACKGROUND_COLOUR);
     dc.Clear();
-
-    // Draw border for the bar
-    if (m_barBorderWidth > 0) {
-        dc.SetPen(wxPen(m_barBorderColour, m_barBorderWidth));
-        //dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawRectangle(0, 0, controlSize.GetWidth(), controlSize.GetHeight());
-    }
 
     if (m_buttons.empty() && IsShown()) { // Only draw placeholder if shown and empty
         dc.SetTextForeground(wxColour(120, 120, 120)); // Lighter grey for placeholder

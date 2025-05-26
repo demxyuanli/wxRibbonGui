@@ -55,6 +55,8 @@ const wxColour FLATUI_PANEL_HEADER_TEXT_COLOUR(*wxBLACK);
 
 // --- Sizes & Spacing ---
 // FlatUIBar
+const int FLATUI_BAR_TOP_MARGIN = 2;
+
 const int FLATUI_BAR_RENDER_HEIGHT = 26; // Renamed from FLATUI_BAR_HEIGHT to avoid conflict with FlatUIBar::GetBarHeight() static method, used for rendering calculations.
 const int FLATUI_BAR_TAB_PADDING = 10;
 const int FLATUI_BAR_TAB_SPACING = 0;
@@ -62,17 +64,16 @@ const int FLATUI_BAR_ELEMENT_SPACING = 5;
 const int FLATUI_BAR_BAR_PADDING = 0; // Renamed from FLATUI_BAR_PADDING to avoid conflict with a potential variable
 
 // FlatUIButtonBar
-const int FLATUI_BUTTONBAR_TARGET_HEIGHT = 30;
+const int FLATUI_BUTTONBAR_TARGET_HEIGHT = 24;
 const int FLATUI_BUTTONBAR_ICON_SIZE = 16;
-const int FLATUI_BUTTONBAR_HORIZONTAL_PADDING = 4;
+const int FLATUI_BUTTONBAR_HORIZONTAL_PADDING = 2;
 // Vertical padding calculated based on height and icon size, so not a direct constant here unless fixed.
 // const int FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING = (FLATUI_BUTTONBAR_TARGET_HEIGHT - FLATUI_BUTTONBAR_ICON_SIZE) / 2;
 const int FLATUI_BUTTONBAR_SPACING = 2;
 const int FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN = 2;
-const int FLATUI_BAR_TOP_MARGIN = 2;
 
 // FlatUIGallery
-const int FLATUI_GALLERY_TARGET_HEIGHT = 30;
+const int FLATUI_GALLERY_TARGET_HEIGHT = 24;
 const int FLATUI_GALLERY_ITEM_SPACING = 2;
 const int FLATUI_GALLERY_HORIZONTAL_MARGIN = 2;
 
@@ -85,8 +86,8 @@ const int FLATUI_PANEL_COLLAPSED_HEIGHT = 25; // Panels in collapsed state
 const int FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE = 20; // For TOP or LEFT headers
 
 // FlatUIButtonBar Style Defaults
-const int FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH = 1;
-const int FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS = 4;
+const int FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH = 0;
+const int FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS = 0;
 const wxColour FLATUI_BUTTONBAR_DEFAULT_BG_COLOUR(240, 240, 240);
 const wxColour FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR(230, 230, 230);
 const wxColour FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR(220, 220, 220);

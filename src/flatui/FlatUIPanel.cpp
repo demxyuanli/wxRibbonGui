@@ -15,14 +15,16 @@ enum {
 };
 
 FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
-    : wxControl(parent, wxID_ANY), m_label(label), m_orientation(orientation),
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
+    m_label(label),
+    m_orientation(orientation),
     m_bgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
     m_borderStyle(PanelBorderStyle::NONE),
     m_borderColour(FLATUI_PANEL_BORDER_COLOUR),
     m_panelBorderTop(0),
     m_panelBorderBottom(0),
     m_panelBorderLeft(0),
-    m_panelBorderRight(0),
+    m_panelBorderRight(1),
     m_headerStyle(PanelHeaderStyle::EMBEDDED),
     m_headerColour(FLATUI_PANEL_HEADER_COLOUR),
     m_headerTextColour(FLATUI_PANEL_HEADER_TEXT_COLOUR),

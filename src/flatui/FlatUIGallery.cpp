@@ -7,29 +7,29 @@
 #include <wx/graphics.h>
 
 FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
-    : wxControl(parent, wxID_ANY),
-      m_itemStyle(ItemStyle::DEFAULT),
-      m_itemBorderStyle(ItemBorderStyle::SOLID),
-      m_layoutStyle(LayoutStyle::HORIZONTAL),
-      m_itemBgColour(wxColour(250, 250, 250)),
-      m_itemHoverBgColour(wxColour(240, 240, 240)),
-      m_itemSelectedBgColour(wxColour(230, 230, 230)),
-      m_itemBorderColour(wxColour(200, 200, 200)),
-      m_galleryBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-      m_galleryBorderColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-      m_itemBorderWidth(0),
-      m_itemCornerRadius(0),
-      m_itemSpacing(FLATUI_GALLERY_ITEM_SPACING),
-      m_itemPadding(4),
-      m_galleryBorderWidth(0),
-      m_selectedItem(-1),
-      m_hoveredItem(-1),
-      m_hoverEffectsEnabled(true),
-      m_selectionEnabled(true)
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
+    m_itemStyle(ItemStyle::DEFAULT),
+    m_itemBorderStyle(ItemBorderStyle::SOLID),
+    m_layoutStyle(LayoutStyle::HORIZONTAL),
+    m_itemBgColour(wxColour(250, 250, 250)),
+    m_itemHoverBgColour(wxColour(240, 240, 240)),
+    m_itemSelectedBgColour(wxColour(230, 230, 230)),
+    m_itemBorderColour(wxColour(200, 200, 200)),
+    m_galleryBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
+    m_galleryBorderColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
+    m_itemBorderWidth(0),
+    m_itemCornerRadius(0),
+    m_itemSpacing(FLATUI_GALLERY_ITEM_SPACING),
+    m_itemPadding(2),
+    m_galleryBorderWidth(0),
+    m_selectedItem(-1),
+    m_hoveredItem(-1),
+    m_hoverEffectsEnabled(true),
+    m_selectionEnabled(true)
 {
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetMinSize(wxSize(100, 30));
+    SetMinSize(wxSize(FLATUI_GALLERY_TARGET_HEIGHT * 2, FLATUI_GALLERY_TARGET_HEIGHT));
     Bind(wxEVT_PAINT, &FlatUIGallery::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUIGallery::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUIGallery::OnMouseMove, this);
@@ -93,11 +93,12 @@ wxSize FlatUIGallery::DoGetBestSize() const
     }
     if (hasItems) {
         currentCalculatedWidth += FLATUI_GALLERY_HORIZONTAL_MARGIN; // Add right margin if there were items
-    } else {
-        currentCalculatedWidth = GetMinSize().GetWidth(); 
-        if (currentCalculatedWidth <= 0) currentCalculatedWidth = 100; 
     }
-    
+    else {
+        currentCalculatedWidth = GetMinSize().GetWidth();
+        if (currentCalculatedWidth <= 0) currentCalculatedWidth = 100;
+    }
+
     return wxSize(currentCalculatedWidth, FLATUI_GALLERY_TARGET_HEIGHT);
 }
 
@@ -148,16 +149,16 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
         if (item.bitmap.IsOk()) {
             int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding;
             int itemHeight = item.bitmap.GetHeight() + 2 * m_itemPadding;
-            
+
             // Calculate actual y position for this specific item
             int item_y = (size.GetHeight() - itemHeight) / 2;
-            
+
             // Update item rect for hit testing
             item.rect = wxRect(x, item_y, itemWidth, itemHeight);
-            
+
             // Draw item
             DrawItem(dc, item, i);
-            
+
             x += itemWidth + m_itemSpacing;
         }
     }
@@ -172,30 +173,30 @@ void FlatUIGallery::DrawItem(wxDC& dc, const ItemInfo& item, int index)
     wxRect itemRect = item.rect;
     bool isHovered = (m_hoverEffectsEnabled && index == m_hoveredItem);
     bool isSelected = (m_selectionEnabled && index == m_selectedItem);
-    
+
     // Draw item background
     if (m_itemStyle != ItemStyle::DEFAULT || isHovered || isSelected) {
         DrawItemBackground(dc, itemRect, isHovered, isSelected);
     }
-    
+
     // Draw item border
-    if (m_itemStyle == ItemStyle::BORDERED || 
+    if (m_itemStyle == ItemStyle::BORDERED ||
         m_itemStyle == ItemStyle::ROUNDED ||
         (m_itemStyle == ItemStyle::DEFAULT && (isHovered || isSelected))) {
         DrawItemBorder(dc, itemRect, isHovered, isSelected);
     }
-    
+
     // Draw shadow for SHADOWED style
     if (m_itemStyle == ItemStyle::SHADOWED) {
         wxColour shadowColour = m_galleryBgColour.ChangeLightness(85);
         dc.SetPen(wxPen(shadowColour, 1));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.DrawLine(itemRect.GetLeft() + 2, itemRect.GetBottom() + 1, 
-                   itemRect.GetRight() + 1, itemRect.GetBottom() + 1);
-        dc.DrawLine(itemRect.GetRight() + 1, itemRect.GetTop() + 2, 
-                   itemRect.GetRight() + 1, itemRect.GetBottom() + 1);
+        dc.DrawLine(itemRect.GetLeft() + 2, itemRect.GetBottom() + 1,
+            itemRect.GetRight() + 1, itemRect.GetBottom() + 1);
+        dc.DrawLine(itemRect.GetRight() + 1, itemRect.GetTop() + 2,
+            itemRect.GetRight() + 1, itemRect.GetBottom() + 1);
     }
-    
+
     // Draw the bitmap
     if (item.bitmap.IsOk()) {
         int bitmapX = itemRect.GetLeft() + m_itemPadding;
@@ -209,16 +210,18 @@ void FlatUIGallery::DrawItemBackground(wxDC& dc, const wxRect& rect, bool isHove
     wxColour bgColour = m_itemBgColour;
     if (isSelected) {
         bgColour = m_itemSelectedBgColour;
-    } else if (isHovered) {
+    }
+    else if (isHovered) {
         bgColour = m_itemHoverBgColour;
     }
-    
+
     dc.SetBrush(wxBrush(bgColour));
     dc.SetPen(*wxTRANSPARENT_PEN);
-    
+
     if (m_itemStyle == ItemStyle::ROUNDED || m_itemCornerRadius > 0) {
         dc.DrawRoundedRectangle(rect, m_itemCornerRadius);
-    } else {
+    }
+    else {
         dc.DrawRectangle(rect);
     }
 }
@@ -229,39 +232,40 @@ void FlatUIGallery::DrawItemBorder(wxDC& dc, const wxRect& rect, bool isHovered,
     if ((isHovered || isSelected) && m_hoverEffectsEnabled) {
         borderColour = borderColour.ChangeLightness(80);
     }
-    
+
     switch (m_itemBorderStyle) {
-        case ItemBorderStyle::SOLID:
-            dc.SetPen(wxPen(borderColour, m_itemBorderWidth));
-            break;
-        case ItemBorderStyle::DASHED:
-            dc.SetPen(wxPen(borderColour, m_itemBorderWidth, wxPENSTYLE_SHORT_DASH));
-            break;
-        case ItemBorderStyle::DOTTED:
-            dc.SetPen(wxPen(borderColour, m_itemBorderWidth, wxPENSTYLE_DOT));
-            break;
-        case ItemBorderStyle::DOUBLE:
-        {
-            // Draw double border
-            dc.SetPen(wxPen(borderColour, 1));
-            dc.DrawRectangle(rect);
-            wxRect innerRect = rect;
-            innerRect.Deflate(2);
-            dc.DrawRectangle(innerRect);
-            return;
-        }
-        case ItemBorderStyle::ROUNDED:
-            dc.SetPen(wxPen(borderColour, m_itemBorderWidth));
-            break;
+    case ItemBorderStyle::SOLID:
+        dc.SetPen(wxPen(borderColour, m_itemBorderWidth));
+        break;
+    case ItemBorderStyle::DASHED:
+        dc.SetPen(wxPen(borderColour, m_itemBorderWidth, wxPENSTYLE_SHORT_DASH));
+        break;
+    case ItemBorderStyle::DOTTED:
+        dc.SetPen(wxPen(borderColour, m_itemBorderWidth, wxPENSTYLE_DOT));
+        break;
+    case ItemBorderStyle::DOUBLE:
+    {
+        // Draw double border
+        dc.SetPen(wxPen(borderColour, 1));
+        dc.DrawRectangle(rect);
+        wxRect innerRect = rect;
+        innerRect.Deflate(2);
+        dc.DrawRectangle(innerRect);
+        return;
     }
-    
+    case ItemBorderStyle::ROUNDED:
+        dc.SetPen(wxPen(borderColour, m_itemBorderWidth));
+        break;
+    }
+
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    
-    if (m_itemStyle == ItemStyle::ROUNDED || 
-        m_itemBorderStyle == ItemBorderStyle::ROUNDED || 
+
+    if (m_itemStyle == ItemStyle::ROUNDED ||
+        m_itemBorderStyle == ItemBorderStyle::ROUNDED ||
         m_itemCornerRadius > 0) {
         dc.DrawRoundedRectangle(rect, m_itemCornerRadius);
-    } else {
+    }
+    else {
         dc.DrawRectangle(rect);
     }
 }
@@ -275,12 +279,12 @@ void FlatUIGallery::OnMouseDown(wxMouseEvent& evt)
     for (size_t i = 0; i < m_items.size(); ++i) {
         if (m_items[i].rect.Contains(pos)) {
             LOG_INF("Clicked on item with ID: " + std::to_string(m_items[i].id), "FlatUIGallery");
-            
+
             // Handle selection
             if (m_selectionEnabled) {
                 SetSelectedItem(i);
             }
-            
+
             // Send event
             wxCommandEvent event(wxEVT_BUTTON, m_items[i].id);
             event.SetEventObject(this);
@@ -297,22 +301,22 @@ void FlatUIGallery::OnMouseMove(wxMouseEvent& evt)
         evt.Skip();
         return;
     }
-    
+
     wxPoint pos = evt.GetPosition();
     int oldHoveredItem = m_hoveredItem;
     m_hoveredItem = -1;
-    
+
     for (size_t i = 0; i < m_items.size(); ++i) {
         if (m_items[i].rect.Contains(pos)) {
             m_hoveredItem = i;
             break;
         }
     }
-    
+
     if (oldHoveredItem != m_hoveredItem) {
         Refresh();
     }
-    
+
     evt.Skip();
 }
 
@@ -427,19 +431,19 @@ void FlatUIGallery::SetSelectedItem(int index)
     if (index < 0 || index >= static_cast<int>(m_items.size())) {
         index = -1;
     }
-    
+
     if (m_selectedItem != index) {
         // Clear old selection
         if (m_selectedItem >= 0 && m_selectedItem < static_cast<int>(m_items.size())) {
             m_items[m_selectedItem].selected = false;
         }
-        
+
         // Set new selection
         m_selectedItem = index;
         if (m_selectedItem >= 0) {
             m_items[m_selectedItem].selected = true;
         }
-        
+
         Refresh();
     }
 }

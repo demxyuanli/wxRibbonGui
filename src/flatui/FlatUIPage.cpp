@@ -7,7 +7,9 @@
 #include <wx/dcbuffer.h>
 
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
-    : wxControl(parent, wxID_ANY), m_label(label), m_isActive(false)
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
+    m_label(label),
+    m_isActive(false)
 {
     SetFont(GetFlatUIDefaultFont());
     SetDoubleBuffered(true);
