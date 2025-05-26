@@ -1,5 +1,6 @@
 #include "flatui/BorderlessFrameLogic.h"
 #include <wx/dcbuffer.h> // For wxScreenDC if used, and double buffering
+#include <wx/log.h> // For logging
 
 #ifdef __WXMSW__
 #include <windows.h> // For Windows specific GDI calls for rubber band
@@ -23,10 +24,20 @@ BorderlessFrameLogic::BorderlessFrameLogic(wxWindow* parent, wxWindowID id, cons
 {
     // Basic setup, often common for borderless windows
     SetDoubleBuffered(true);
+
+    // Register event filter
+    this->PushEventHandler(new BorderlessFrameLogicEventFilter(this));
+}
+
+void BorderlessFrameLogic::ResetCursorToDefault() {
+    SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
 BorderlessFrameLogic::~BorderlessFrameLogic()
 {
+    // Clean up event filter
+    wxEvtHandler* handler = this->PopEventHandler(true);
+    delete handler;
 }
 
 void BorderlessFrameLogic::OnLeftDown(wxMouseEvent& event)
@@ -221,7 +232,7 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
         }
         DrawRubberBand(newRect);
     }
-    else if (!event.LeftIsDown()) { // Only update cursor if mouse button is not down
+    else { // Only update cursor if mouse button is not down or if not dragging/resizing
         ResizeMode hoverMode = GetResizeModeForPosition(event.GetPosition());
         UpdateCursorForResizeMode(hoverMode);
     }
@@ -237,6 +248,7 @@ ResizeMode BorderlessFrameLogic::GetResizeModeForPosition(const wxPoint& clientP
     bool onRight = (x >= clientSize.GetWidth() - m_borderThreshold && x < clientSize.GetWidth());
     bool onTop = (y >= 0 && y < m_borderThreshold);
     bool onBottom = (y >= clientSize.GetHeight() - m_borderThreshold && y < clientSize.GetHeight());
+
 
     if (onTop && onLeft) return ResizeMode::TOP_LEFT;
     if (onBottom && onLeft) return ResizeMode::BOTTOM_LEFT;
@@ -314,7 +326,7 @@ void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
 {
     wxPaintDC dc(this);
     wxSize sz = GetClientSize();
-    dc.SetPen(wxPen(*wxRED, 1));
+    dc.SetPen(wxPen(FLATUI_PRIMARY_FRAME_BORDER_COLOUR, 1));
     dc.DrawLine(0, 0, sz.x, 0);           
     dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1); 
     dc.DrawLine(0, 0, 0, sz.y);           

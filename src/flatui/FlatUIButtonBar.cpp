@@ -18,13 +18,13 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
       m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE), // Default display style
       m_buttonStyle(ButtonStyle::DEFAULT),
       m_buttonBorderStyle(ButtonBorderStyle::SOLID),
-      m_buttonBgColour(FLATUI_BUTTONBAR_DEFAULT_BG_COLOUR),
+      m_buttonBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
       m_buttonHoverBgColour(FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR),
       m_buttonPressedBgColour(FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR),
       m_buttonTextColour(FLATUI_BUTTONBAR_DEFAULT_TEXT_COLOUR),
       m_buttonBorderColour(FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR),
-      m_barBgColour(FLATUI_BUTTONBAR_PANEL_BG_COLOUR),
-      m_barBorderColour(FLATUI_BUTTONBAR_PANEL_BORDER_COLOUR),
+      m_barBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
+      m_barBorderColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
       m_buttonBorderWidth(FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH),
       m_buttonCornerRadius(FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS),
       m_buttonSpacing(FLATUI_BUTTONBAR_SPACING),
@@ -243,13 +243,13 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
     wxSize controlSize = GetSize(); 
 
     // Background of the bar itself
-    dc.SetBackground(m_barBgColour);
+    dc.SetBackground(FLATUI_ACT_BAR_BACKGROUND_COLOUR);
     dc.Clear();
 
     // Draw border for the bar
     if (m_barBorderWidth > 0) {
         dc.SetPen(wxPen(m_barBorderColour, m_barBorderWidth));
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        //dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRectangle(0, 0, controlSize.GetWidth(), controlSize.GetHeight());
     }
 

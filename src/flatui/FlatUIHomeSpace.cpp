@@ -116,7 +116,7 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
                 FlatUIFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
                 if (mainFrame) {
                     int frameHeight = mainFrame->GetClientSize().GetHeight();
-                    menuContentHeight = frameHeight - 39;
+                    menuContentHeight = frameHeight - FLATUI_BUTTONBAR_TARGET_HEIGHT - FLATUI_BAR_TOP_MARGIN;
                     if (menuContentHeight < 50) { // Ensure a minimum height
                         menuContentHeight = 50;
                     }

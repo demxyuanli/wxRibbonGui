@@ -4,17 +4,19 @@
 #include <wx/wx.h>
 #include <wx/settings.h> // For wxSystemSettings
 
+const wxColour FLATUI_PRIMARY_FRAME_BORDER_COLOUR(*wxRED);
+
 // Global default background color (light gray)
 // This will now be the primary content background for active tabs, panels, etc.
-const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(240, 240, 2430); // Deeper light gray
-static const wxColour FLATUI_DEFAULT_BG_COLOUR(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(240, 240, 240); // Deeper light gray
+const wxColour FLATUI_DEFAULT_BG_COLOUR(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
 
 // Global default border color (gray)
-static const wxColour FLATUI_DEFAULT_BORDER_COLOUR(wxGREY_PEN->GetColour());
+const wxColour FLATUI_DEFAULT_BORDER_COLOUR(wxGREY_PEN->GetColour());
 
 // Default Colors
-static const wxColour FLATUI_DEFAULT_TEXT_COLOUR(*wxBLACK);
-static const wxColour FLATUI_HIGHLIGHT_COLOUR(0, 120, 215);      // Example highlight color (blueish)
+const wxColour FLATUI_DEFAULT_TEXT_COLOUR(*wxBLACK);
+const wxColour FLATUI_HIGHLIGHT_COLOUR(0, 120, 215);      // Example highlight color (blueish)
 
 // Default Font Settings
 // These constants are no longer directly used by GetFlatUIDefaultFont() if returning system default.
@@ -23,7 +25,7 @@ const int FLATUI_DEFAULT_FONT_SIZE = 6;
 const wxFontFamily FLATUI_DEFAULT_FONT_FAMILY = wxFONTFAMILY_SWISS;
 const wxFontStyle FLATUI_DEFAULT_FONT_STYLE = wxFONTSTYLE_NORMAL;
 const wxFontWeight FLATUI_DEFAULT_FONT_WEIGHT = wxFONTWEIGHT_NORMAL;
-static const wxString FLATUI_DEFAULT_FONT_FACE_NAME = wxS("Consolas");
+const wxString FLATUI_DEFAULT_FONT_FACE_NAME = wxS("Consolas");
 
 // Helper to get the default font
 static wxFont GetFlatUIDefaultFont()
@@ -67,6 +69,7 @@ const int FLATUI_BUTTONBAR_HORIZONTAL_PADDING = 4;
 // const int FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING = (FLATUI_BUTTONBAR_TARGET_HEIGHT - FLATUI_BUTTONBAR_ICON_SIZE) / 2;
 const int FLATUI_BUTTONBAR_SPACING = 2;
 const int FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN = 2;
+const int FLATUI_BAR_TOP_MARGIN = 2;
 
 // FlatUIGallery
 const int FLATUI_GALLERY_TARGET_HEIGHT = 30;

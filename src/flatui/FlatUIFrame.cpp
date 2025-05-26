@@ -54,8 +54,8 @@ void FlatUIFrame::OnMotion(wxMouseEvent& event)
 {
     // Check for conditions that should prevent cursor changes or rubber banding
     if (m_isPseudoMaximized) {
-        SetCursor(wxCursor(wxCURSOR_ARROW)); // Ensure default cursor if maximized
-        event.Skip();
+        // Still call base class to update cursor, but prevent actual resizing/dragging
+        BorderlessFrameLogic::OnMotion(event);
         return;
     }
 

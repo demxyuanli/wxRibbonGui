@@ -22,6 +22,8 @@ public:
     BorderlessFrameLogic(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style = wxBORDER_NONE);
     virtual ~BorderlessFrameLogic();
 
+    void ResetCursorToDefault();
+
 protected:
     // Core mouse event handlers for dragging and resizing
     virtual void OnLeftDown(wxMouseEvent& event);
@@ -53,6 +55,23 @@ protected:
 
 private:
     wxDECLARE_EVENT_TABLE();
+};
+
+class BorderlessFrameLogicEventFilter : public wxEvtHandler {
+public:
+    BorderlessFrameLogicEventFilter(BorderlessFrameLogic* frame) : m_frame(frame) {}
+
+    bool ProcessEvent(wxEvent& event) override {
+        if (event.GetEventType() == wxEVT_ENTER_WINDOW) {
+            m_frame->ResetCursorToDefault();
+        } else if (event.GetEventType() == wxEVT_LEAVE_WINDOW) {
+            m_frame->ResetCursorToDefault();
+        }
+        return wxEvtHandler::ProcessEvent(event);
+    }
+
+private:
+    BorderlessFrameLogic* m_frame;
 };
 
 #endif // BORDERLESSFRAMELOGIC_H 
