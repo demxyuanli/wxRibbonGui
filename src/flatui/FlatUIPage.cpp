@@ -52,9 +52,9 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
 
     dc.SetPen(wxPen(*wxBLUE, 1));
 
-    dc.DrawLine(0, 0, size.GetWidth(), 0);
+    dc.DrawLine(2, 0, size.GetWidth()-2, 0);
 
-    dc.DrawLine(0, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
+    dc.DrawLine(2, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
 
 
     // Ribbon style: Page typically doesn't have its own prominent border distinct from the active tab
@@ -182,7 +182,7 @@ void FlatUIPage::AddPanel(FlatUIPanel* panel)
     wxSize minSize = panel->GetBestSize();
     panel->SetMinSize(minSize);
 
-    boxSizer->Add(panel, 0, wxALL, 0);
+    boxSizer->Add(panel, 0, wxALL, 4);
 
     wxSize pageSizeForLog = GetSize();
     wxSize panelSizeForLog = panel->GetSize();

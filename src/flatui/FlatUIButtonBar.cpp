@@ -14,7 +14,7 @@ constexpr int ICON_TEXT_BELOW_SPACING = 1;        // Space between icon and text
 // constexpr int ICON_TEXT_BELOW_BOTTOM_MARGIN = 2; // Bottom margin below text (derived if total height is fixed)
 
 FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
-    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_DEFAULT),
       m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE), // Default display style
       m_buttonStyle(ButtonStyle::DEFAULT),
       m_buttonBorderStyle(ButtonBorderStyle::SOLID),
@@ -143,7 +143,11 @@ void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& b
     ButtonInfo button;
     button.id = id;
     button.label = label;
-    button.icon = bitmap; // Should be 16x16
+    if (bitmap.IsOk() && (bitmap.GetWidth() != 24 || bitmap.GetHeight() != 24)) {
+        button.icon = wxBitmap(bitmap.ConvertToImage().Rescale(24, 24));
+    } else {
+        button.icon = bitmap;
+    }
     button.menu = menu;
     button.isDropDown = (menu != nullptr);
     button.hovered = false; 
@@ -173,7 +177,7 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
 {
     int totalWidth = FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN; 
     wxMemoryDC tempDC; 
-    tempDC.SetFont(GetFont()); 
+    tempDC.SetFont(GetFlatUIDefaultFont());
 
     for (size_t i = 0; i < m_buttons.size(); ++i) {
         const auto& button = m_buttons[i];
@@ -476,7 +480,7 @@ void FlatUIButtonBar::OnMouseDown(wxMouseEvent& evt)
     for (auto& button : m_buttons) {
         if (button.rect.Contains(pos)) {
             if (button.menu) {
-                wxPoint menuPos = ClientToScreen(wxPoint(button.rect.GetLeft(), button.rect.GetBottom()));
+                wxPoint menuPos = ClientToScreen(button.rect.GetBottomLeft());
                 PopupMenu(button.menu, menuPos.x, menuPos.y);
             }
             else {

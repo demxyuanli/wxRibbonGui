@@ -15,7 +15,7 @@ enum {
 };
 
 FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
-    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_DEFAULT), 
     m_label(label),
     m_orientation(orientation),
     m_bgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),

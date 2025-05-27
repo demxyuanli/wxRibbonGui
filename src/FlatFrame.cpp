@@ -42,6 +42,7 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
       m_searchCtrl(nullptr),
       m_homeMenu(nullptr)
 {
+    wxInitAllImageHandlers();
     // PlatUIFrame::InitFrameStyle() is called by base constructor.
     // FlatFrame specific UI initialization
     InitializeUI(size);
@@ -161,8 +162,11 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetHeaderBorderWidths(1, 0, 0, 0);
     panel1->SetHeaderBorderColour(wxColour(120, 120, 120));
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
-    buttonBar1->AddButton(wxID_OPEN, "Open", wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_BUTTON, wxSize(16, 16)));
-    buttonBar1->AddButton(wxID_SAVE, "Save", wxArtProvider::GetBitmap(wxART_FILE_SAVE, wxART_BUTTON, wxSize(16, 16)));
+    wxBitmap openBmp("IDP_OPEN", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap saveBmp("IDP_SAVE", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap fileMenuBmp("IDP_FILEMENU", wxBITMAP_TYPE_PNG_RESOURCE);
+    buttonBar1->AddButton(wxID_OPEN, "Open", openBmp);
+    buttonBar1->AddButton(wxID_SAVE, "Save", saveBmp);
     wxMenu* fileMenu = new wxMenu;
     fileMenu->Append(ID_Menu_NewProject_MainFrame, "&New Project...\tCtrl-N");
     fileMenu->Append(ID_Menu_OpenProject_MainFrame, "&Open Project...\tCtrl-O");
@@ -170,7 +174,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     recentFilesMenu->Append(wxID_ANY, "File2.cpp");
     fileMenu->AppendSubMenu(recentFilesMenu, "Recent &Files");
     fileMenu->AppendSeparator();
-    buttonBar1->AddButton(wxID_ANY, "File Menu", wxArtProvider::GetBitmap(wxART_NORMAL_FILE, wxART_BUTTON, wxSize(16, 16)), fileMenu);
+    buttonBar1->AddButton(wxID_ANY, "File Menu", fileMenuBmp, fileMenu);
     panel1->AddButtonBar(buttonBar1, 0, wxEXPAND | wxALL, 5);
     FlatUIGallery* gallery1 = new FlatUIGallery(panel1);
     gallery1->AddItem(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER, wxSize(16, 16)), wxID_ANY);
@@ -188,8 +192,10 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetHeaderBorderWidths(1, 0, 0, 0);
     panel2->SetHeaderBorderColour(wxColour(120, 120, 120));
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
-    buttonBar2->AddButton(wxID_HELP, "Help", wxArtProvider::GetBitmap(wxART_HELP, wxART_BUTTON, wxSize(16, 16)));
-    buttonBar2->AddButton(wxID_INFO, "Info", wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_BUTTON, wxSize(16, 16)));
+    wxBitmap helpBmp("IDP_HELP", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap infoBmp("IDP_INFO", wxBITMAP_TYPE_PNG_RESOURCE);
+    buttonBar2->AddButton(wxID_HELP, "Help", helpBmp);
+    buttonBar2->AddButton(wxID_INFO, "Info", infoBmp);
     panel2->AddButtonBar(buttonBar2, 0, wxEXPAND | wxALL, 5);
     page1->AddPanel(panel2);
     m_ribbon->AddPage(page1);
@@ -197,8 +203,10 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
     FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
     FlatUIButtonBar* buttonBar3 = new FlatUIButtonBar(panel3);
-    buttonBar3->AddButton(wxID_COPY, "Copy", wxArtProvider::GetBitmap(wxART_COPY, wxART_BUTTON, wxSize(16,16)));
-    buttonBar3->AddButton(wxID_PASTE, "Paste", wxArtProvider::GetBitmap(wxART_PASTE, wxART_BUTTON, wxSize(16,16)));
+    wxBitmap copyBmp("IDP_COPY", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap pasteBmp("IDP_PASTE", wxBITMAP_TYPE_PNG_RESOURCE);
+    buttonBar3->AddButton(wxID_COPY, "Copy", copyBmp);
+    buttonBar3->AddButton(wxID_PASTE, "Paste", pasteBmp);
     panel3->AddButtonBar(buttonBar3);
     page3->AddPanel(panel3);
     m_ribbon->AddPage(page3);
@@ -207,8 +215,10 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
     panel4->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar4 = new FlatUIButtonBar(panel4);
-    buttonBar4->AddButton(wxID_FIND, "Find", wxArtProvider::GetBitmap(wxART_FIND, wxART_BUTTON, wxSize(16, 16)));
-    buttonBar4->AddButton(wxID_SELECTALL, "SelectAll", wxArtProvider::GetBitmap(wxART_FULL_SCREEN, wxART_BUTTON, wxSize(16, 16)));
+    wxBitmap findBmp("IDP_FIND", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap selectAllBmp("IDP_SELECT", wxBITMAP_TYPE_PNG_RESOURCE);
+    buttonBar4->AddButton(wxID_FIND, "Find", findBmp);
+    buttonBar4->AddButton(wxID_SELECTALL, "Select", selectAllBmp);
     panel4->AddButtonBar(buttonBar4);
     page4->AddPanel(panel4);
     m_ribbon->AddPage(page4);
@@ -217,8 +227,10 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPanel* panel5 = new FlatUIPanel(page5, "HelpPanel", wxVERTICAL);
     panel5->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar5 = new FlatUIButtonBar(panel5);
-    buttonBar5->AddButton(wxID_ABOUT, "About", wxArtProvider::GetBitmap(wxART_WX_LOGO, wxART_BUTTON, wxSize(16, 16)));
-    buttonBar5->AddButton(wxID_STOP, "Stop", wxArtProvider::GetBitmap(wxART_STOP, wxART_BUTTON, wxSize(16, 16)));
+    wxBitmap aboutBmp("IDP_ABOUT", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap stopBmp("IDP_STOP", wxBITMAP_TYPE_PNG_RESOURCE);
+    buttonBar5->AddButton(wxID_ABOUT, "About", aboutBmp);
+    buttonBar5->AddButton(wxID_STOP, "Stop", stopBmp);
     panel5->AddButtonBar(buttonBar5);
     page5->AddPanel(panel5);
     m_ribbon->AddPage(page5);
