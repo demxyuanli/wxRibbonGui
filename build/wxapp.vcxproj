@@ -119,9 +119,18 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>	Copying D:/source/repos/wxgui/config/config.ini to D:/source/repos/wxgui/build/Debug</Message>
       <Command>setlocal
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/Debug/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/debug/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config/config.ini D:/source/repos/wxgui/build/Debug/
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -179,9 +188,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>	Copying D:/source/repos/wxgui/config/config.ini to D:/source/repos/wxgui/build/Release</Message>
       <Command>setlocal
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/Release/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config/config.ini D:/source/repos/wxgui/build/Release/
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -239,9 +257,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>	Copying D:/source/repos/wxgui/config/config.ini to D:/source/repos/wxgui/build/MinSizeRel</Message>
       <Command>setlocal
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/MinSizeRel/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config/config.ini D:/source/repos/wxgui/build/MinSizeRel/
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -298,9 +325,18 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>	Copying D:/source/repos/wxgui/config/config.ini to D:/source/repos/wxgui/build/RelWithDebInfo</Message>
       <Command>setlocal
 C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/RelWithDebInfo/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config/config.ini D:/source/repos/wxgui/build/RelWithDebInfo/
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -382,9 +418,28 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D:\source\repos\wxgui\src\MainApplication.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\FlatFrame.cpp" />
+    <ResourceCompile Include="D:\source\repos\wxgui\src\resource.rc" />
     <ClCompile Include="D:\source\repos\wxgui\src\logger\Logger.cpp" />
     <ClCompile Include="D:\source\repos\wxgui\src\config\ConfigManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\LoggerConfig.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\Coin3DConfig.cpp" />
     <ClCompile Include="D:\source\repos\wxgui\src\language\LanguageManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\BorderlessFrameLogic.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFrame.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBar.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIButtonBar.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIGallery.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPage.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPanel.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFunctionSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIProfileSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISystemButtons.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIEventManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISpacerControl.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeMenu.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\UIHierarchyDebugger.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
