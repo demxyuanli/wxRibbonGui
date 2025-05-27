@@ -1,10 +1,14 @@
-# wxFlatGUI - 扁平化 UI 框架
+# wxRibbonGui - 扁平化 UI 框架
 
 ## 注：本项目的代码编写完全由AI生成，使用的AI包括(Grok3、Gemini、gpt4、DeekSeek3.1、Claude3.7)，其中主力智能体使用了Grok3的免费版本，IDE使用的是Visual Studio 2022，AI编程工具Trae，Cousor主要用于获得智能体的访问途径，为此付费了Cousor的192美元的Pro版本(得说一句，Cousor的付费版本真正是个坑，秉承了阿三的骗钱风格)
 
 ## 项目简介
 
-wxFlatGUI 是一个基于 [wxWidgets](https://www.wxwidgets.org/) 库开发的图形用户界面 (GUI) 应用程序，旨在提供一个高度可定制和现代化的扁平化用户界面体验。项目通过一系列自定义控件和事件处理机制，实现了传统 wxWidgets 应用程序之外的独特视觉效果和交互行为，例如无边框窗口、自定义标题栏和丰富的 UI 布局。
+wxRibbonGui 是一个基于 [wxWidgets](https://www.wxwidgets.org/) 库开发的图形用户界面 (GUI) 组件，旨在提供一个高度可定制和现代化的扁平化用户界面体验，主要实现了基于原生wxWidgets基础控件（主要是wxControl）的Ribbon菜单界面，后续后增加更多的组件和控件。
+
+开发这个组件的目标主要是解决开源或商用的美化GUI界面和OpenGL应用之间存在的因为渲染冲突导致的性能下降，渲染失败等问题，而尝试开发的更为基础和基本特效的GUI组件。
+
+项目通过一系列自定义控件和事件处理机制，实现了传统 wxWidgets 应用程序之外的独特视觉效果和交互行为，例如无边框窗口、自定义标题栏和丰富的 UI 布局。
 
 本项目的核心目标是为 wxWidgets 应用程序提供一个现代、美观且易于扩展的 UI 框架，特别适用于需要自定义外观和复杂交互的应用。
 
@@ -124,9 +128,9 @@ logger/                 # 日志系统相关头文件
 编译成功后，您可以在 `build` 目录（或其子目录，取决于您的构建系统配置）中找到生成的可执行文件。直接运行该文件即可启动应用程序。
 
 ```bash
-.\Debug\wxgui.exe # Windows 示例
+.\Debug\wxapp.exe # Windows 示例
 # 或
-./wxflatgui # Linux/macOS 示例
+./wxapp # Linux/macOS 示例
 ```
 
 ## 使用与扩展
