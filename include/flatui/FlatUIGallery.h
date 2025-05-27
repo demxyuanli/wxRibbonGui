@@ -137,8 +137,10 @@ private:
     int m_galleryBorderWidth;
     int m_selectedItem;
     int m_hoveredItem;
+    int m_dropdownWidth;
     bool m_hoverEffectsEnabled;
     bool m_selectionEnabled;
+    bool m_hasDropdown;
     
     void RecalculateLayout();
     void DrawItem(wxDC& dc, const ItemInfo& item, int index);

@@ -25,7 +25,9 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     m_selectedItem(-1),
     m_hoveredItem(-1),
     m_hoverEffectsEnabled(true),
-    m_selectionEnabled(true)
+    m_selectionEnabled(true),
+    m_hasDropdown(false),
+    m_dropdownWidth(0)
 {
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -79,27 +81,37 @@ void FlatUIGallery::AddItem(const wxBitmap& bitmap, int id)
 
 wxSize FlatUIGallery::DoGetBestSize() const
 {
-    int currentCalculatedWidth = FLATUI_GALLERY_HORIZONTAL_MARGIN; // Start with left margin
+    int totalWidth = FLATUI_GALLERY_HORIZONTAL_MARGIN; // Start with left margin
     int itemCount = 0;
     bool hasItems = false;
 
     for (const auto& item : m_items) {
         if (item.bitmap.IsOk()) {
             hasItems = true;
-            currentCalculatedWidth += item.bitmap.GetWidth() + 2 * m_itemPadding;
-            if (itemCount > 0) currentCalculatedWidth += m_itemSpacing;
+            int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding; // Consider image size and padding
+            totalWidth += itemWidth;
+            if (itemCount > 0) {
+                totalWidth += m_itemSpacing; // Add spacing between items
+            }
             itemCount++;
         }
     }
+
     if (hasItems) {
-        currentCalculatedWidth += FLATUI_GALLERY_HORIZONTAL_MARGIN; // Add right margin if there were items
-    }
-    else {
-        currentCalculatedWidth = GetMinSize().GetWidth();
-        if (currentCalculatedWidth <= 0) currentCalculatedWidth = 100;
+        totalWidth += FLATUI_GALLERY_HORIZONTAL_MARGIN; // Add right margin if there were items
+    } else {
+        totalWidth = GetMinSize().GetWidth();
+        if (totalWidth <= 0) {
+            totalWidth = 100; // Default width if no items
+        }
     }
 
-    return wxSize(currentCalculatedWidth, FLATUI_GALLERY_TARGET_HEIGHT);
+    // Consider dropdown width if applicable
+    if (m_hasDropdown) {
+        totalWidth += m_dropdownWidth;
+    }
+
+    return wxSize(totalWidth, FLATUI_GALLERY_TARGET_HEIGHT);
 }
 
 void FlatUIGallery::RecalculateLayout()

@@ -15,7 +15,7 @@ enum {
 };
 
 FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
-    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_DEFAULT), 
+    : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_label(label),
     m_orientation(orientation),
     m_bgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
@@ -176,9 +176,9 @@ void FlatUIPanel::RecalculateBestSize()
     }
 
     // Calculate actual width and height needed by children
-    // These calculations remain the same as original
     int childrenTotalWidth = 0;
     int childrenTotalHeight = 0;
+    int childControlCount = 0; 
 
     if (m_buttonBars.size() + m_galleries.size() > 0) {
         for (auto buttonBar : m_buttonBars) {
@@ -188,6 +188,7 @@ void FlatUIPanel::RecalculateBestSize()
                 wxSize barSize = buttonBar->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     childrenTotalWidth += barSize.GetWidth();
+                    childControlCount++;  // 增加计数
                     childrenTotalHeight = wxMax(childrenTotalHeight, barSize.GetHeight());
                 } else {
                     childrenTotalWidth = wxMax(childrenTotalWidth, barSize.GetWidth());
@@ -204,6 +205,7 @@ void FlatUIPanel::RecalculateBestSize()
                 wxSize gallerySize = gallery->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     childrenTotalWidth += gallerySize.GetWidth();
+                    childControlCount++;  
                     childrenTotalHeight = wxMax(childrenTotalHeight, gallerySize.GetHeight());
                 } else {
                     childrenTotalWidth = wxMax(childrenTotalWidth, gallerySize.GetWidth());
@@ -211,6 +213,10 @@ void FlatUIPanel::RecalculateBestSize()
                 }
                 if (wasHidden) gallery->Hide();
             }
+        }
+        
+        if (m_orientation == wxHORIZONTAL && childControlCount > 1) {
+            childrenTotalWidth += (childControlCount - 1) * FLATUI_PANEL_MARGIN;
         }
     } else {
         // Default minimum size if no children, to ensure panel is visible
@@ -625,21 +631,22 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
                          size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE + (FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE - textHeight) / 2);
             
             // Draw header borders
+			LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
             if (m_headerBorderTop > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
-                gc->StrokeLine(0, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth(), size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+                gc->StrokeLine(FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth()- FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
             }
             if (m_headerBorderBottom > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
-                gc->StrokeLine(0, size.GetHeight(), size.GetWidth(), size.GetHeight());
+                gc->StrokeLine(FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight(), size.GetWidth()- FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight());
             }
             if (m_headerBorderLeft > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
-                gc->StrokeLine(0, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, 0, size.GetHeight());
+                gc->StrokeLine(0, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE - FLATUI_INNERBAR_BORDER_SPACING, 0, size.GetHeight()- FLATUI_INNERBAR_BORDER_SPACING);
             }
             if (m_headerBorderRight > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
-                gc->StrokeLine(size.GetWidth(), size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth(), size.GetHeight());
+                gc->StrokeLine(size.GetWidth(), size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE- FLATUI_INNERBAR_BORDER_SPACING, size.GetWidth(), size.GetHeight()- FLATUI_INNERBAR_BORDER_SPACING);
             }
             break;
         }

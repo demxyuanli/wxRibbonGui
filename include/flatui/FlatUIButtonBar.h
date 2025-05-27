@@ -2,44 +2,39 @@
 #define FLATUIBUTTONBAR_H
 
 #include <wx/wx.h>
-#include <wx/artprov.h> // For wxArtProvider
+#include <wx/artprov.h>
 #include <wx/vector.h>
-#include <string>
-#include <wx/menu.h> // Included for wxMenu*
-#include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
+#include <wx/menu.h>
+#include <wx/dcbuffer.h>
 #include "logger/Logger.h"
 #include "flatui/FlatUIConstants.h"
 
-// Forward declaration
 class FlatUIPanel;
 
-// Enum for button display styles
 enum class ButtonDisplayStyle {
-    ICON_ONLY,        // Only icon is displayed
-    TEXT_ONLY,        // Only text is displayed
-    ICON_TEXT_BESIDE, // Icon on the left, text on the right (default)
-    ICON_TEXT_BELOW   // Icon on top, text below
+    ICON_ONLY,
+    TEXT_ONLY,
+    ICON_TEXT_BESIDE,
+    ICON_TEXT_BELOW
 };
 
 class FlatUIButtonBar : public wxControl
 {
 public:
-    // Button Style
     enum class ButtonStyle {
-        DEFAULT,        // Default flat style
-        RAISED,         // Raised button appearance
-        OUTLINED,       // Outlined button style
-        GHOST,          // Ghost button (no background)
-        PILL            // Pill-shaped button
+        DEFAULT,
+        RAISED,
+        OUTLINED,
+        GHOST,
+        PILL
     };
-    
-    // Button Border Style
+
     enum class ButtonBorderStyle {
-        SOLID,          // Solid line border
-        DASHED,         // Dashed line border
-        DOTTED,         // Dotted line border
-        DOUBLE,         // Double line border
-        ROUNDED         // Rounded corners
+        SOLID,
+        DASHED,
+        DOTTED,
+        DOUBLE,
+        ROUNDED
     };
 
     FlatUIButtonBar(FlatUIPanel* parent);
@@ -48,73 +43,62 @@ public:
     void AddButton(int id, const wxString& label, const wxBitmap& bitmap = wxNullBitmap, wxMenu* menu = nullptr);
     size_t GetButtonCount() const { return m_buttons.size(); }
 
-    void SetDisplayStyle(ButtonDisplayStyle styleh);
+    void SetDisplayStyle(ButtonDisplayStyle style);
     ButtonDisplayStyle GetDisplayStyle() const { return m_displayStyle; }
 
-    // Button spacing and padding
+    void SetButtonStyle(ButtonStyle style);
+    ButtonStyle GetButtonStyle() const { return m_buttonStyle; }
+
+    void SetButtonBorderStyle(ButtonBorderStyle style);
+    ButtonBorderStyle GetButtonBorderStyle() const { return m_buttonBorderStyle; }
+
+    void SetButtonBackgroundColour(const wxColour& colour);
+    wxColour GetButtonBackgroundColour() const { return m_buttonBgColour; }
+
+    void SetButtonHoverBackgroundColour(const wxColour& colour);
+    wxColour GetButtonHoverBackgroundColour() const { return m_buttonHoverBgColour; }
+
+    void SetButtonPressedBackgroundColour(const wxColour& colour);
+    wxColour GetButtonPressedBackgroundColour() const { return m_buttonPressedBgColour; }
+
+    void SetButtonTextColour(const wxColour& colour);
+    wxColour GetButtonTextColour() const { return m_buttonTextColour; }
+
+    void SetButtonBorderColour(const wxColour& colour);
+    wxColour GetButtonBorderColour() const { return m_buttonBorderColour; }
+
+    void SetButtonBorderWidth(int width);
+    int GetButtonBorderWidth() const { return m_buttonBorderWidth; }
+
+    void SetButtonCornerRadius(int radius);
+    int GetButtonCornerRadius() const { return m_buttonCornerRadius; }
+
+    void SetButtonSpacing(int spacing);
+    int GetButtonSpacing() const { return m_buttonSpacing; }
+
+    void SetButtonPadding(int horizontal, int vertical);
+    void GetButtonPadding(int& horizontal, int& vertical) const;
+
+    void SetBarBackgroundColour(const wxColour& colour);
+    wxColour GetBarBackgroundColour() const { return m_barBgColour; }
+
     void SetBarBorderColour(const wxColour& colour);
     wxColour GetBarBorderColour() const { return m_barBorderColour; }
 
-    // Button spacing and padding
     void SetBarBorderWidth(int width);
     int GetBarBorderWidth() const { return m_barBorderWidth; }
 
-    // Style configuration methods
-    void SetButtonStyle(ButtonStyle style);
-    ButtonStyle GetButtonStyle() const { return m_buttonStyle; }
-    
-    void SetButtonBorderStyle(ButtonBorderStyle style);
-    ButtonBorderStyle GetButtonBorderStyle() const { return m_buttonBorderStyle; }
-    
-    // Button appearance configuration
-    void SetButtonBackgroundColour(const wxColour& colour);
-    wxColour GetButtonBackgroundColour() const { return m_buttonBgColour; }
-    
-    void SetButtonHoverBackgroundColour(const wxColour& colour);
-    wxColour GetButtonHoverBackgroundColour() const { return m_buttonHoverBgColour; }
-    
-    void SetButtonPressedBackgroundColour(const wxColour& colour);
-    wxColour GetButtonPressedBackgroundColour() const { return m_buttonPressedBgColour; }
-    
-    void SetButtonTextColour(const wxColour& colour);
-    wxColour GetButtonTextColour() const { return m_buttonTextColour; }
-    
-    void SetButtonBorderColour(const wxColour& colour);
-    wxColour GetButtonBorderColour() const { return m_buttonBorderColour; }
-    
-    void SetButtonBorderWidth(int width);
-    int GetButtonBorderWidth() const { return m_buttonBorderWidth; }
-    
-    void SetButtonCornerRadius(int radius);
-    int GetButtonCornerRadius() const { return m_buttonCornerRadius; }
-    
-    // Button spacing and padding
-    void SetButtonSpacing(int spacing);
-    int GetButtonSpacing() const { return m_buttonSpacing; }
-    
-    void SetButtonPadding(int horizontal, int vertical);
-    void GetButtonPadding(int& horizontal, int& vertical) const;
-    
-    // Bar background
-    void SetBarBackgroundColour(const wxColour& colour);
-    wxColour GetBarBackgroundColour() const { return m_barBgColour; }
-    
-    // Enable/disable hover effects
     void SetHoverEffectsEnabled(bool enabled);
     bool GetHoverEffectsEnabled() const { return m_hoverEffectsEnabled; }
 
     void OnPaint(wxPaintEvent& evt);
     void OnMouseDown(wxMouseEvent& evt);
-    void OnMouseMove(wxMouseEvent& evt);
-    void OnMouseLeave(wxMouseEvent& evt);
-    void OnSize(wxSizeEvent& evt);
 
 protected:
-    virtual wxSize DoGetBestSize() const override;
+    wxSize DoGetBestSize() const override;
 
 private:
-    struct ButtonInfo
-    {
+    struct ButtonInfo {
         int id;
         wxString label;
         wxBitmap icon;
@@ -123,11 +107,10 @@ private:
         bool isDropDown = false;
         bool hovered = false;
         bool pressed = false;
+        wxSize textSize; // Cached text extent
     };
     wxVector<ButtonInfo> m_buttons;
     ButtonDisplayStyle m_displayStyle;
-    
-    // Style members
     ButtonStyle m_buttonStyle;
     ButtonBorderStyle m_buttonBorderStyle;
     wxColour m_buttonBgColour;
@@ -144,12 +127,22 @@ private:
     int m_buttonVerticalPadding;
     int m_barBorderWidth;
     bool m_hoverEffectsEnabled;
-    int m_hoveredButtonIndex; // Track which button is hovered (-1 for none)
-    
-    void RecalculateLayout(); // Helper for layout updates
+    int m_hoveredButtonIndex = -1;
+
+    void RecalculateLayout();
+    int CalculateButtonWidth(const ButtonInfo& button, wxDC& dc) const;
     void DrawButton(wxDC& dc, const ButtonInfo& button, int index);
     void DrawButtonBackground(wxDC& dc, const wxRect& rect, bool isHovered, bool isPressed);
     void DrawButtonBorder(wxDC& dc, const wxRect& rect, bool isHovered, bool isPressed);
+    void DrawButtonIcon(wxDC& dc, const ButtonInfo& button, const wxRect& rect);
+    void DrawButtonText(wxDC& dc, const ButtonInfo& button, const wxRect& rect);
+    void DrawButtonDropdownArrow(wxDC& dc, const ButtonInfo& button, const wxRect& rect);
+    void DrawButtonSeparator(wxDC& dc, const ButtonInfo& button, const wxRect& rect); // New method
+
+
+    void OnMouseMove(wxMouseEvent& evt);
+    void OnMouseLeave(wxMouseEvent& evt);
+    void OnSize(wxSizeEvent& evt);
 };
 
-#endif // FLATUIBUTTONBAR_H 
+#endif // FLATUIBUTTONBAR_H

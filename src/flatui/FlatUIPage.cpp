@@ -50,7 +50,7 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
 
     dc.Clear();
 
-    dc.SetPen(wxPen(*wxBLUE, 1));
+    dc.SetPen(wxPen(FLATUI_PANEL_BORDER_COLOUR, 1));
 
     dc.DrawLine(2, 0, size.GetWidth()-2, 0);
 

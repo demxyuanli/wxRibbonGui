@@ -159,9 +159,9 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel1->SetHeaderColour(*wxWHITE);
     panel1->SetHeaderTextColour(wxColour(60, 60, 60));
-    panel1->SetHeaderBorderWidths(1, 0, 0, 0);
-    panel1->SetHeaderBorderColour(wxColour(120, 120, 120));
+    panel1->SetHeaderBorderWidths(1, 0, 0, 1);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
+	buttonBar1->SetDisplayStyle(ButtonDisplayStyle::ICON_ONLY);
     wxBitmap openBmp("IDP_OPEN", wxBITMAP_TYPE_PNG_RESOURCE);
     wxBitmap saveBmp("IDP_SAVE", wxBITMAP_TYPE_PNG_RESOURCE);
     wxBitmap fileMenuBmp("IDP_FILEMENU", wxBITMAP_TYPE_PNG_RESOURCE);
@@ -188,9 +188,8 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel2->SetHeaderColour(*wxWHITE);
-    panel2->SetHeaderTextColour(wxColour(60, 60, 60));
-    panel2->SetHeaderBorderWidths(1, 0, 0, 0);
-    panel2->SetHeaderBorderColour(wxColour(120, 120, 120));
+    panel2->SetHeaderTextColour(wxColour(120, 120, 120));
+    panel2->SetHeaderBorderWidths(1, 0, 0, 1);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
     wxBitmap helpBmp("IDP_HELP", wxBITMAP_TYPE_PNG_RESOURCE);
     wxBitmap infoBmp("IDP_INFO", wxBITMAP_TYPE_PNG_RESOURCE);
