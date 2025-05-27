@@ -1,10 +1,12 @@
 #include "flatui/flatui.h"
 
 
+
 FlatUIPage::FlatUIPage(FlatUIBar* parent, const wxString& label)
     : wxControl(parent, wxID_ANY), m_label(label)
 {
 }
+
 
 FlatUIPage::~FlatUIPage()
 {

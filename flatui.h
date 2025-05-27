@@ -10,6 +10,7 @@ class FlatUIPanel;
 class FlatUIButtonBar;
 class FlatUIGallery;
 
+
 class FlatUIBar : public wxControl
 {
 public:
