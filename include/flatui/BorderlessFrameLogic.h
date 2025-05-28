@@ -23,6 +23,7 @@ public:
     virtual ~BorderlessFrameLogic();
 
     void ResetCursorToDefault();
+    void UpdateMinSizeBasedOnBarContent();
 
 protected:
     // Core mouse event handlers for dragging and resizing

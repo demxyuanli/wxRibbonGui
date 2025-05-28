@@ -15,11 +15,11 @@ void FlatUIBar::PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset)
 void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
 {
     int barH = GetBarHeight();
-    int tabStartX = FLATUI_BAR_BAR_PADDING;
+    int tabStartX = (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
     if (m_homeSpace && m_homeSpace->IsShown()) {
         tabStartX = m_homeSpace->GetRect().GetRight() + FLATUI_BAR_ELEMENT_SPACING;
     }
-    int tabEndX = GetClientSize().GetWidth() - FLATUI_BAR_BAR_PADDING;
+    int tabEndX = GetClientSize().GetWidth() - (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
     if (m_systemButtons && m_systemButtons->IsShown()) {
         tabEndX = m_systemButtons->GetRect().GetLeft() - FLATUI_BAR_ELEMENT_SPACING;
     }

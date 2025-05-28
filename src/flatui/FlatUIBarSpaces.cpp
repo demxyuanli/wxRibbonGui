@@ -165,7 +165,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
 
     wxClientDC dc(this);
-    int barPadding = CFG_INT("BarBarPadding", FLATUI_BAR_BAR_PADDING);
+    int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
     int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
     int currentX = barPadding;
     int barStripHeight = GetBarHeight();
