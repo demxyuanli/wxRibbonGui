@@ -1,11 +1,12 @@
 #include "flatui/BorderlessFrameLogic.h"
 #include <wx/dcbuffer.h> // For wxScreenDC if used, and double buffering
-#include <wx/log.h> // For logging
 
 #ifdef __WXMSW__
 #include <windows.h> // For Windows specific GDI calls for rubber band
 #endif
 #include <flatui/FlatUIConstants.h>
+#include "config/ConstantsConfig.h"
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
 
 wxBEGIN_EVENT_TABLE(BorderlessFrameLogic, wxFrame)
     EVT_LEFT_DOWN(BorderlessFrameLogic::OnLeftDown)
@@ -25,8 +26,11 @@ BorderlessFrameLogic::BorderlessFrameLogic(wxWindow* parent, wxWindowID id, cons
     // Basic setup, often common for borderless windows
     SetDoubleBuffered(true);
 
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
+    SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
     // Register event filter
     this->PushEventHandler(new BorderlessFrameLogicEventFilter(this));
+    Refresh(); // Ensure background is painted initially
 }
 
 void BorderlessFrameLogic::ResetCursorToDefault() {
@@ -161,11 +165,14 @@ void BorderlessFrameLogic::OnLeftUp(wxMouseEvent& event)
 
 void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
 {
+    static wxRect lastDrawnRect;
+    static wxLongLong lastDrawTime = 0;
+    wxLongLong currentTime = wxGetLocalTimeMillis();
+    
     // Basic rubber band and cursor update logic (without pseudo-maximization check)
     // Derived classes (like FlatUIFrame) will call this and add their specific checks first.
 
     if (m_dragging && event.Dragging() && event.LeftIsDown()) {
-        if (m_rubberBandVisible) EraseRubberBand();
         wxPoint mousePosOnScreen = wxGetMousePosition();
         wxRect newRect(
             mousePosOnScreen.x - m_dragStartPos.x, // Top-left X of dragging rect
@@ -173,10 +180,15 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
             m_resizeStartWindowRect.GetWidth(),    // Original width
             m_resizeStartWindowRect.GetHeight()    // Original height
         );
-        DrawRubberBand(newRect);
+        if (!m_rubberBandVisible || lastDrawnRect != newRect && (currentTime - lastDrawTime > 16 ||
+            abs(newRect.x - lastDrawnRect.x) > 5 || abs(newRect.y - lastDrawnRect.y) > 5)) {
+            if (m_rubberBandVisible) EraseRubberBand();
+            DrawRubberBand(newRect);
+            lastDrawnRect = newRect;
+            lastDrawTime = currentTime;
+        }
     }
     else if (m_resizing && event.Dragging() && event.LeftIsDown()) {
-        if (m_rubberBandVisible) EraseRubberBand();
         wxPoint currentMouseScreenPos = wxGetMousePosition();
         int dx = currentMouseScreenPos.x - m_resizeStartMouseScreenPos.x;
         int dy = currentMouseScreenPos.y - m_resizeStartMouseScreenPos.y;
@@ -230,7 +242,14 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
             break;
         case ResizeMode::NONE: break;
         }
-        DrawRubberBand(newRect);
+        if (!m_rubberBandVisible || lastDrawnRect != newRect && (currentTime - lastDrawTime > 16 ||
+            abs(newRect.x - lastDrawnRect.x) > 5 || abs(newRect.y - lastDrawnRect.y) > 5 ||
+            abs(newRect.width - lastDrawnRect.width) > 5 || abs(newRect.height - lastDrawnRect.height) > 5)) {
+            if (m_rubberBandVisible) EraseRubberBand();
+            DrawRubberBand(newRect);
+            lastDrawnRect = newRect;
+            lastDrawTime = currentTime;
+        }
     }
     else { // Only update cursor if mouse button is not down or if not dragging/resizing
         ResizeMode hoverMode = GetResizeModeForPosition(event.GetPosition());
@@ -278,55 +297,62 @@ void BorderlessFrameLogic::UpdateCursorForResizeMode(ResizeMode mode)
 void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
 {
 #ifdef __WXMSW__
-    HDC hdc = ::GetDC(NULL); 
-    RECT winRect;
-    winRect.left = rect.GetLeft();
-    winRect.top = rect.GetTop();
-    winRect.right = rect.GetRight() + 1; 
-    winRect.bottom = rect.GetBottom() + 1;
-
-    int oldROP = ::SetROP2(hdc, R2_XORPEN); 
-
-    HPEN hPen = ::CreatePen(PS_DOT, 1, RGB(0, 0, 0)); 
+    HDC hdc = ::GetDC(NULL);
+    int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC|PS_SOLID, 5, RGB(100, 100, 100));
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
-    HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH)); 
-
-    ::Rectangle(hdc, winRect.left, winRect.top, winRect.right, winRect.bottom);
-
-    ::SelectObject(hdc, hOldPen);
+    HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    ::Rectangle(hdc, rect.GetLeft(), rect.GetTop(), rect.GetRight(), rect.GetBottom());
     ::SelectObject(hdc, hOldBrush);
+    ::SelectObject(hdc, hOldPen);
     ::DeleteObject(hPen);
     ::SetROP2(hdc, oldROP);
     ::ReleaseDC(NULL, hdc);
-
-    m_rubberBandVisible = true;
-    m_currentRubberBandRect = rect;
 #else
+    if (m_rubberBandVisible) EraseRubberBand();
     wxScreenDC dc;
     dc.SetLogicalFunction(wxINVERT);
-    dc.SetPen(wxPen(*wxBLACK, 1, wxPENSTYLE_DOT));
+    wxPen pen(wxColour(100, 100, 100), 5, wxPENSTYLE_SOLID);
+    dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRectangle(rect);
-
-    m_rubberBandVisible = true;
-    m_currentRubberBandRect = rect;
 #endif
+    m_currentRubberBandRect = rect;
+    m_rubberBandVisible = true;
 }
 
 void BorderlessFrameLogic::EraseRubberBand()
 {
-    if (m_rubberBandVisible)
-    {
-        DrawRubberBand(m_currentRubberBandRect); 
-        m_rubberBandVisible = false;
-    }
+    if (!m_rubberBandVisible) return;
+#ifdef __WXMSW__
+    HDC hdc = ::GetDC(NULL);
+    int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC|PS_SOLID, 5, RGB(100, 100, 100));
+    HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
+    HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
+    ::Rectangle(hdc, m_currentRubberBandRect.GetLeft(), m_currentRubberBandRect.GetTop(), m_currentRubberBandRect.GetRight(), m_currentRubberBandRect.GetBottom());
+    ::SelectObject(hdc, hOldBrush);
+    ::SelectObject(hdc, hOldPen);
+    ::DeleteObject(hPen);
+    ::SetROP2(hdc, oldROP);
+    ::ReleaseDC(NULL, hdc);
+#else
+    wxScreenDC dc;
+    dc.SetLogicalFunction(wxINVERT);
+    wxPen pen(wxColour(100, 100, 100), 5, wxPENSTYLE_SOLID);
+    dc.SetPen(pen);
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.DrawRectangle(m_currentRubberBandRect);
+#endif
+    m_rubberBandVisible = false;
 } 
 
 void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
 {
-    wxPaintDC dc(this);
+    wxAutoBufferedPaintDC dc(this);
+    dc.Clear(); // Fill background before drawing border
     wxSize sz = GetClientSize();
-    dc.SetPen(wxPen(FLATUI_PRIMARY_FRAME_BORDER_COLOUR, 1));
+    dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColour", FLATUI_FRAME_BORDER_COLOR), 1));
     dc.DrawLine(0, 0, sz.x, 0);           
     dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1); 
     dc.DrawLine(0, 0, 0, sz.y);           

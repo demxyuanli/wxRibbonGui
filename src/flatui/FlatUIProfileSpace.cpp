@@ -57,11 +57,3 @@ void FlatUIProfileSpace::OnSize(wxSizeEvent& evt)
     }
     evt.Skip();
 }
-
-/*
-void FlatUIProfileSpace::OnPaint(wxPaintEvent& evt)
-{
-    wxPaintDC dc(this);
-    // Custom painting if desired (e.g., background, border)
-}
-*/ 

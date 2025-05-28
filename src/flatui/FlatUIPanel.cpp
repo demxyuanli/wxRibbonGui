@@ -287,9 +287,7 @@ void FlatUIPanel::RecalculateBestSize()
         m_sizer->SetDimension(sizerAreaX, sizerAreaY, sizerAreaWidth, sizerAreaHeight);
     }
 
-    LOG_INF("RecalculateBestSize for panel: " + GetLabel().ToStdString() +
-        " Best Size: (" + std::to_string(bestPanelSize.GetWidth()) + ", " +
-        std::to_string(bestPanelSize.GetHeight()) + ")", "FlatUIPanel");
+    //LOG_INF("RecalculateBestSize for panel: " + GetLabel().ToStdString() + " Best Size: (" + std::to_string(bestPanelSize.GetWidth()) + ", " +  std::to_string(bestPanelSize.GetHeight()) + ")", "FlatUIPanel");
 
     Thaw();
     isRecalculating = false;

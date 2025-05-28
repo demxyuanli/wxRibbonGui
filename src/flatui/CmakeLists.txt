@@ -1,7 +1,10 @@
 set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/BorderlessFrameLogic.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFrame.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBar.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarCore.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarSpaces.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarTabs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarDrawing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIButtonBar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIGallery.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPage.cpp

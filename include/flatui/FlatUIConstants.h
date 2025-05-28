@@ -13,7 +13,7 @@ const wxColour FLATUI_DEFAULT_TEXT_COLOUR(100, 100, 100);
 const wxColour FLATUI_HIGHLIGHT_COLOUR(0, 120, 215); // Blueish highlight
 
 const wxColour FLATUI_WINDOW_MOTION_COLOR(150, 150, 150);
-
+const wxColour FLATUI_FRAME_BORDER_COLOR(255, 100, 0);
 const int PROFILESPACE_DEFAULT_WIDTH = 100;
 
 // Default Font Settings

@@ -23,39 +23,39 @@
 // Height of the entire FlatUIBar strip
 
 // Static method implementation
-int FlatUIBar::GetBarHeight() 
+int FlatUIBar::GetBarHeight()
 {
     return CFG_INT("BarRenderHeight", FLATUI_BAR_RENDER_HEIGHT);
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
-      m_activePage(0),
-      m_homeSpace(nullptr),
-      m_functionSpace(nullptr),
-      m_profileSpace(nullptr),
-      m_systemButtons(nullptr),
-      m_tabFunctionSpacer(nullptr),
-      m_functionProfileSpacer(nullptr),
-      m_tabStyle(TabStyle::DEFAULT),
-      m_tabBorderStyle(TabBorderStyle::SOLID),
-      m_tabBorderTop(2),      // Default for DEFAULT style
-      m_tabBorderBottom(0),
-      m_tabBorderLeft(0),
-      m_tabBorderRight(0),
-      m_tabCornerRadius(0)   // Border colours and margins will be set in constructor body
+    m_activePage(0),
+    m_homeSpace(nullptr),
+    m_functionSpace(nullptr),
+    m_profileSpace(nullptr),
+    m_systemButtons(nullptr),
+    m_tabFunctionSpacer(nullptr),
+    m_functionProfileSpacer(nullptr),
+    m_tabStyle(TabStyle::DEFAULT),
+    m_tabBorderStyle(TabBorderStyle::SOLID),
+    m_tabBorderTop(2),      // Default for DEFAULT style
+    m_tabBorderBottom(0),
+    m_tabBorderLeft(0),
+    m_tabBorderRight(0),
+    m_tabCornerRadius(0)   // Border colours and margins will be set in constructor body
 {
     SetFont(GetFlatUIDefaultFont());
     auto& cfg = ConstantsConfig::getInstance();
-    m_tabBorderColour       = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderTopColour    = CFG_COLOUR("BarActiveTabTopBorderColour", FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR);
-    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderLeftColour   = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderRightColour  = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_activeTabBgColour     = CFG_COLOUR("ActBarBackgroundColour",   FLATUI_PRIMARY_CONTENT_BG_COLOUR);
-    m_activeTabTextColour   = CFG_COLOUR("BarActiveTextColour",      FLATUI_BAR_ACTIVE_TEXT_COLOUR);
-    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour",    FLATUI_BAR_INACTIVE_TEXT_COLOUR);
-    m_barTopMargin          = CFG_INT("BarTopMargin",               FLATUI_BAR_TOP_MARGIN);
+    m_tabBorderColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour", FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR);
+    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderLeftColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderRightColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_activeTabBgColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+    m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour", FLATUI_BAR_ACTIVE_TEXT_COLOUR);
+    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour", FLATUI_BAR_INACTIVE_TEXT_COLOUR);
+    m_barTopMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -67,33 +67,33 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
 
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    
+
     // Create child component controls
     m_homeSpace = new FlatUIHomeSpace(this, wxID_ANY);
     m_functionSpace = new FlatUIFunctionSpace(this, wxID_ANY);
     m_profileSpace = new FlatUIProfileSpace(this, wxID_ANY);
     m_systemButtons = new FlatUISystemButtons(this, wxID_ANY);
-    
+
     m_homeSpace->SetDoubleBuffered(true);
     m_functionSpace->SetDoubleBuffered(true);
     m_profileSpace->SetDoubleBuffered(true);
     m_systemButtons->SetDoubleBuffered(true);
-    
+
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 0);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 0);
     m_tabFunctionSpacer->SetDoubleBuffered(true);
     m_functionProfileSpacer->SetDoubleBuffered(true);
-    
+
     m_tabFunctionSpacer->SetCanDragWindow(true);
     m_functionProfileSpacer->SetCanDragWindow(true);
-    
+
     m_tabFunctionSpacer->Hide();
     m_functionProfileSpacer->Hide();
 
     // m_pages is default constructed (empty wxVector)
 
     FlatUIEventManager::getInstance().bindBarEvents(this);
-    
+
     FlatUIEventManager::getInstance().bindHomeSpaceEvents(m_homeSpace);
     FlatUIEventManager::getInstance().bindSystemButtonsEvents(m_systemButtons);
     FlatUIEventManager::getInstance().bindFunctionSpaceEvents(m_functionSpace);
@@ -101,7 +101,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
 
     int barHeight = GetBarHeight() + 2; // Add 2 for border
     SetMinSize(wxSize(-1, barHeight));
-    
+
     // Ensure child controls are initially hidden if they don't have content
     // or based on some initial state. FlatUIBar will Show() them as needed during layout.
     m_functionSpace->Show(false);
@@ -111,7 +111,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
     }
-    
+
     // Ensure the initial page can be activated and displayed after all pages are added
     Bind(wxEVT_SHOW, [this](wxShowEvent& event) {
         if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
@@ -122,30 +122,30 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
                     FlatUIPage* currentPage = m_pages[m_activePage];
                     currentPage->SetActive(true);
                     currentPage->Show();
-                    
+
                     wxSize barClientSize = GetClientSize();
                     int barStripHeight = GetBarHeight();
                     currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-                    
+
                     int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
                     if (pageHeight < 0) {
                         pageHeight = 0;
                     }
-                    
+
                     currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
                     currentPage->Layout();
                     currentPage->Refresh();
-                    
+
                     UpdateElementPositionsAndSizes(GetClientSize());
                     Refresh();
                 }
                 delete timer; // Clean up the timer
-            }, timer->GetId());
-            
+                }, timer->GetId());
+
             timer->StartOnce(50); // 50ms delay
         }
         event.Skip();
-    });
+        });
 }
 
 FlatUIBar::~FlatUIBar()
@@ -165,7 +165,7 @@ wxSize FlatUIBar::DoGetBestSize() const
         // The width of the FlatUIBar should ideally be determined by its contents or parent sizer.
         // For now, let's take the page's width as a hint, but this might need refinement.
         // If pages can have varying widths, the widest page or a default width might be better.
-        bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth())); 
+        bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth()));
     }
 
     // The width calculation can be complex as it depends on home button, tabs, function/profile spaces, and system buttons.
@@ -178,7 +178,7 @@ wxSize FlatUIBar::DoGetBestSize() const
             bestSize.SetWidth(200); // Example: a minimum reasonable width for a bar
         }
     }
-    
+
     // Ensure minimum height is at least the bar height plus margin
     if (bestSize.GetHeight() < (GetBarHeight() + m_barTopMargin)) {
         bestSize.SetHeight(GetBarHeight() + m_barTopMargin);
@@ -209,25 +209,24 @@ void FlatUIBar::SetHomeButtonWidth(int width)
 void FlatUIBar::AddPage(FlatUIPage* page)
 {
     if (!page) return;
-    
+
     m_pages.push_back(page);
-    
+
     page->Hide();
-    
+
     if (m_pages.size() == 1) {
         m_activePage = 0;
         // Ensure the first page is properly activated
         page->SetActive(true);
-    } else {
+    }
+    else {
         // Non-first pages are inactive by default
         page->SetActive(false);
-    } 
-    
+    }
+
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
-        
-        LOG_INF("Added page '" + page->GetLabel().ToStdString() + "', total pages: " + std::to_string(m_pages.size()) + ", active page: " + std::to_string(m_activePage), "FlatUIBar");
     }
 }
 
@@ -236,48 +235,41 @@ void FlatUIBar::SetActivePage(size_t index)
     if (index >= m_pages.size() || index == m_activePage)
         return;
 
-    LOG_INF("Setting active page to index: " + std::to_string(index), "FlatUIBar");
-
     // Deactivate the previously active page
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
         m_pages[m_activePage]->SetActive(false);
-            m_pages[m_activePage]->Hide();
-        }
+        m_pages[m_activePage]->Hide();
+    }
 
-        m_activePage = index;
-            
+    m_activePage = index;
+
     // Activate the new page
     FlatUIPage* currentPage = m_pages[m_activePage];
     if (currentPage) {
         // Set the page position and size
-            wxSize barClientSize = GetClientSize();
-            int barStripHeight = GetBarHeight();
+        wxSize barClientSize = GetClientSize();
+        int barStripHeight = GetBarHeight();
         currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-            
-            int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-            if (pageHeight < 0) {
-                pageHeight = 0;
+
+        int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
+        if (pageHeight < 0) {
+            pageHeight = 0;
         }
-        
+
         currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-        
+
         // Make the page visible before setting it active to ensure layout calculations work
         currentPage->Show();
-        
+
         // Activate the page and ensure all panels become visible
         currentPage->SetActive(true);
-        
+
         // Force layout update to ensure proper positioning
         currentPage->Layout();
         currentPage->Refresh();
-        
-        // Log activation for debugging
-        LOG_DBG("Page activated: " + currentPage->GetLabel().ToStdString() +
-            ", Panels: " + std::to_string(currentPage->GetPanels().size()),
-            "FlatUIBar");
-        }
-    
-    Refresh();
+
+        Refresh();
+    }
 }
 
 size_t FlatUIBar::GetPageCount() const { return m_pages.size(); }
@@ -311,7 +303,7 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
     int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
     int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
     int totalWidth = 0;
-    if (m_pages.empty()) return 0; 
+    if (m_pages.empty()) return 0;
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
         if (!m_pages[i]) continue;
@@ -330,11 +322,10 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
 void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 {
     if (!m_homeSpace || !m_systemButtons || !m_functionSpace || !m_profileSpace) {
-        LOG_DBG("FlatUIBar::UpdateElementPositionsAndSizes - one or more child components are null.","FlatUIBar");
         return; // Components not ready
     }
 
-    wxClientDC dc(this); 
+    wxClientDC dc(this);
     int barPadding = CFG_INT("BarBarPadding", FLATUI_BAR_BAR_PADDING);
     int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
     int currentX = barPadding;
@@ -342,17 +333,18 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     int elementY = m_barTopMargin;  // Use top margin instead of 0
 
     // 1. HomeSpace
-    int homeActualWidth = 0; 
-    if (m_homeSpace && m_homeSpace->IsShown()) { 
-        homeActualWidth = m_homeSpace->GetButtonWidth(); 
+    int homeActualWidth = 0;
+    if (m_homeSpace && m_homeSpace->IsShown()) {
+        homeActualWidth = m_homeSpace->GetButtonWidth();
     }
     m_homeSpace->SetPosition(wxPoint(currentX, elementY));
     m_homeSpace->SetSize(homeActualWidth, barStripHeight);
-   
+
     if (homeActualWidth > 0) {
         m_homeSpace->Show(true);
         currentX += homeActualWidth + elemSpacing;
-    } else {
+    }
+    else {
         m_homeSpace->Show(false);
     }
 
@@ -364,7 +356,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     int rightBoundary = barClientSz.GetWidth() - barPadding;
     if (sysButtonsWidth > 0) {
         rightBoundary -= (sysButtonsWidth + elemSpacing);
-    } else {
+    }
+    else {
         m_systemButtons->Show(false);
     }
 
@@ -374,50 +367,52 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     bool funcProfileSpacerVisible = m_functionProfileSpacer && m_functionProfileSpacer->IsShown();
     bool funcProfileSpacerAutoExpand = funcProfileSpacerVisible && m_functionProfileSpacer->GetAutoExpand();
 
-    int funcRequestedWidth = 0; 
-    bool funcSpaceIsEffectivelyVisible = m_functionSpace && m_functionSpace->IsShown() && m_functionSpace->GetChildControl(); 
+    int funcRequestedWidth = 0;
+    bool funcSpaceIsEffectivelyVisible = m_functionSpace && m_functionSpace->IsShown() && m_functionSpace->GetChildControl();
     if (funcSpaceIsEffectivelyVisible) {
-        funcRequestedWidth = m_functionSpace->GetSpaceWidth(); 
+        funcRequestedWidth = m_functionSpace->GetSpaceWidth();
     }
 
-    int profileRequestedWidth = 0; 
-    bool profileSpaceIsEffectivelyVisible = m_profileSpace && m_profileSpace->IsShown() && m_profileSpace->GetChildControl(); 
+    int profileRequestedWidth = 0;
+    bool profileSpaceIsEffectivelyVisible = m_profileSpace && m_profileSpace->IsShown() && m_profileSpace->GetChildControl();
     if (profileSpaceIsEffectivelyVisible) {
-        profileRequestedWidth = m_profileSpace->GetSpaceWidth(); 
+        profileRequestedWidth = m_profileSpace->GetSpaceWidth();
     }
 
     if (tabFuncSpacerAutoExpand || funcProfileSpacerAutoExpand) {
         int tabsNeededWidth = CalculateTabsWidth(dc);
-        
+
         if (tabsNeededWidth > 0) {
             m_tabAreaRect = wxRect(currentX, elementY, tabsNeededWidth, barStripHeight);
             currentX += tabsNeededWidth + elemSpacing;
-        } else {
+        }
+        else {
             m_tabAreaRect = wxRect();
         }
-        
+
         if (tabFuncSpacerAutoExpand && funcSpaceIsEffectivelyVisible) {
             int reservedWidthAfterTabFunc = 0;
-            
+
             reservedWidthAfterTabFunc += funcRequestedWidth;
-            
+
             if (profileSpaceIsEffectivelyVisible) {
                 reservedWidthAfterTabFunc += profileRequestedWidth;
-                
+
                 if (funcProfileSpacerVisible && !funcProfileSpacerAutoExpand) {
                     reservedWidthAfterTabFunc += m_functionProfileSpacer->GetSpacerWidth();
-                } else if (!funcProfileSpacerVisible) {
+                }
+                else if (!funcProfileSpacerVisible) {
                     reservedWidthAfterTabFunc += elemSpacing;
                 }
             }
 
             int autoSpacerWidth = rightBoundary - currentX - reservedWidthAfterTabFunc;
             autoSpacerWidth = wxMax(m_tabFunctionSpacer->GetSpacerWidth(), autoSpacerWidth);
-            
+
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
             m_tabFunctionSpacer->SetSize(autoSpacerWidth, barStripHeight);
             currentX += autoSpacerWidth;
-            
+
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
             m_functionSpace->Show(true);
@@ -427,22 +422,25 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                     if (funcProfileSpacerAutoExpand) {
                         int remainingSpace = rightBoundary - currentX - profileRequestedWidth;
                         remainingSpace = wxMax(m_functionProfileSpacer->GetSpacerWidth(), remainingSpace);
-                        
+
                         m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
                         m_functionProfileSpacer->SetSize(remainingSpace, barStripHeight);
                         currentX += remainingSpace;
-                    } else {
+                    }
+                    else {
                         m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
                         m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
                         currentX += m_functionProfileSpacer->GetSpacerWidth();
                     }
-                } else {
+                }
+                else {
                     currentX += elemSpacing;
                 }
                 m_profileSpace->SetPosition(wxPoint(currentX, elementY));
                 m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
                 m_profileSpace->Show(true);
-            } else {
+            }
+            else {
                 m_profileSpace->Show(false);
             }
         }
@@ -451,10 +449,11 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            } else {
+            }
+            else {
                 currentX += elemSpacing;
             }
-            
+
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
             m_functionSpace->Show(true);
@@ -471,89 +470,101 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         else {
             int tabsNeededWidth = CalculateTabsWidth(dc);
             int availableWidthForTabs = rightBoundary - currentX;
-            
+
             int reservedWidth = 0;
-            
+
             if (funcSpaceIsEffectivelyVisible) {
                 reservedWidth += funcRequestedWidth;
                 if (tabFuncSpacerVisible) {
                     reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-                } else {
+                }
+                else {
                     reservedWidth += elemSpacing;
                 }
             }
-            
+
             if (profileSpaceIsEffectivelyVisible) {
                 reservedWidth += profileRequestedWidth;
                 if (funcSpaceIsEffectivelyVisible) {
                     if (funcProfileSpacerVisible) {
                         reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
-                    } else {
+                    }
+                    else {
                         reservedWidth += elemSpacing;
                     }
-                } else {
+                }
+                else {
                     if (tabFuncSpacerVisible) {
                         reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-                    } else {
+                    }
+                    else {
                         reservedWidth += elemSpacing;
+                    }
+                }
             }
-        }
-    }
-    
+
             availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
-            
+
             int tabsWidth = 0;
             if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
                 tabsWidth = availableWidthForTabs; // It takes all available tab space
-            } else { // Multiple pages, or no pages needing width
+            }
+            else { // Multiple pages, or no pages needing width
                 tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
             }
             tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
-            
+
             if (tabsWidth > 0) {
                 m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
                 currentX += tabsWidth;
-            } else {
+            }
+            else {
                 m_tabAreaRect = wxRect();
             }
-            
+
             if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            } else if (funcSpaceIsEffectivelyVisible) {
+            }
+            else if (funcSpaceIsEffectivelyVisible) {
                 currentX += elemSpacing;
             }
-            
+
             if (funcSpaceIsEffectivelyVisible) {
                 m_functionSpace->SetPosition(wxPoint(currentX, elementY));
                 m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
                 m_functionSpace->Show(true);
                 currentX += funcRequestedWidth;
-            } else {
+            }
+            else {
                 m_functionSpace->Show(false);
             }
-            
+
             if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
                 m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
                 m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_functionProfileSpacer->GetSpacerWidth();
-            } else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
+            }
+            else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
                 currentX += elemSpacing;
-            } else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
+            }
+            else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            } else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
+            }
+            else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
                 currentX += elemSpacing;
             }
-            
+
             if (profileSpaceIsEffectivelyVisible) {
                 m_profileSpace->SetPosition(wxPoint(currentX, elementY));
                 m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
                 m_profileSpace->Show(true);
                 currentX += profileRequestedWidth;
-            } else {
+            }
+            else {
                 m_profileSpace->Show(false);
             }
         }
@@ -561,118 +572,130 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     else {
         int tabsNeededWidth = CalculateTabsWidth(dc);
         int availableWidthForTabs = rightBoundary - currentX;
-        
+
         int reservedWidth = 0;
-        
+
         if (funcSpaceIsEffectivelyVisible) {
             reservedWidth += funcRequestedWidth;
             if (tabFuncSpacerVisible) {
                 reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-            } else {
+            }
+            else {
                 reservedWidth += elemSpacing;
             }
         }
-        
+
         if (profileSpaceIsEffectivelyVisible) {
             reservedWidth += profileRequestedWidth;
             if (funcSpaceIsEffectivelyVisible) {
                 if (funcProfileSpacerVisible) {
                     reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
-                } else {
+                }
+                else {
                     reservedWidth += elemSpacing;
                 }
-            } else {
+            }
+            else {
                 if (tabFuncSpacerVisible) {
                     reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-                } else {
+                }
+                else {
                     reservedWidth += elemSpacing;
                 }
             }
         }
-        
+
         availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
-        
+
         int tabsWidth = 0;
         if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
             tabsWidth = availableWidthForTabs; // It takes all available tab space
-        } else { // Multiple pages, or no pages needing width
+        }
+        else { // Multiple pages, or no pages needing width
             tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
         }
         tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
-        
+
         if (tabsWidth > 0) {
             m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
             currentX += tabsWidth;
-    } else {
+        }
+        else {
             m_tabAreaRect = wxRect();
         }
-        
+
         if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
             m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
-        } else if (funcSpaceIsEffectivelyVisible) {
+        }
+        else if (funcSpaceIsEffectivelyVisible) {
             currentX += elemSpacing;
         }
-        
+
         if (funcSpaceIsEffectivelyVisible) {
-        m_functionSpace->SetPosition(wxPoint(currentX, elementY));
+            m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
-    } else {
+        }
+        else {
             m_functionSpace->Show(false);
         }
-        
+
         if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
             m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
             m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_functionProfileSpacer->GetSpacerWidth();
-        } else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
+        }
+        else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
             currentX += elemSpacing;
-        } else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
+        }
+        else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
             m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
-        } else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
+        }
+        else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
             currentX += elemSpacing;
         }
-        
+
         if (profileSpaceIsEffectivelyVisible) {
-        m_profileSpace->SetPosition(wxPoint(currentX, elementY));
+            m_profileSpace->SetPosition(wxPoint(currentX, elementY));
             m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
             m_profileSpace->Show(true);
             currentX += profileRequestedWidth;
-    } else {
+        }
+        else {
             m_profileSpace->Show(false);
         }
     }
     if (sysButtonsWidth > 0) {
-         m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - barPadding - sysButtonsWidth, elementY));
+        m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - barPadding - sysButtonsWidth, elementY));
         m_systemButtons->SetSize(sysButtonsWidth, barStripHeight);
         m_systemButtons->Show(true);
-    } else {
+    }
+    else {
         m_systemButtons->Show(false);
     }
     if (m_activePage < m_pages.size() && m_pages[m_activePage])
     {
         FlatUIPage* currentPage = m_pages[m_activePage];
-        
+
         currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-        
+
         int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
         if (pageHeight < 0) {
             pageHeight = 0;
-            LOG_DBG("Warning: Page height calculated as negative, adjusted to 0.", "FlatUIBar");
         }
         currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
-        
+
         // Ensure the active page is correctly activated and displayed
         currentPage->SetActive(true);
-        if (!currentPage->IsShown()) { 
+        if (!currentPage->IsShown()) {
             currentPage->Show();
         }
-        
+
         currentPage->Layout();
         currentPage->Refresh();
     }
@@ -680,7 +703,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         if (i != m_activePage && m_pages[i]) {
             m_pages[i]->SetActive(false);
             if (m_pages[i]->IsShown()) {
-            m_pages[i]->Hide();
+                m_pages[i]->Hide();
             }
         }
     }
@@ -688,30 +711,72 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     Refresh();
 }
 
+void FlatUIBar::DrawBackground(wxDC& dc)
+{
+    wxSize clientSize = GetClientSize();
+    int padding = FLATUI_BAR_BAR_PADDING;
+    int barH = GetBarHeight();
+    dc.SetBrush(CFG_COLOUR("BarBackgroundColour", FLATUI_BAR_BACKGROUND_COLOUR));
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.DrawRectangle(padding, 0, clientSize.GetWidth() - 2 * padding, barH);
+}
+
+void FlatUIBar::DrawBarSeparator(wxDC& dc)
+{
+    wxSize clientSize = GetClientSize();
+    int padding = FLATUI_BAR_BAR_PADDING;
+    int barH = GetBarHeight();
+    dc.SetPen(wxPen(*wxBLACK, 1));
+    dc.DrawLine(padding, barH, clientSize.GetWidth() - padding, barH);
+}
+
+void FlatUIBar::PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset)
+{
+    PaintTabs(dc, availableWidth, currentXOffset);
+}
+
+void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
+{
+    int barH = GetBarHeight();
+    int tabStartX = FLATUI_BAR_BAR_PADDING;
+    if (m_homeSpace && m_homeSpace->IsShown()) {
+        tabStartX = m_homeSpace->GetRect().GetRight() + FLATUI_BAR_ELEMENT_SPACING;
+    }
+    int tabEndX = GetClientSize().GetWidth() - FLATUI_BAR_BAR_PADDING;
+    if (m_systemButtons && m_systemButtons->IsShown()) {
+        tabEndX = m_systemButtons->GetRect().GetLeft() - FLATUI_BAR_ELEMENT_SPACING;
+    }
+    wxClientDC dc(this);
+    if (pos.y >= 0 && pos.y < barH && pos.x >= tabStartX && pos.x < tabEndX) {
+        int currentX = tabStartX;
+        for (size_t i = 0; i < m_pages.size(); ++i) {
+            if (!m_pages[i]) continue;
+            FlatUIPage* page = m_pages[i];
+            wxSize labelSize = dc.GetTextExtent(page->GetLabel());
+            int tabWidth = labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2;
+            wxRect rect(currentX, 0, tabWidth, barH);
+            if (rect.Contains(pos)) {
+                SetActivePage(i);
+                break;
+            }
+            currentX += tabWidth + FLATUI_BAR_TAB_SPACING;
+            if (currentX >= tabEndX) break;
+        }
+    }
+}
+
 void FlatUIBar::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
-    wxSize clientSize = GetClientSize();
+    DrawBackground(dc);
+    DrawBarSeparator(dc);
 
-    // Ribbon style: Define specific colors
-    // const wxColour barBackgroundColor(220, 225, 230); // Now from FlatUIConstants.h
-
-    dc.SetBrush(CFG_COLOUR("BarBackgroundColour", FLATUI_BAR_BACKGROUND_COLOUR));
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.Clear(); // Clear with the new bar background color
-    // It's often good to draw a rectangle for the bar area if borders are desired,
-    // but for a flatter look, Clear() might be sufficient if child controls define edges.
-    // For now, we'll rely on PaintTabs and child controls to define the visual structure on top of this background.
-    // dc.DrawRectangle(0, 0, clientSize.GetWidth(), clientSize.GetHeight()); // Optional: redraw rect if a border for the whole bar is needed
-
-    dc.SetPen(wxPen(*wxBLACK,1));
-    wxSize size = GetSize();
-    dc.DrawLine(0, size.GetHeight() - 2, size.GetWidth(), size.GetHeight() - 2);
+    LOG_DBG("FlatUIBar The Border Pos: (" + std::to_string(GetSize().GetWidth()) + "," + std::to_string(GetBarHeight()) + ")", "FlatUIBar");
 
     if (!m_pages.empty() && m_tabAreaRect.GetWidth() > 0) {
         wxDCClipper clip(dc, m_tabAreaRect);
-        int currentXOffsetForTabs = m_tabAreaRect.GetX();
-        PaintTabs(dc, m_tabAreaRect.GetWidth(), currentXOffsetForTabs);
+        int offset = m_tabAreaRect.GetX();
+        PaintTabsArea(dc, m_tabAreaRect.GetWidth(), offset);
     }
 }
 
@@ -720,10 +785,10 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
     int tabYPos = m_barTopMargin;  // Use top margin
     int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
     int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
-    int barEffectiveHeight = GetBarHeight(); 
+    int barEffectiveHeight = GetBarHeight();
     int initialXOffset = currentXOffsetInOut;
 
-    dc.SetFont(GetFont()); 
+    dc.SetFont(GetFont());
 
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
@@ -734,95 +799,96 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
         wxSize labelSize = dc.GetTextExtent(label);
         int tabWidth = labelSize.GetWidth() + tabPadding * 2;
 
-        if ((currentXOffsetInOut + tabWidth) > (initialXOffset + availableTotalWidth) && i > 0) { 
-            break; 
+        if ((currentXOffsetInOut + tabWidth) > (initialXOffset + availableTotalWidth) && i > 0) {
+            break;
         }
 
-        wxRect tabRect(currentXOffsetInOut, tabYPos, tabWidth, barEffectiveHeight); 
+        wxRect tabRect(currentXOffsetInOut, tabYPos, tabWidth, barEffectiveHeight);
 
         if (i == m_activePage)
         {
-            dc.SetBrush(wxBrush(m_activeTabBgColour)); 
-            dc.SetTextForeground(m_activeTabTextColour); 
-            
+            dc.SetBrush(wxBrush(m_activeTabBgColour));
+            dc.SetTextForeground(m_activeTabTextColour);
+
             // Draw tab based on style
             switch (m_tabStyle) {
-                case TabStyle::DEFAULT:
-                    // Fill background of active tab (excluding the top border)
-                    dc.SetPen(*wxTRANSPARENT_PEN);
-                    dc.DrawRectangle(tabRect.x, tabRect.y + m_tabBorderTop, tabRect.width, tabRect.height - m_tabBorderTop);
-                    
-                    // Draw borders based on border style
-                    if (m_tabBorderStyle == TabBorderStyle::SOLID) {
-                        // Use simple line drawing for solid borders
-                        if (m_tabBorderTop > 0) {
-                            dc.SetPen(wxPen(m_tabBorderTopColour, m_tabBorderTop));
-                            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop/2, 
-                                       tabRect.GetRight() + 1, tabRect.GetTop() + m_tabBorderTop/2);
-                        }
-                        if (m_tabBorderLeft > 0) {
-                            dc.SetPen(wxPen(m_tabBorderLeftColour, m_tabBorderLeft));
-                            dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop, 
-                                       tabRect.GetLeft(), tabRect.GetBottom());
-                        }
-                        if (m_tabBorderRight > 0) {
-                            dc.SetPen(wxPen(m_tabBorderRightColour, m_tabBorderRight));
-                            dc.DrawLine(tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop, 
-                                       tabRect.GetRight(), tabRect.GetBottom());
-                        }
-                    } else {
-                        // Use DrawTabBorder for other border styles
-                        DrawTabBorder(dc, tabRect, true);
-                    }
-                    break;
-                    
-                case TabStyle::UNDERLINE:
-                    // No background fill for underline style
-                    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-                    dc.SetPen(*wxTRANSPARENT_PEN);
-                    
-                    // Draw bottom border only
-                    if (m_tabBorderBottom > 0) {
-                        dc.SetPen(wxPen(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR, m_tabBorderBottom));
-                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom() - m_tabBorderBottom/2, 
-                                   tabRect.GetRight() + 1, tabRect.GetBottom() - m_tabBorderBottom/2);
-                    }
-                    break;
-                    
-                case TabStyle::BUTTON:
-                    // Fill background
-                    dc.SetPen(*wxTRANSPARENT_PEN);
-                    dc.DrawRectangle(tabRect);
-                    
-                    // Draw all borders
-                    dc.SetPen(wxPen(m_tabBorderColour, 1));
+            case TabStyle::DEFAULT:
+                // Fill background of active tab (excluding the top border)
+                dc.SetPen(*wxTRANSPARENT_PEN);
+                dc.DrawRectangle(tabRect.x, tabRect.y + m_tabBorderTop, tabRect.width, tabRect.height - m_tabBorderTop);
+
+                // Draw borders based on border style
+                if (m_tabBorderStyle == TabBorderStyle::SOLID) {
+                    // Use simple line drawing for solid borders
                     if (m_tabBorderTop > 0) {
-                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderTop));
-                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(), 
-                                   tabRect.GetRight() + 1, tabRect.GetTop());
-                    }
-                    if (m_tabBorderBottom > 0) {
-                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderBottom));
-                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom(), 
-                                   tabRect.GetRight() + 1, tabRect.GetBottom());
+                        dc.SetPen(wxPen(m_tabBorderTopColour, m_tabBorderTop));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop / 2,
+                            tabRect.GetRight() + 1, tabRect.GetTop() + m_tabBorderTop / 2);
                     }
                     if (m_tabBorderLeft > 0) {
-                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderLeft));
-                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(), 
-                                   tabRect.GetLeft(), tabRect.GetBottom() + 1);
+                        dc.SetPen(wxPen(m_tabBorderLeftColour, m_tabBorderLeft));
+                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop,
+                            tabRect.GetLeft(), tabRect.GetBottom());
                     }
                     if (m_tabBorderRight > 0) {
-                        dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderRight));
-                        dc.DrawLine(tabRect.GetRight(), tabRect.GetTop(), 
-                                   tabRect.GetRight(), tabRect.GetBottom() + 1);
+                        dc.SetPen(wxPen(m_tabBorderRightColour, m_tabBorderRight));
+                        dc.DrawLine(tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop,
+                            tabRect.GetRight(), tabRect.GetBottom());
                     }
-                    break;
-                    
-                case TabStyle::FLAT:
-                    // No background, no borders, only text color changes
-                    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-                    dc.SetPen(*wxTRANSPARENT_PEN);
-                    break;
+                }
+                else {
+                    // Use DrawTabBorder for other border styles
+                    DrawTabBorder(dc, tabRect, true);
+                }
+                break;
+
+            case TabStyle::UNDERLINE:
+                // No background fill for underline style
+                dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                dc.SetPen(*wxTRANSPARENT_PEN);
+
+                // Draw bottom border only
+                if (m_tabBorderBottom > 0) {
+                    dc.SetPen(wxPen(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR, m_tabBorderBottom));
+                    dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom() - m_tabBorderBottom / 2,
+                        tabRect.GetRight() + 1, tabRect.GetBottom() - m_tabBorderBottom / 2);
+                }
+                break;
+
+            case TabStyle::BUTTON:
+                // Fill background
+                dc.SetPen(*wxTRANSPARENT_PEN);
+                dc.DrawRectangle(tabRect);
+
+                // Draw all borders
+                dc.SetPen(wxPen(m_tabBorderColour, 1));
+                if (m_tabBorderTop > 0) {
+                    dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderTop));
+                    dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(),
+                        tabRect.GetRight() + 1, tabRect.GetTop());
+                }
+                if (m_tabBorderBottom > 0) {
+                    dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderBottom));
+                    dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom(),
+                        tabRect.GetRight() + 1, tabRect.GetBottom());
+                }
+                if (m_tabBorderLeft > 0) {
+                    dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderLeft));
+                    dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop(),
+                        tabRect.GetLeft(), tabRect.GetBottom() + 1);
+                }
+                if (m_tabBorderRight > 0) {
+                    dc.SetPen(wxPen(m_tabBorderColour, m_tabBorderRight));
+                    dc.DrawLine(tabRect.GetRight(), tabRect.GetTop(),
+                        tabRect.GetRight(), tabRect.GetBottom() + 1);
+                }
+                break;
+
+            case TabStyle::FLAT:
+                // No background, no borders, only text color changes
+                dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                dc.SetPen(*wxTRANSPARENT_PEN);
+                break;
             }
         }
         else // Inactive Tab
@@ -831,99 +897,39 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
             // No border
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
             dc.SetPen(*wxTRANSPARENT_PEN);
-            dc.SetTextForeground(m_inactiveTabTextColour); 
+            dc.SetTextForeground(m_inactiveTabTextColour);
         }
-        
-        dc.DrawText(label, currentXOffsetInOut + tabPadding, tabYPos + (barEffectiveHeight - labelSize.GetHeight()) / 2); 
-        currentXOffsetInOut += tabWidth + tabSpacing; 
+
+        dc.DrawText(label, currentXOffsetInOut + tabPadding, tabYPos + (barEffectiveHeight - labelSize.GetHeight()) / 2);
+        currentXOffsetInOut += tabWidth + tabSpacing;
     }
 }
 
 void FlatUIBar::OnMouseDown(wxMouseEvent& evt)
 {
-    wxPoint pos = evt.GetPosition();
-    int barEffectiveHeight = GetBarHeight();
-
-    // Mouse events on HomeSpace, FunctionSpace, ProfileSpace, SystemButtons are handled by themselves.
-    // This OnMouseDown now only needs to care about clicks on the TABS area.
-
-    int tabRegionStartX = FLATUI_BAR_BAR_PADDING;
-    if (m_homeSpace && m_homeSpace->IsShown()) {
-        tabRegionStartX = m_homeSpace->GetRect().GetRight() + FLATUI_BAR_ELEMENT_SPACING;
-    }
-    
-    int tabRegionEndX = GetClientSize().GetWidth() - FLATUI_BAR_BAR_PADDING;
-    if (m_systemButtons && m_systemButtons->IsShown()) {
-        tabRegionEndX = m_systemButtons->GetRect().GetLeft() - FLATUI_BAR_ELEMENT_SPACING;
-    }
-    // Refine tabRegionEndX based on visible Function/Profile spaces that are to the left of system buttons
-    // and to the right of where tabs start.
-    if (m_profileSpace && m_profileSpace->IsShown()) {
-        int profileLeft = m_profileSpace->GetRect().GetLeft();
-        if (profileLeft > tabRegionStartX) { // Profile space is to the right of tabs
-            tabRegionEndX = wxMin(tabRegionEndX, profileLeft - FLATUI_BAR_ELEMENT_SPACING);
-        }
-    }
-    if (m_functionSpace && m_functionSpace->IsShown()) {
-        int funcLeft = m_functionSpace->GetRect().GetLeft();
-        if (funcLeft > tabRegionStartX) { // Function space is to the right of tabs
-             tabRegionEndX = wxMin(tabRegionEndX, funcLeft - FLATUI_BAR_ELEMENT_SPACING);
-        }
-    }
-
-
-    if (pos.y >= 0 && pos.y < barEffectiveHeight && pos.x >= tabRegionStartX && pos.x < tabRegionEndX) {
-        wxClientDC dc(this); 
-        int currentXOffset = tabRegionStartX;
-    for (size_t i = 0; i < m_pages.size(); ++i)
-        {
-            if (!m_pages[i]) continue;
-            FlatUIPage* page = m_pages[i];
-            wxString label = page->GetLabel();
-            wxSize labelSize = dc.GetTextExtent(label);
-            int tabWidth = labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2;
-            wxRect tabRect(currentXOffset, 0, tabWidth, barEffectiveHeight);
-
-            if (tabRect.Contains(pos)) {
-                if (m_activePage != i) {
-                    SetActivePage(i);
-                }
-                evt.Skip(false); 
-                return;
-            }
-            currentXOffset += tabWidth + FLATUI_BAR_TAB_SPACING;
-            if (currentXOffset >= tabRegionEndX) break; 
-        }
-    }
-    evt.Skip(); 
+    HandleTabAreaClick(evt.GetPosition());
+    evt.Skip();
 }
 
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {
     wxSize newSize = GetClientSize();
-    LOG_DBG("FlatUIBar::OnSize - New size: (" + std::to_string(newSize.GetWidth()) + ", " + std::to_string(newSize.GetHeight()) + ")", "FlatUIBar");
-    
-    // Ensure bar height is not less than required minimum
-    if (newSize.GetHeight() < GetBarHeight()) {
-        LOG_DBG("Warning: FlatUIBar height(" + std::to_string(newSize.GetHeight()) + ") is less than required minimum height(" + std::to_string(GetBarHeight()) + ")", "FlatUIBar");
-    }
-    
     UpdateElementPositionsAndSizes(newSize);
-    
+
     if (m_homeSpace) m_homeSpace->Update();
     if (m_functionSpace) m_functionSpace->Update();
     if (m_profileSpace) m_profileSpace->Update();
     if (m_systemButtons) m_systemButtons->Update();
     if (m_tabFunctionSpacer) m_tabFunctionSpacer->Update();
     if (m_functionProfileSpacer) m_functionProfileSpacer->Update();
-    
+
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
         m_pages[m_activePage]->Update();
     }
-    
+
     Refresh(true);
     Update();
-    
+
     evt.Skip();
 }
 
@@ -934,18 +940,17 @@ void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator, bool dragFla
         m_tabFunctionSpacer->SetCanDragWindow(true);
         m_tabFunctionSpacer->SetDoubleBuffered(true);
     }
-    
+
     if (width > 0) {
         m_tabFunctionSpacer->SetSpacerWidth(width);
         m_tabFunctionSpacer->SetDrawSeparator(drawSeparator);
         m_tabFunctionSpacer->SetShowDragFlag(dragFlag);
         m_tabFunctionSpacer->Show();
-        LOG_INF("FlatUIBar: Show TabFunctionSpacer，Width=" + std::to_string(width), "FlatUIBar");
-    } else {
-        m_tabFunctionSpacer->Hide();
-        LOG_INF("FlatUIBar: Hidden TabFunctionSpacer", "FlatUIBar");
     }
-    
+    else {
+        m_tabFunctionSpacer->Hide();
+    }
+
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
@@ -959,18 +964,17 @@ void FlatUIBar::SetFunctionProfileSpacer(int width, bool drawSeparator, bool dra
         m_functionProfileSpacer->SetCanDragWindow(true);
         m_functionProfileSpacer->SetDoubleBuffered(true);
     }
-    
+
     if (width > 0) {
         m_functionProfileSpacer->SetSpacerWidth(width);
         m_functionProfileSpacer->SetDrawSeparator(drawSeparator);
         m_functionProfileSpacer->SetShowDragFlag(dragFlag);
         m_functionProfileSpacer->Show();
-        LOG_INF("FlatUIBar: Show FunctionProfileSpacer，Width=" + std::to_string(width), "FlatUIBar");
-    } else {
-        m_functionProfileSpacer->Hide();
-        LOG_INF("FlatUIBar: Hidden FunctionProfileSpacer", "FlatUIBar");
     }
-    
+    else {
+        m_functionProfileSpacer->Hide();
+    }
+
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
@@ -981,7 +985,7 @@ void FlatUIBar::SetTabFunctionSpacerAutoExpand(bool autoExpand)
 {
     if (m_tabFunctionSpacer) {
         m_tabFunctionSpacer->SetAutoExpand(autoExpand);
-        
+
         if (IsShown()) {
             UpdateElementPositionsAndSizes(GetClientSize());
             Refresh();
@@ -993,7 +997,7 @@ void FlatUIBar::SetFunctionProfileSpacerAutoExpand(bool autoExpand)
 {
     if (m_functionProfileSpacer) {
         m_functionProfileSpacer->SetAutoExpand(autoExpand);
-        
+
         if (IsShown()) {
             UpdateElementPositionsAndSizes(GetClientSize());
             Refresh();
@@ -1005,39 +1009,38 @@ void FlatUIBar::AddSpaceSeparator(SpacerLocation location, int width, bool drawS
 {
     FlatUISpacerControl** targetSpacer = nullptr;
     wxString logLocation;
-    
-    switch(location) {
-        case SPACER_TAB_FUNCTION:
-            targetSpacer = &m_tabFunctionSpacer;
-            logLocation = "TabFunction";
-            break;
-        case SPACER_FUNCTION_PROFILE:
-            targetSpacer = &m_functionProfileSpacer;
-            logLocation = "FunctionProfile";
-            break;
-        default:
-            LOG_ERR("FlatUIBar::AddSpaceSeparator - Invalid location specified", "FlatUIBar");
-            return;
+
+    switch (location) {
+    case SPACER_TAB_FUNCTION:
+        targetSpacer = &m_tabFunctionSpacer;
+        logLocation = "TabFunction";
+        break;
+    case SPACER_FUNCTION_PROFILE:
+        targetSpacer = &m_functionProfileSpacer;
+        logLocation = "FunctionProfile";
+        break;
+    default:
+        LOG_ERR("FlatUIBar::AddSpaceSeparator - Invalid location specified", "FlatUIBar");
+        return;
     }
-    
+
     if (!*targetSpacer) {
         *targetSpacer = new FlatUISpacerControl(this, width);
         (*targetSpacer)->SetCanDragWindow(canDrag);
         (*targetSpacer)->SetDoubleBuffered(true);
     }
-    
+
     if (width > 0) {
         (*targetSpacer)->SetSpacerWidth(width);
         (*targetSpacer)->SetDrawSeparator(drawSeparator);
         (*targetSpacer)->SetShowDragFlag(canDrag);
         (*targetSpacer)->SetAutoExpand(autoExpand);
         (*targetSpacer)->Show();
-        LOG_INF("FlatUIBar: Show " + logLocation.ToStdString() + " Spacer, Width=" + std::to_string(width) + ", AutoExpand=" + (autoExpand ? "true" : "false"), "FlatUIBar");
-    } else {
-        (*targetSpacer)->Hide();
-        LOG_INF("FlatUIBar: Hidden " + logLocation.ToStdString() + " Spacer", "FlatUIBar");
     }
-    
+    else {
+        (*targetSpacer)->Hide();
+    }
+
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
@@ -1047,35 +1050,35 @@ void FlatUIBar::AddSpaceSeparator(SpacerLocation location, int width, bool drawS
 void FlatUIBar::SetTabStyle(TabStyle style)
 {
     m_tabStyle = style;
-    
+
     // Set default border widths based on style
     switch (style) {
-        case TabStyle::DEFAULT:
-            m_tabBorderTop = 2;
-            m_tabBorderBottom = 0;
-            m_tabBorderLeft = 0;
-            m_tabBorderRight = 01;
-            break;
-        case TabStyle::UNDERLINE:
-            m_tabBorderTop = 0;
-            m_tabBorderBottom = 2;
-            m_tabBorderLeft = 0;
-            m_tabBorderRight = 0;
-            break;
-        case TabStyle::BUTTON:
-            m_tabBorderTop = 1;
-            m_tabBorderBottom = 1;
-            m_tabBorderLeft = 1;
-            m_tabBorderRight = 1;
-            break;
-        case TabStyle::FLAT:
-            m_tabBorderTop = 1;
-            m_tabBorderBottom = 0;
-            m_tabBorderLeft = 0;
-            m_tabBorderRight = 0;
-            break;
+    case TabStyle::DEFAULT:
+        m_tabBorderTop = 2;
+        m_tabBorderBottom = 0;
+        m_tabBorderLeft = 0;
+        m_tabBorderRight = 01;
+        break;
+    case TabStyle::UNDERLINE:
+        m_tabBorderTop = 0;
+        m_tabBorderBottom = 2;
+        m_tabBorderLeft = 0;
+        m_tabBorderRight = 0;
+        break;
+    case TabStyle::BUTTON:
+        m_tabBorderTop = 1;
+        m_tabBorderBottom = 1;
+        m_tabBorderLeft = 1;
+        m_tabBorderRight = 1;
+        break;
+    case TabStyle::FLAT:
+        m_tabBorderTop = 1;
+        m_tabBorderBottom = 0;
+        m_tabBorderLeft = 0;
+        m_tabBorderRight = 0;
+        break;
     }
-    
+
     Refresh();
 }
 
@@ -1200,154 +1203,159 @@ void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)
     if (m_tabBorderStyle == TabBorderStyle::SOLID) {
         return;
     }
-    
+
     // Try to get the actual DC type and create appropriate graphics context
     wxGraphicsContext* gc = nullptr;
-    
-    if (wxPaintDC* paintDC = dynamic_cast<wxPaintDC*>(&dc)) {
+
+    if (wxAutoBufferedPaintDC* paintDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
         gc = wxGraphicsContext::Create(*paintDC);
-    } else if (wxClientDC* clientDC = dynamic_cast<wxClientDC*>(&dc)) {
+    }
+    else if (wxClientDC* clientDC = dynamic_cast<wxClientDC*>(&dc)) {
         gc = wxGraphicsContext::Create(*clientDC);
-    } else if (wxMemoryDC* memDC = dynamic_cast<wxMemoryDC*>(&dc)) {
+    }
+    else if (wxMemoryDC* memDC = dynamic_cast<wxMemoryDC*>(&dc)) {
         gc = wxGraphicsContext::Create(*memDC);
-    } else if (wxWindowDC* winDC = dynamic_cast<wxWindowDC*>(&dc)) {
+    }
+    else if (wxWindowDC* winDC = dynamic_cast<wxWindowDC*>(&dc)) {
         gc = wxGraphicsContext::Create(*winDC);
-    } else if (wxAutoBufferedPaintDC* bufferedDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
+    }
+    else if (wxAutoBufferedPaintDC* bufferedDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
         // wxAutoBufferedPaintDC derives from wxMemoryDC or wxPaintDC
         gc = wxGraphicsContext::Create(*bufferedDC);
-    } else {
+    }
+    else {
         // If we can't determine the DC type, try creating from the window
         wxWindow* win = dc.GetWindow();
         if (win) {
             gc = wxGraphicsContext::Create(win);
         }
     }
-    
+
     if (!gc) return;
-    
+
     // Use individual border colors
     wxColour topColour = isActive ? m_tabBorderTopColour : m_tabBorderColour;
     wxColour bottomColour = m_tabBorderBottomColour;
     wxColour leftColour = m_tabBorderLeftColour;
     wxColour rightColour = m_tabBorderRightColour;
-    
+
     switch (m_tabBorderStyle) {
-        case TabBorderStyle::DASHED:
-            {
-                if (m_tabBorderTop > 0) {
-                    wxPen dashedPen(topColour, m_tabBorderTop, wxPENSTYLE_SHORT_DASH);
-                    gc->SetPen(dashedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
-                }
-                if (m_tabBorderBottom > 0) {
-                    wxPen dashedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_SHORT_DASH);
-                    gc->SetPen(dashedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-                if (m_tabBorderLeft > 0) {
-                    wxPen dashedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_SHORT_DASH);
-                    gc->SetPen(dashedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
-                }
-                if (m_tabBorderRight > 0) {
-                    wxPen dashedPen(rightColour, m_tabBorderRight, wxPENSTYLE_SHORT_DASH);
-                    gc->SetPen(dashedPen);
-                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-            }
-            break;
-            
-        case TabBorderStyle::DOTTED:
-            {
-                if (m_tabBorderTop > 0) {
-                    wxPen dottedPen(topColour, m_tabBorderTop, wxPENSTYLE_DOT);
-                    gc->SetPen(dottedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
-                }
-                if (m_tabBorderBottom > 0) {
-                    wxPen dottedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_DOT);
-                    gc->SetPen(dottedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-                if (m_tabBorderLeft > 0) {
-                    wxPen dottedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_DOT);
-                    gc->SetPen(dottedPen);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
-                }
-                if (m_tabBorderRight > 0) {
-                    wxPen dottedPen(rightColour, m_tabBorderRight, wxPENSTYLE_DOT);
-                    gc->SetPen(dottedPen);
-                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-            }
-            break;
-            
-        case TabBorderStyle::DOUBLE:
-            {
-                int gap = 2; // Gap between double lines
-                if (m_tabBorderTop > 0) {
-                    gc->SetPen(wxPen(topColour, 1));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + gap, tabRect.GetRight(), tabRect.GetTop() + gap);
-                }
-                if (m_tabBorderBottom > 0) {
-                    gc->SetPen(wxPen(bottomColour, 1));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom() - gap, tabRect.GetRight(), tabRect.GetBottom() - gap);
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-                if (m_tabBorderLeft > 0) {
-                    gc->SetPen(wxPen(leftColour, 1));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
-                    gc->StrokeLine(tabRect.GetLeft() + gap, tabRect.GetTop(), tabRect.GetLeft() + gap, tabRect.GetBottom());
-                }
-                if (m_tabBorderRight > 0) {
-                    gc->SetPen(wxPen(rightColour, 1));
-                    gc->StrokeLine(tabRect.GetRight() - gap, tabRect.GetTop(), tabRect.GetRight() - gap, tabRect.GetBottom());
-                    gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
-                }
-            }
-            break;
-            
-        case TabBorderStyle::GROOVE:
-        case TabBorderStyle::RIDGE:
-            {
-                // For groove/ridge effect, use two colors
-                wxColour lightColour = topColour.ChangeLightness(150);
-                wxColour darkColour = topColour.ChangeLightness(50);
-                
-                if (m_tabBorderStyle == TabBorderStyle::RIDGE) {
-                    // Swap colors for ridge effect
-                    wxColour temp = lightColour;
-                    lightColour = darkColour;
-                    darkColour = temp;
-                }
-                
-                if (m_tabBorderTop > 0 && isActive) {
-                    gc->SetPen(wxPen(darkColour, m_tabBorderTop/2));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
-                    gc->SetPen(wxPen(lightColour, m_tabBorderTop/2));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop/2, tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop/2);
-                }
-                if (m_tabBorderLeft > 0) {
-                    gc->SetPen(wxPen(darkColour, m_tabBorderLeft/2));
-                    gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
-                    gc->SetPen(wxPen(lightColour, m_tabBorderLeft/2));
-                    gc->StrokeLine(tabRect.GetLeft() + m_tabBorderLeft/2, tabRect.GetTop(), tabRect.GetLeft() + m_tabBorderLeft/2, tabRect.GetBottom());
-                }
-            }
-            break;
-            
-        case TabBorderStyle::ROUNDED:
-            {
-                gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
-                gc->SetPen(wxPen(topColour, wxMax(wxMax(m_tabBorderTop, m_tabBorderBottom), 
-                                               wxMax(m_tabBorderLeft, m_tabBorderRight))));
-                wxGraphicsPath path = gc->CreatePath();
-                path.AddRoundedRectangle(tabRect.x, tabRect.y, tabRect.width, tabRect.height, m_tabCornerRadius);
-                gc->StrokePath(path);
-            }
-            break;
+    case TabBorderStyle::DASHED:
+    {
+        if (m_tabBorderTop > 0) {
+            wxPen dashedPen(topColour, m_tabBorderTop, wxPENSTYLE_SHORT_DASH);
+            gc->SetPen(dashedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+        }
+        if (m_tabBorderBottom > 0) {
+            wxPen dashedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_SHORT_DASH);
+            gc->SetPen(dashedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+        }
+        if (m_tabBorderLeft > 0) {
+            wxPen dashedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_SHORT_DASH);
+            gc->SetPen(dashedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+        }
+        if (m_tabBorderRight > 0) {
+            wxPen dashedPen(rightColour, m_tabBorderRight, wxPENSTYLE_SHORT_DASH);
+            gc->SetPen(dashedPen);
+            gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+        }
     }
-    
+    break;
+
+    case TabBorderStyle::DOTTED:
+    {
+        if (m_tabBorderTop > 0) {
+            wxPen dottedPen(topColour, m_tabBorderTop, wxPENSTYLE_DOT);
+            gc->SetPen(dottedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+        }
+        if (m_tabBorderBottom > 0) {
+            wxPen dottedPen(bottomColour, m_tabBorderBottom, wxPENSTYLE_DOT);
+            gc->SetPen(dottedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+        }
+        if (m_tabBorderLeft > 0) {
+            wxPen dottedPen(leftColour, m_tabBorderLeft, wxPENSTYLE_DOT);
+            gc->SetPen(dottedPen);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+        }
+        if (m_tabBorderRight > 0) {
+            wxPen dottedPen(rightColour, m_tabBorderRight, wxPENSTYLE_DOT);
+            gc->SetPen(dottedPen);
+            gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+        }
+    }
+    break;
+
+    case TabBorderStyle::DOUBLE:
+    {
+        int gap = 2; // Gap between double lines
+        if (m_tabBorderTop > 0) {
+            gc->SetPen(wxPen(topColour, 1));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + gap, tabRect.GetRight(), tabRect.GetTop() + gap);
+        }
+        if (m_tabBorderBottom > 0) {
+            gc->SetPen(wxPen(bottomColour, 1));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom() - gap, tabRect.GetRight(), tabRect.GetBottom() - gap);
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetBottom(), tabRect.GetRight(), tabRect.GetBottom());
+        }
+        if (m_tabBorderLeft > 0) {
+            gc->SetPen(wxPen(leftColour, 1));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+            gc->StrokeLine(tabRect.GetLeft() + gap, tabRect.GetTop(), tabRect.GetLeft() + gap, tabRect.GetBottom());
+        }
+        if (m_tabBorderRight > 0) {
+            gc->SetPen(wxPen(rightColour, 1));
+            gc->StrokeLine(tabRect.GetRight() - gap, tabRect.GetTop(), tabRect.GetRight() - gap, tabRect.GetBottom());
+            gc->StrokeLine(tabRect.GetRight(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetBottom());
+        }
+    }
+    break;
+
+    case TabBorderStyle::GROOVE:
+    case TabBorderStyle::RIDGE:
+    {
+        // For groove/ridge effect, use two colors
+        wxColour lightColour = topColour.ChangeLightness(150);
+        wxColour darkColour = topColour.ChangeLightness(50);
+
+        if (m_tabBorderStyle == TabBorderStyle::RIDGE) {
+            // Swap colors for ridge effect
+            wxColour temp = lightColour;
+            lightColour = darkColour;
+            darkColour = temp;
+        }
+
+        if (m_tabBorderTop > 0 && isActive) {
+            gc->SetPen(wxPen(darkColour, m_tabBorderTop / 2));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetRight(), tabRect.GetTop());
+            gc->SetPen(wxPen(lightColour, m_tabBorderTop / 2));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop / 2, tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop / 2);
+        }
+        if (m_tabBorderLeft > 0) {
+            gc->SetPen(wxPen(darkColour, m_tabBorderLeft / 2));
+            gc->StrokeLine(tabRect.GetLeft(), tabRect.GetTop(), tabRect.GetLeft(), tabRect.GetBottom());
+            gc->SetPen(wxPen(lightColour, m_tabBorderLeft / 2));
+            gc->StrokeLine(tabRect.GetLeft() + m_tabBorderLeft / 2, tabRect.GetTop(), tabRect.GetLeft() + m_tabBorderLeft / 2, tabRect.GetBottom());
+        }
+    }
+    break;
+
+    case TabBorderStyle::ROUNDED:
+    {
+        gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+        gc->SetPen(wxPen(topColour, wxMax(wxMax(m_tabBorderTop, m_tabBorderBottom),
+            wxMax(m_tabBorderLeft, m_tabBorderRight))));
+        wxGraphicsPath path = gc->CreatePath();
+        path.AddRoundedRectangle(tabRect.x, tabRect.y, tabRect.width, tabRect.height, m_tabCornerRadius);
+        gc->StrokePath(path);
+    }
+    break;
+    }
+
     delete gc;
 }

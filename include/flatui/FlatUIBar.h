@@ -1,6 +1,14 @@
 #ifndef FLATUIBAR_H
 #define FLATUIBAR_H
 
+#include "flatui/FlatUIPage.h"
+#include "flatui/FlatUIPanel.h"
+#include "flatui/FlatUIHomeSpace.h"
+#include "flatui/FlatUIFunctionSpace.h"
+#include "flatui/FlatUIProfileSpace.h"
+#include "flatui/FlatUISystemButtons.h"
+#include "flatui/FlatUIEventManager.h"
+#include "flatui/FlatUISpacerControl.h"
 #include <wx/wx.h>
 #include <wx/vector.h>
 #include <string> // Keep if std::string is used, though not visible here
@@ -197,6 +205,11 @@ private:
 
     // GetTopLevelFrame might now be primarily used by m_systemButtons internally
     // wxFrame* GetTopLevelFrame() const; 
+
+    void DrawBackground(wxDC& dc);
+    void DrawBarSeparator(wxDC& dc);
+    void PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset);
+    void HandleTabAreaClick(const wxPoint& pos);
 };
 
 #endif // FLATUIBAR_H 

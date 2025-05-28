@@ -7,6 +7,7 @@
 #include <wx/artprov.h>
 #include <wx/sizer.h>
 #include <wx/settings.h>
+#include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 
 #include "config/ConstantsConfig.h"
 #define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
@@ -21,9 +22,12 @@ FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame)
     : wxPopupTransientWindow(parent, wxBORDER_NONE),
       m_eventSinkFrame(eventSinkFrame)
 {
+    // Enable paint background style for auto-buffered drawing
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
 
     m_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_panel->SetBackgroundStyle(wxBG_STYLE_PAINT);
     m_panel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
 
     m_itemSizer = new wxBoxSizer(wxVERTICAL);
@@ -171,7 +175,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
 
 void FlatUIHomeMenu::OnPaint(wxPaintEvent& event)
 {
-    wxPaintDC dc(m_panel);
+    wxAutoBufferedPaintDC dc(m_panel);
     int w, h;
     m_panel->GetSize(&w, &h);
     dc.SetPen(wxPen(FLATUI_BAR_TAB_BORDER_COLOUR, 1));

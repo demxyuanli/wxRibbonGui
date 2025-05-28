@@ -67,15 +67,3 @@ void FlatUIFunctionSpace::OnSize(wxSizeEvent& evt)
     }
     evt.Skip(); // Allow other handlers for this event if any
 }
-
-/* Uncomment if custom painting for FlatUIFunctionSpace itself is needed (e.g., a border or background)
-void FlatUIFunctionSpace::OnPaint(wxPaintEvent& evt)
-{
-    wxPaintDC dc(this);
-    // wxSize size = GetClientSize();
-    // dc.SetBackground(*wxYELLOW_BRUSH); // Example: Set a background color
-    // dc.Clear();
-    // dc.SetPen(*wxBLACK_PEN);
-    // dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight()); // Example: Draw a border
-}
-*/ 

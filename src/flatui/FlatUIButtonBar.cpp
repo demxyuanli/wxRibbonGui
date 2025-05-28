@@ -103,10 +103,6 @@ void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& b
 
     Thaw();
     Refresh();
-
-    LOG_INF(wxString::Format("Added button \"%s\" to ButtonBar. BestSize: %dx%d",
-        label, GetBestSize().GetWidth(), GetBestSize().GetHeight()).ToStdString(),
-        "FlatUIButtonBar");
 }
 
 int FlatUIButtonBar::CalculateButtonWidth(const ButtonInfo& button, wxDC& dc) const
@@ -358,10 +354,6 @@ void FlatUIButtonBar::DrawButtonSeparator(wxDC& dc, const ButtonInfo& button, co
     int botY = rect.GetBottom() - m_separatorMargin;
     dc.SetPen(wxPen(m_buttonBorderColour, m_separatorWidth));
     dc.DrawLine(sepX, topY, sepX, botY);
-
-    LOG_INF(wxString::Format("Drawing separator at x=%d, y=%d to %d for button \"%s\"",
-        sepX, topY, botY, button.label).ToStdString(),
-        "FlatUIButtonBar");
 }
 
 void FlatUIButtonBar::DrawButtonBackground(wxDC& dc, const wxRect& rect, bool isHovered, bool isPressed)
@@ -466,13 +458,6 @@ void FlatUIButtonBar::OnMouseDown(wxMouseEvent& evt)
                 menuPos.y += FLATUI_BUTTONBAR_MENU_VERTICAL_OFFSET;
                 // Log client and screen coordinates
                 wxPoint screenMenuPos = ClientToScreen(menuPos);
-                LOG_INF(wxString::Format("Button rect: x=%d, y=%d, w=%d, h=%d",
-                    button.rect.GetX(), button.rect.GetY(),
-                    button.rect.GetWidth(), button.rect.GetHeight()).ToStdString(),
-                    "FlatUIButtonBar");
-                LOG_INF(wxString::Format("Client MenuPos: %d, %d; Screen MenuPos: %d, %d for button \"%s\"",
-                    menuPos.x, menuPos.y, screenMenuPos.x, screenMenuPos.y, button.label).ToStdString(),
-                    "FlatUIButtonBar");
                 PopupMenu(button.menu, menuPos);
             }
             else {

@@ -121,7 +121,7 @@ std::string ConfigManager::getString(const std::string& section, const std::stri
     wxString value;
     fileConfig->SetPath("/" + wxString(section));
     bool success = fileConfig->Read(wxString(key), &value, wxString(defaultValue));
-    LOG_INF("Reading config [" + section + "][" + key + "]: " + (success ? value.ToStdString() : "default: " + defaultValue), "ConfigManager");
+    //LOG_INF("Reading config [" + section + "][" + key + "]: " + (success ? value.ToStdString() : "default: " + defaultValue), "ConfigManager");
     return value.ToStdString();
 }
 

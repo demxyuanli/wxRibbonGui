@@ -29,24 +29,73 @@ public:
     void bindSystemButtonsEvents(FlatUISystemButtons* systemButtons);
     void bindFunctionSpaceEvents(FlatUIFunctionSpace* functionSpace);
     void bindProfileSpaceEvents(FlatUIProfileSpace* profileSpace);
-    void bindGalleryEvents(FlatUIGallery* gallery);
-    
-    template<typename T>
-    void bindCustomEvents(T* customControl, void (T::*paintHandler)(wxPaintEvent&), 
-                          void (T::*mouseDownHandler)(wxMouseEvent&) = nullptr,
-                          void (T::*mouseMoveHandler)(wxMouseEvent&) = nullptr,
-                          void (T::*mouseLeaveHandler)(wxMouseEvent&) = nullptr);
-                          
-    template<typename T, typename EventType>
-    void bindEvent(T* control, wxEventType eventType, void (T::*handler)(EventType&), int id = wxID_ANY);
-    
     void bindSizeEvents(wxWindow* control, std::function<void(wxSizeEvent&)> handler);
-    
+    void bindGalleryEvents(FlatUIGallery* gallery);   
+
     template<typename T>
-    void bindButtonEvent(T* control, void (T::*handler)(wxCommandEvent&), int id = wxID_ANY);
-    
+    void bindCustomEvents(T* customControl, void (T::* paintHandler)(wxPaintEvent&),
+        void (T::* mouseDownHandler)(wxMouseEvent&),
+        void (T::* mouseMoveHandler)(wxMouseEvent&),
+        void (T::* mouseLeaveHandler)(wxMouseEvent&))
+    {
+        if (!customControl) return;
+
+        if (paintHandler) {
+            customControl->Bind(wxEVT_PAINT, paintHandler, customControl);
+        }
+
+        if (mouseDownHandler) {
+            customControl->Bind(wxEVT_LEFT_DOWN, mouseDownHandler, customControl);
+        }
+
+        if (mouseMoveHandler) {
+            customControl->Bind(wxEVT_MOTION, mouseMoveHandler, customControl);
+        }
+
+        if (mouseLeaveHandler) {
+            customControl->Bind(wxEVT_LEAVE_WINDOW, mouseLeaveHandler, customControl);
+        }
+    }
+
+    template<typename T, typename EventType>
+    void bindEvent(T* control, wxEventType eventType, void (T::* handler)(EventType&), int id)
+    {
+        if (!control || !handler) return;
+
+        if (id == wxID_ANY) {
+            control->Bind(eventType, handler, control);
+        }
+        else {
+            control->Bind(eventType, handler, control, id);
+        }
+    }
+
     template<typename T>
-    void bindMenuEvent(T* control, void (T::*handler)(wxCommandEvent&), int id = wxID_ANY);
+    void bindButtonEvent(T* control, void (T::* handler)(wxCommandEvent&), int id)
+    {
+        if (!control || !handler) return;
+
+        if (id == wxID_ANY) {
+            control->Bind(wxEVT_BUTTON, handler, control);
+        }
+        else {
+            control->Bind(wxEVT_BUTTON, handler, control, id);
+        }
+    }
+
+    template<typename T>
+    void bindMenuEvent(T* control, void (T::* handler)(wxCommandEvent&), int id)
+    {
+        if (!control || !handler) return;
+
+        if (id == wxID_ANY) {
+            control->Bind(wxEVT_MENU, handler, control);
+        }
+        else {
+            control->Bind(wxEVT_MENU, handler, control, id);
+        }
+    }
+
 
 private:
     FlatUIEventManager() {}
@@ -55,84 +104,3 @@ private:
 };
 
 #endif // FLATUIEVENTMANAGER_H 
-
-template<typename T>
-void bindButtonEvent(T* control, void (T::*handler)(wxCommandEvent&), int id = wxID_ANY) {
-    if (!control || !handler) return;
-    if (id == wxID_ANY) {
-        control->Bind(wxEVT_BUTTON, handler, control);
-    } else {
-        control->Bind(wxEVT_BUTTON, handler, control, id);
-    }
-}
-
-template<typename T>
-void bindMenuEvent(T* control, void (T::*handler)(wxCommandEvent&), int id = wxID_ANY) {
-    if (!control || !handler) return;
-    if (id == wxID_ANY) {
-        control->Bind(wxEVT_MENU, handler, control);
-    } else {
-        control->Bind(wxEVT_MENU, handler, control, id);
-    }
-}
-
-template<typename T>
-void FlatUIEventManager::bindCustomEvents(T* customControl, void (T::*paintHandler)(wxPaintEvent&), 
-                                          void (T::*mouseDownHandler)(wxMouseEvent&),
-                                          void (T::*mouseMoveHandler)(wxMouseEvent&),
-                                          void (T::*mouseLeaveHandler)(wxMouseEvent&))
-{
-    if (!customControl) return;
-    
-    if (paintHandler) {
-        customControl->Bind(wxEVT_PAINT, paintHandler, customControl);
-    }
-    
-    if (mouseDownHandler) {
-        customControl->Bind(wxEVT_LEFT_DOWN, mouseDownHandler, customControl);
-    }
-    
-    if (mouseMoveHandler) {
-        customControl->Bind(wxEVT_MOTION, mouseMoveHandler, customControl);
-    }
-    
-    if (mouseLeaveHandler) {
-        customControl->Bind(wxEVT_LEAVE_WINDOW, mouseLeaveHandler, customControl);
-    }
-}
-
-template<typename T, typename EventType>
-void FlatUIEventManager::bindEvent(T* control, wxEventType eventType, void (T::*handler)(EventType&), int id)
-{
-    if (!control || !handler) return;
-    
-    if (id == wxID_ANY) {
-        control->Bind(eventType, handler, control);
-    } else {
-        control->Bind(eventType, handler, control, id);
-    }
-}
-
-template<typename T>
-void FlatUIEventManager::bindButtonEvent(T* control, void (T::*handler)(wxCommandEvent&), int id)
-{
-    if (!control || !handler) return;
-    
-    if (id == wxID_ANY) {
-        control->Bind(wxEVT_BUTTON, handler, control);
-    } else {
-        control->Bind(wxEVT_BUTTON, handler, control, id);
-    }
-}
-
-template<typename T>
-void FlatUIEventManager::bindMenuEvent(T* control, void (T::*handler)(wxCommandEvent&), int id)
-{
-    if (!control || !handler) return;
-    
-    if (id == wxID_ANY) {
-        control->Bind(wxEVT_MENU, handler, control);
-    } else {
-        control->Bind(wxEVT_MENU, handler, control, id);
-    }
-} 
