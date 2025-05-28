@@ -5,6 +5,9 @@
 #include "flatui/FlatUIBar.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
+#include "config/ConstantsConfig.h"
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
@@ -14,7 +17,9 @@ FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     SetFont(GetFlatUIDefaultFont());
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    wxColour bg = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    SetBackgroundColour(bg);
+    m_backgroundColour = bg;
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -50,9 +55,9 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
 
     dc.Clear();
 
-    dc.SetPen(wxPen(FLATUI_PANEL_BORDER_COLOUR, 1));
+    dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour", FLATUI_PANEL_BORDER_COLOUR), CFG_INT("PanelBorderWidth", 1)));
 
-    dc.DrawLine(2, 0, size.GetWidth()-2, 0);
+    //dc.DrawLine(2, 0, size.GetWidth()-2, 0);
 
     dc.DrawLine(2, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
 

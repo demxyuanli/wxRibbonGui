@@ -60,10 +60,6 @@ private:
     
     void SendItemCommand(int id);
 
-    static const int ITEM_HEIGHT = 25; // Example item height
-    static const int SEPARATOR_HEIGHT = 5;
-    static const int MENU_WIDTH = 240;
-
 wxDECLARE_EVENT_TABLE();
 };
 

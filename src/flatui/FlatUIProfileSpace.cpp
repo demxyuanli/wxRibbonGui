@@ -1,9 +1,12 @@
 #include "flatui/FlatUIProfileSpace.h"
+#include "flatui/FlatUIConstants.h"
+#include "config/ConstantsConfig.h"
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUIProfileSpace::FlatUIProfileSpace(wxWindow* parent, wxWindowID id)
     : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE),
       m_childControl(nullptr),
-      m_spaceWidth(DEFAULT_WIDTH)
+      m_spaceWidth(CFG_INT("ProfileSpaceDefaulWidth", PROFILESPACE_DEFAULT_WIDTH))
 {
     SetMinSize(wxSize(m_spaceWidth, wxDefaultCoord));
     Bind(wxEVT_SIZE, &FlatUIProfileSpace::OnSize, this);

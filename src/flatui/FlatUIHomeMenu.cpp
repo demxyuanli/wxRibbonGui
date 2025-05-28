@@ -8,6 +8,10 @@
 #include <wx/sizer.h>
 #include <wx/settings.h>
 
+#include "config/ConstantsConfig.h"
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+
 wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupTransientWindow)
     EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
     EVT_KILL_FOCUS(FlatUIHomeMenu::OnKillFocus)
@@ -17,10 +21,10 @@ FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame)
     : wxPopupTransientWindow(parent, wxBORDER_NONE),
       m_eventSinkFrame(eventSinkFrame)
 {
-    SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+    SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
 
     m_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_panel->SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+    m_panel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
 
     m_itemSizer = new wxBoxSizer(wxVERTICAL);
     m_panel->SetSizer(m_itemSizer);
@@ -56,9 +60,9 @@ void FlatUIHomeMenu::BuildMenuLayout()
 
     for (const auto& itemInfo : m_menuItems) {
         if (itemInfo.isSeparator) {
-            wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(MENU_WIDTH -10, 1));
-            separator->SetBackgroundColour(FLATUI_BAR_TAB_BORDER_COLOUR);
-            m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (SEPARATOR_HEIGHT-1)/2 );
+            wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH) - 10, 1));
+            separator->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR));
+            m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight", HOMEMENU_SEPARATOR_HEIGHT)-1)/2 );
         } else {
             wxPanel* itemPanel = new wxPanel(m_panel, wxID_ANY);
             itemPanel->SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
@@ -75,7 +79,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
             itemPanel->SetSizer(hsizer);
 
             m_itemSizer->Add(itemPanel, 0, wxEXPAND | wxALL, 2);
-            itemPanel->SetMinSize(wxSize(MENU_WIDTH, ITEM_HEIGHT));
+            itemPanel->SetMinSize(wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH), CFG_INT("HomeMenuHeight", HOMEMENU_HEIGHT)));
 
             itemPanel->Bind(wxEVT_LEFT_DOWN, [this, item_id = itemInfo.id](wxMouseEvent& event) {
                 if (item_id == wxID_EXIT) {
@@ -102,10 +106,10 @@ void FlatUIHomeMenu::BuildMenuLayout()
 
     if (hasDynamicItems) {
         // Add a separator if there were dynamic items and we're about to add fixed ones
-        wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(MENU_WIDTH - 10, 1));
-        separator->SetBackgroundColour(FLATUI_BAR_TAB_BORDER_COLOUR);
+        wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH) - 10, 1));
+        separator->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR));
         // Add a bit more vertical margin for this separator
-        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, SEPARATOR_HEIGHT); 
+        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, CFG_INT("HomeMenuSeparatorHeight", HOMEMENU_SEPARATOR_HEIGHT));
     }
 
     m_itemSizer->AddStretchSpacer(1); // This will push subsequent items to the bottom
@@ -114,7 +118,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
     auto createAndAddFixedMenuItemPanel = 
         [this](const wxString& text, int id, const wxBitmap& icon) {
         wxPanel* itemPanel = new wxPanel(m_panel, wxID_ANY);
-        itemPanel->SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+        itemPanel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
         wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
         
         if(icon.IsOk()){
@@ -129,7 +133,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
         itemPanel->SetSizer(hsizer);
 
         m_itemSizer->Add(itemPanel, 0, wxEXPAND | wxALL, 2);
-        itemPanel->SetMinSize(wxSize(MENU_WIDTH, ITEM_HEIGHT));
+        itemPanel->SetMinSize(wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH), CFG_INT("HomeMenuHeight", HOMEMENU_HEIGHT)));
 
         itemPanel->Bind(wxEVT_LEFT_DOWN, [this, item_id = id](wxMouseEvent& event) {
             SendItemCommand(item_id);
@@ -146,9 +150,9 @@ void FlatUIHomeMenu::BuildMenuLayout()
     };
     
     auto addFixedSeparatorToSizer = [&]() {
-        wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(MENU_WIDTH -10, 1));
-        separator->SetBackgroundColour(FLATUI_BAR_TAB_BORDER_COLOUR);
-        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (SEPARATOR_HEIGHT-1)/2 );
+        wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH) - 10, 1));
+        separator->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR));
+        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight", HOMEMENU_SEPARATOR_HEIGHT)-1)/2 );
     };
 
     // Add fixed bottom items
@@ -195,7 +199,7 @@ void FlatUIHomeMenu::SendItemCommand(int id)
 void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight)
 {
     SetPosition(pos);
-    SetSize(wxSize(MENU_WIDTH, contentHeight));
+    SetSize(wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH), contentHeight));
     wxPopupWindow::Show(); // Using Show as Popup() caused issues
     
     // Try to set focus to the popup window itself.

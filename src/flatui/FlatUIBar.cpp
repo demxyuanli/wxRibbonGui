@@ -16,19 +16,22 @@
 #include <wx/dcclient.h>     // For wxClientDC, wxPaintDC
 #include <logger/Logger.h>     // For wxGraphicsContext
 #include "flatui/FlatUIConstants.h" // Include for font constants
+#include "config/ConstantsConfig.h"  
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 // Height of the entire FlatUIBar strip
 
 // Static method implementation
 int FlatUIBar::GetBarHeight() 
 {
-    return FLATUI_BAR_RENDER_HEIGHT;
+    return CFG_INT("BarRenderHeight", FLATUI_BAR_RENDER_HEIGHT);
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
     : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
-      m_activePage(0), 
-      m_homeSpace(nullptr), 
+      m_activePage(0),
+      m_homeSpace(nullptr),
       m_functionSpace(nullptr),
       m_profileSpace(nullptr),
       m_systemButtons(nullptr),
@@ -40,18 +43,19 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
       m_tabBorderBottom(0),
       m_tabBorderLeft(0),
       m_tabBorderRight(0),
-      m_tabCornerRadius(0),   // Default corner radius
-      m_tabBorderColour(FLATUI_BAR_TAB_BORDER_COLOUR),
-      m_tabBorderTopColour(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR),
-      m_tabBorderBottomColour(FLATUI_BAR_TAB_BORDER_COLOUR),
-      m_tabBorderLeftColour(FLATUI_BAR_TAB_BORDER_COLOUR),
-      m_tabBorderRightColour(FLATUI_BAR_TAB_BORDER_COLOUR),
-      m_activeTabBgColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR),
-      m_activeTabTextColour(FLATUI_BAR_ACTIVE_TEXT_COLOUR),
-      m_inactiveTabTextColour(FLATUI_BAR_INACTIVE_TEXT_COLOUR),
-      m_barTopMargin(2)  // Default top margin of 5 pixels
+      m_tabCornerRadius(0)   // Border colours and margins will be set in constructor body
 {
     SetFont(GetFlatUIDefaultFont());
+    auto& cfg = ConstantsConfig::getInstance();
+    m_tabBorderColour       = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderTopColour    = CFG_COLOUR("BarActiveTabTopBorderColour", FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR);
+    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderLeftColour   = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_tabBorderRightColour  = CFG_COLOUR("BarTabBorderColour",       FLATUI_BAR_TAB_BORDER_COLOUR);
+    m_activeTabBgColour     = CFG_COLOUR("ActBarBackgroundColour",   FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+    m_activeTabTextColour   = CFG_COLOUR("BarActiveTextColour",      FLATUI_BAR_ACTIVE_TEXT_COLOUR);
+    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour",    FLATUI_BAR_INACTIVE_TEXT_COLOUR);
+    m_barTopMargin          = CFG_INT("BarTopMargin",               FLATUI_BAR_TOP_MARGIN);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -304,17 +308,20 @@ void FlatUIBar::SetProfileSpaceControl(wxWindow* profControl, int width)
 // CalculateTabsWidth remains for direct tab drawing
 int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
 {
+    int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
+    int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
     int totalWidth = 0;
     if (m_pages.empty()) return 0; 
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
         if (!m_pages[i]) continue;
-        wxString label = m_pages[i]->GetLabel();
+        FlatUIPage* page = m_pages[i];
+        wxString label = page->GetLabel();
         wxSize labelSize = dc.GetTextExtent(label);
-        totalWidth += labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2;
+        totalWidth += labelSize.GetWidth() + tabPadding * 2;
         if (i < m_pages.size() - 1)
         {
-            totalWidth += FLATUI_BAR_TAB_SPACING;
+            totalWidth += tabSpacing;
         }
     }
     return totalWidth;
@@ -328,7 +335,9 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
 
     wxClientDC dc(this); 
-    int currentX = FLATUI_BAR_BAR_PADDING;
+    int barPadding = CFG_INT("BarBarPadding", FLATUI_BAR_BAR_PADDING);
+    int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
+    int currentX = barPadding;
     int barStripHeight = GetBarHeight();
     int elementY = m_barTopMargin;  // Use top margin instead of 0
 
@@ -342,7 +351,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
    
     if (homeActualWidth > 0) {
         m_homeSpace->Show(true);
-        currentX += homeActualWidth + FLATUI_BAR_ELEMENT_SPACING;
+        currentX += homeActualWidth + elemSpacing;
     } else {
         m_homeSpace->Show(false);
     }
@@ -352,9 +361,11 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         sysButtonsWidth = m_systemButtons->GetMyRequiredWidth();
     }
 
-    int rightBoundary = barClientSz.GetWidth() - FLATUI_BAR_BAR_PADDING;
+    int rightBoundary = barClientSz.GetWidth() - barPadding;
     if (sysButtonsWidth > 0) {
-        rightBoundary -= (sysButtonsWidth + FLATUI_BAR_ELEMENT_SPACING);
+        rightBoundary -= (sysButtonsWidth + elemSpacing);
+    } else {
+        m_systemButtons->Show(false);
     }
 
     bool tabFuncSpacerVisible = m_tabFunctionSpacer && m_tabFunctionSpacer->IsShown();
@@ -380,7 +391,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         
         if (tabsNeededWidth > 0) {
             m_tabAreaRect = wxRect(currentX, elementY, tabsNeededWidth, barStripHeight);
-            currentX += tabsNeededWidth + FLATUI_BAR_ELEMENT_SPACING;
+            currentX += tabsNeededWidth + elemSpacing;
         } else {
             m_tabAreaRect = wxRect();
         }
@@ -396,7 +407,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 if (funcProfileSpacerVisible && !funcProfileSpacerAutoExpand) {
                     reservedWidthAfterTabFunc += m_functionProfileSpacer->GetSpacerWidth();
                 } else if (!funcProfileSpacerVisible) {
-                    reservedWidthAfterTabFunc += FLATUI_BAR_ELEMENT_SPACING;
+                    reservedWidthAfterTabFunc += elemSpacing;
                 }
             }
 
@@ -426,7 +437,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                         currentX += m_functionProfileSpacer->GetSpacerWidth();
                     }
                 } else {
-                    currentX += FLATUI_BAR_ELEMENT_SPACING;
+                    currentX += elemSpacing;
                 }
                 m_profileSpace->SetPosition(wxPoint(currentX, elementY));
                 m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
@@ -441,7 +452,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             } else {
-                currentX += FLATUI_BAR_ELEMENT_SPACING;
+                currentX += elemSpacing;
             }
             
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
@@ -468,7 +479,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 if (tabFuncSpacerVisible) {
                     reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
                 } else {
-                    reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                    reservedWidth += elemSpacing;
                 }
             }
             
@@ -478,13 +489,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                     if (funcProfileSpacerVisible) {
                         reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
                     } else {
-                        reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                        reservedWidth += elemSpacing;
                     }
                 } else {
                     if (tabFuncSpacerVisible) {
                         reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
                     } else {
-                        reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                        reservedWidth += elemSpacing;
             }
         }
     }
@@ -511,7 +522,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             } else if (funcSpaceIsEffectivelyVisible) {
-                currentX += FLATUI_BAR_ELEMENT_SPACING;
+                currentX += elemSpacing;
             }
             
             if (funcSpaceIsEffectivelyVisible) {
@@ -528,13 +539,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_functionProfileSpacer->GetSpacerWidth();
             } else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-                currentX += FLATUI_BAR_ELEMENT_SPACING;
+                currentX += elemSpacing;
             } else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
                 m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             } else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-                currentX += FLATUI_BAR_ELEMENT_SPACING;
+                currentX += elemSpacing;
             }
             
             if (profileSpaceIsEffectivelyVisible) {
@@ -558,7 +569,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             if (tabFuncSpacerVisible) {
                 reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
             } else {
-                reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                reservedWidth += elemSpacing;
             }
         }
         
@@ -568,13 +579,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                 if (funcProfileSpacerVisible) {
                     reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
                 } else {
-                    reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                    reservedWidth += elemSpacing;
                 }
             } else {
                 if (tabFuncSpacerVisible) {
                     reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
                 } else {
-                    reservedWidth += FLATUI_BAR_ELEMENT_SPACING;
+                    reservedWidth += elemSpacing;
                 }
             }
         }
@@ -601,7 +612,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
         } else if (funcSpaceIsEffectivelyVisible) {
-            currentX += FLATUI_BAR_ELEMENT_SPACING;
+            currentX += elemSpacing;
         }
         
         if (funcSpaceIsEffectivelyVisible) {
@@ -618,13 +629,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_functionProfileSpacer->GetSpacerWidth();
         } else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += FLATUI_BAR_ELEMENT_SPACING;
+            currentX += elemSpacing;
         } else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
             m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
         } else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += FLATUI_BAR_ELEMENT_SPACING;
+            currentX += elemSpacing;
         }
         
         if (profileSpaceIsEffectivelyVisible) {
@@ -637,7 +648,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
     if (sysButtonsWidth > 0) {
-         m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - FLATUI_BAR_BAR_PADDING - sysButtonsWidth, elementY));
+         m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - barPadding - sysButtonsWidth, elementY));
         m_systemButtons->SetSize(sysButtonsWidth, barStripHeight);
         m_systemButtons->Show(true);
     } else {
@@ -685,13 +696,17 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
     // Ribbon style: Define specific colors
     // const wxColour barBackgroundColor(220, 225, 230); // Now from FlatUIConstants.h
 
-    dc.SetBrush(FLATUI_BAR_BACKGROUND_COLOUR);
+    dc.SetBrush(CFG_COLOUR("BarBackgroundColour", FLATUI_BAR_BACKGROUND_COLOUR));
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.Clear(); // Clear with the new bar background color
     // It's often good to draw a rectangle for the bar area if borders are desired,
     // but for a flatter look, Clear() might be sufficient if child controls define edges.
     // For now, we'll rely on PaintTabs and child controls to define the visual structure on top of this background.
     // dc.DrawRectangle(0, 0, clientSize.GetWidth(), clientSize.GetHeight()); // Optional: redraw rect if a border for the whole bar is needed
+
+    dc.SetPen(wxPen(*wxBLACK,1));
+    wxSize size = GetSize();
+    dc.DrawLine(0, size.GetHeight() - 2, size.GetWidth(), size.GetHeight() - 2);
 
     if (!m_pages.empty() && m_tabAreaRect.GetWidth() > 0) {
         wxDCClipper clip(dc, m_tabAreaRect);
@@ -703,6 +718,8 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
 void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffsetInOut)
 {
     int tabYPos = m_barTopMargin;  // Use top margin
+    int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
+    int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
     int barEffectiveHeight = GetBarHeight(); 
     int initialXOffset = currentXOffsetInOut;
 
@@ -715,7 +732,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
         FlatUIPage* page = m_pages[i];
         wxString label = page->GetLabel();
         wxSize labelSize = dc.GetTextExtent(label);
-        int tabWidth = labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2; 
+        int tabWidth = labelSize.GetWidth() + tabPadding * 2;
 
         if ((currentXOffsetInOut + tabWidth) > (initialXOffset + availableTotalWidth) && i > 0) { 
             break; 
@@ -817,8 +834,8 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
             dc.SetTextForeground(m_inactiveTabTextColour); 
         }
         
-        dc.DrawText(label, currentXOffsetInOut + FLATUI_BAR_TAB_PADDING, tabYPos + (barEffectiveHeight - labelSize.GetHeight()) / 2); 
-        currentXOffsetInOut += tabWidth + FLATUI_BAR_TAB_SPACING; 
+        dc.DrawText(label, currentXOffsetInOut + tabPadding, tabYPos + (barEffectiveHeight - labelSize.GetHeight()) / 2); 
+        currentXOffsetInOut += tabWidth + tabSpacing; 
     }
 }
 

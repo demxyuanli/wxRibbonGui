@@ -41,8 +41,7 @@ private:
     void HandleSystemButtonAction(const wxPoint& pos, wxMouseEvent& evt);
     void PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose = false, bool isMaximized = false);
 
-    static const int DEFAULT_BUTTON_WIDTH = 40;
-    static const int DEFAULT_BUTTON_SPACING = 0;
+
 };
 
 #endif // FLATUI_SYSTEM_BUTTONS_H 

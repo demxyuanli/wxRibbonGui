@@ -126,6 +126,12 @@ private:
     int m_buttonHorizontalPadding;
     int m_buttonVerticalPadding;
     int m_barBorderWidth;
+    int m_dropdownArrowWidth;
+    int m_dropdownArrowHeight;
+    int m_separatorWidth;
+    int m_separatorPadding;
+    int m_separatorMargin;
+    int m_barHorizontalMargin;
     bool m_hoverEffectsEnabled;
     int m_hoveredButtonIndex = -1;
 

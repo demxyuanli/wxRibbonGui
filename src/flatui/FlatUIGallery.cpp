@@ -5,6 +5,9 @@
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
+#include "config/ConstantsConfig.h"  
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
@@ -15,11 +18,8 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     m_itemHoverBgColour(wxColour(240, 240, 240)),
     m_itemSelectedBgColour(wxColour(230, 230, 230)),
     m_itemBorderColour(wxColour(200, 200, 200)),
-    m_galleryBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-    m_galleryBorderColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
     m_itemBorderWidth(0),
     m_itemCornerRadius(0),
-    m_itemSpacing(FLATUI_GALLERY_ITEM_SPACING),
     m_itemPadding(2),
     m_galleryBorderWidth(0),
     m_selectedItem(-1),
@@ -31,7 +31,15 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
 {
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetMinSize(wxSize(FLATUI_GALLERY_TARGET_HEIGHT * 2, FLATUI_GALLERY_TARGET_HEIGHT));
+
+    auto& cfg = ConstantsConfig::getInstance();
+    m_galleryBgColour     = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_galleryBorderColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_itemSpacing         = CFG_INT("GalleryItemSpacing", FLATUI_GALLERY_ITEM_SPACING);
+    int targetH           = CFG_INT("GalleryTargetHeight", FLATUI_GALLERY_TARGET_HEIGHT);
+    int horizMargin       = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
+    SetMinSize(wxSize(targetH * 2, targetH));
+
     Bind(wxEVT_PAINT, &FlatUIGallery::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUIGallery::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUIGallery::OnMouseMove, this);
@@ -81,37 +89,27 @@ void FlatUIGallery::AddItem(const wxBitmap& bitmap, int id)
 
 wxSize FlatUIGallery::DoGetBestSize() const
 {
-    int totalWidth = FLATUI_GALLERY_HORIZONTAL_MARGIN; // Start with left margin
-    int itemCount = 0;
+    wxSize size;
+    int horizMargin = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
+    int totalWidth = horizMargin;
     bool hasItems = false;
-
+    int itemCount = 0;
     for (const auto& item : m_items) {
         if (item.bitmap.IsOk()) {
             hasItems = true;
-            int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding; // Consider image size and padding
+            int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding;
             totalWidth += itemWidth;
-            if (itemCount > 0) {
-                totalWidth += m_itemSpacing; // Add spacing between items
-            }
+            if (itemCount > 0) totalWidth += m_itemSpacing;
             itemCount++;
         }
     }
+    if (hasItems) totalWidth += horizMargin;
+    else totalWidth = GetMinSize().GetWidth() > 0 ? GetMinSize().GetWidth() : 100;
 
-    if (hasItems) {
-        totalWidth += FLATUI_GALLERY_HORIZONTAL_MARGIN; // Add right margin if there were items
-    } else {
-        totalWidth = GetMinSize().GetWidth();
-        if (totalWidth <= 0) {
-            totalWidth = 100; // Default width if no items
-        }
-    }
+    if (m_hasDropdown) totalWidth += m_dropdownWidth;
 
-    // Consider dropdown width if applicable
-    if (m_hasDropdown) {
-        totalWidth += m_dropdownWidth;
-    }
-
-    return wxSize(totalWidth, FLATUI_GALLERY_TARGET_HEIGHT);
+    int targetH = CFG_INT("GalleryTargetHeight", FLATUI_GALLERY_TARGET_HEIGHT);
+    return wxSize(totalWidth, targetH);
 }
 
 void FlatUIGallery::RecalculateLayout()
@@ -153,7 +151,7 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
         return;
     }
 
-    int x = FLATUI_GALLERY_HORIZONTAL_MARGIN;
+    int x = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
     int y = (size.GetHeight() - FLATUI_BUTTONBAR_ICON_SIZE - 2 * m_itemPadding) / 2;
 
     for (size_t i = 0; i < m_items.size(); ++i) {
@@ -400,15 +398,6 @@ void FlatUIGallery::SetItemCornerRadius(int radius)
 {
     m_itemCornerRadius = radius;
     Refresh();
-}
-
-void FlatUIGallery::SetItemSpacing(int spacing)
-{
-    if (m_itemSpacing != spacing) {
-        m_itemSpacing = spacing;
-        InvalidateBestSize();
-        RecalculateLayout();
-    }
 }
 
 void FlatUIGallery::SetItemPadding(int padding)

@@ -8,6 +8,9 @@
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
 #include <wx/event.h>
+#include "config/ConstantsConfig.h"  
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 enum {
     TIMER_RESIZE = wxID_HIGHEST + 1000,
@@ -18,25 +21,28 @@ FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientat
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_label(label),
     m_orientation(orientation),
-    m_bgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-    m_borderStyle(PanelBorderStyle::NONE),
-    m_borderColour(FLATUI_PANEL_BORDER_COLOUR),
     m_panelBorderTop(0),
     m_panelBorderBottom(0),
     m_panelBorderLeft(0),
     m_panelBorderRight(1),
-    m_headerStyle(PanelHeaderStyle::EMBEDDED),
-    m_headerColour(FLATUI_PANEL_HEADER_COLOUR),
-    m_headerTextColour(FLATUI_PANEL_HEADER_TEXT_COLOUR),
-    m_headerBorderTop(0),
-    m_headerBorderBottom(0),
-    m_headerBorderLeft(0),
-    m_headerBorderRight(0),
-    m_headerBorderColour(FLATUI_PANEL_BORDER_COLOUR),
+    m_borderStyle(PanelBorderStyle::NONE),
     m_resizeTimer(this, TIMER_RESIZE)
 {
     SetFont(GetFlatUIDefaultFont());
     SetDoubleBuffered(true);
+
+    auto& cfg = ConstantsConfig::getInstance();
+    m_bgColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_borderColour = CFG_COLOUR("PanelBorderColour", FLATUI_PANEL_BORDER_COLOUR);
+    m_headerColour = CFG_COLOUR("PanelHeaderColour", FLATUI_PANEL_HEADER_COLOUR);
+    m_headerTextColour = CFG_COLOUR("PanelHeaderTextColour", FLATUI_PANEL_HEADER_TEXT_COLOUR);
+    m_headerBorderColour = CFG_COLOUR("PanelBorderColour", FLATUI_PANEL_BORDER_COLOUR);
+
+    // int headerArea = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+    // int padVertical = CFG_INT("PanelInternalVerticalPadding", FLATUI_PANEL_INTERNAL_VERTICAL_PADDING);
+    // int targetHeight= CFG_INT("PanelTargetHeight", FLATUI_PANEL_TARGET_HEIGHT);
+
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -45,8 +51,6 @@ FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientat
         ::SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_COMPOSITED);
     }
 #endif
-
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     m_sizer = new wxBoxSizer(orientation);
     SetSizer(m_sizer);
@@ -116,36 +120,36 @@ void FlatUIPanel::ResizeChildControls(int width, int height)
         int sizerY = 0;
         int sizerWidth = width;
         int sizerHeight = height;
-        
+
         // Adjust for header placement
         switch (m_headerStyle) {
-            case PanelHeaderStyle::TOP:
-                sizerY = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                sizerHeight -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::LEFT:
-                sizerX = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                sizerWidth -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::BOTTOM_CENTERED:
-                sizerHeight -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::EMBEDDED:
-                // For embedded style, add top padding to avoid text overlap
-                if (!m_label.IsEmpty()) {
-                    const int embeddedHeaderHeight = 20; // Space for embedded text
-                    sizerY = embeddedHeaderHeight;
-                    sizerHeight -= embeddedHeaderHeight;
-                }
-                break;
-            case PanelHeaderStyle::NONE:
-                // No adjustment needed
-                break;
+        case PanelHeaderStyle::TOP:
+            sizerY = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            sizerHeight -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::LEFT:
+            sizerX = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            sizerWidth -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::BOTTOM_CENTERED:
+            sizerHeight -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::EMBEDDED:
+            // For embedded style, add top padding to avoid text overlap
+            if (!m_label.IsEmpty()) {
+                const int embeddedHeaderHeight = 20; // Space for embedded text
+                sizerY = embeddedHeaderHeight;
+                sizerHeight -= embeddedHeaderHeight;
+            }
+            break;
+        case PanelHeaderStyle::NONE:
+            // No adjustment needed
+            break;
         }
-        
+
         if (sizerWidth < 0) sizerWidth = 0;
         if (sizerHeight < 0) sizerHeight = 0;
-        
+
         m_sizer->SetDimension(sizerX, sizerY, sizerWidth, sizerHeight);
         Layout();
     }
@@ -169,16 +173,16 @@ void FlatUIPanel::RecalculateBestSize()
     int headerOffsetWidth = 0, headerOffsetHeight = 0;
 
     if (m_headerStyle == PanelHeaderStyle::TOP || m_headerStyle == PanelHeaderStyle::BOTTOM_CENTERED) {
-        headerOffsetHeight = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
+        headerOffsetHeight = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
     }
     else if (m_headerStyle == PanelHeaderStyle::LEFT) {
-        headerOffsetWidth = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
+        headerOffsetWidth = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
     }
 
     // Calculate actual width and height needed by children
     int childrenTotalWidth = 0;
     int childrenTotalHeight = 0;
-    int childControlCount = 0; 
+    int childControlCount = 0;
 
     if (m_buttonBars.size() + m_galleries.size() > 0) {
         for (auto buttonBar : m_buttonBars) {
@@ -188,9 +192,10 @@ void FlatUIPanel::RecalculateBestSize()
                 wxSize barSize = buttonBar->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     childrenTotalWidth += barSize.GetWidth();
-                    childControlCount++;  // 增加计数
+                    childControlCount++;
                     childrenTotalHeight = wxMax(childrenTotalHeight, barSize.GetHeight());
-                } else {
+                }
+                else {
                     childrenTotalWidth = wxMax(childrenTotalWidth, barSize.GetWidth());
                     childrenTotalHeight += barSize.GetHeight();
                 }
@@ -205,37 +210,41 @@ void FlatUIPanel::RecalculateBestSize()
                 wxSize gallerySize = gallery->GetBestSize();
                 if (m_orientation == wxHORIZONTAL) {
                     childrenTotalWidth += gallerySize.GetWidth();
-                    childControlCount++;  
+                    childControlCount++;
                     childrenTotalHeight = wxMax(childrenTotalHeight, gallerySize.GetHeight());
-                } else {
+                }
+                else {
                     childrenTotalWidth = wxMax(childrenTotalWidth, gallerySize.GetWidth());
                     childrenTotalHeight += gallerySize.GetHeight();
                 }
                 if (wasHidden) gallery->Hide();
             }
         }
-        
+
         if (m_orientation == wxHORIZONTAL && childControlCount > 1) {
-            childrenTotalWidth += (childControlCount - 1) * FLATUI_PANEL_MARGIN;
+            childrenTotalWidth += (childControlCount - 1) * CFG_INT("PanelMargin", FLATUI_PANEL_MARGIN);
         }
-    } else {
+    }
+    else {
         // Default minimum size if no children, to ensure panel is visible
         // Values based on original implicit empty panel size, adjust if needed
-        childrenTotalWidth = GetMinSize().GetWidth() > 0 ? GetMinSize().GetWidth() - FLATUI_PANEL_INTERNAL_PADDING_TOTAL - headerOffsetWidth : 20; 
+        childrenTotalWidth = GetMinSize().GetWidth() > 0
+            ? GetMinSize().GetWidth() - CFG_INT("PanelInternalPaddingTotal", FLATUI_PANEL_INTERNAL_PADDING_TOTAL) - headerOffsetWidth
+            : CFG_INT("PanelMargin", FLATUI_PANEL_MARGIN);
         // childrenTotalHeight calculation for empty panel needs to result in TARGET_PANEL_HEIGHT
         // This part is tricky if we want an empty panel to also be TARGET_PANEL_HEIGHT.
         // Let's assume childrenTotalHeight is 0 if no children, 
         // and TARGET_PANEL_HEIGHT will handle the overall panel height.
-        childrenTotalHeight = 0; 
+        childrenTotalHeight = 0;
     }
-    
+
     // Panel's best width is based on children content + padding + header
-    bestPanelSize.SetWidth(childrenTotalWidth + FLATUI_PANEL_INTERNAL_PADDING_TOTAL + headerOffsetWidth);
-    
+    bestPanelSize.SetWidth(childrenTotalWidth + CFG_INT("PanelInternalPaddingTotal", FLATUI_PANEL_INTERNAL_PADDING_TOTAL) + headerOffsetWidth);
+
     // Panel's best height should be based on actual content + header + padding
     // Use the larger of: calculated height or minimum target height
-    int calculatedHeight = childrenTotalHeight + headerOffsetHeight + FLATUI_PANEL_INTERNAL_VERTICAL_PADDING * 2;
-    bestPanelSize.SetHeight(wxMax(calculatedHeight, FLATUI_PANEL_TARGET_HEIGHT));
+    int calculatedHeight = childrenTotalHeight + headerOffsetHeight + CFG_INT("PanelInternalVerticalPadding", FLATUI_PANEL_INTERNAL_VERTICAL_PADDING) * 2;
+    bestPanelSize.SetHeight(wxMax(calculatedHeight, CFG_INT("PanelTargetHeight", FLATUI_PANEL_TARGET_HEIGHT)));
 
     SetMinSize(bestPanelSize);
     SetSize(bestPanelSize); // Keep this to enforce size, as in original
@@ -245,36 +254,36 @@ void FlatUIPanel::RecalculateBestSize()
         int sizerAreaY = 0;
         int sizerAreaWidth = bestPanelSize.GetWidth();
         int sizerAreaHeight = bestPanelSize.GetHeight();  // Use actual panel height, not fixed target
-        
+
         // Adjust sizer area based on header style
         switch (m_headerStyle) {
-            case PanelHeaderStyle::TOP:
-                sizerAreaY = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                sizerAreaHeight -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::LEFT:
-                sizerAreaX = FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                sizerAreaWidth -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::BOTTOM_CENTERED:
-                sizerAreaHeight -= FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE;
-                break;
-            case PanelHeaderStyle::EMBEDDED:
-                // For embedded style, add top padding to avoid text overlap
-                if (!m_label.IsEmpty()) {
-                    const int embeddedHeaderHeight = 20; // Space for embedded text
-                    sizerAreaY = embeddedHeaderHeight;
-                    sizerAreaHeight -= embeddedHeaderHeight;
-                }
-                break;
-            case PanelHeaderStyle::NONE:
-                // No adjustment needed
-                break;
+        case PanelHeaderStyle::TOP:
+            sizerAreaY = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            sizerAreaHeight -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::LEFT:
+            sizerAreaX = CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            sizerAreaWidth -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::BOTTOM_CENTERED:
+            sizerAreaHeight -= CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+            break;
+        case PanelHeaderStyle::EMBEDDED:
+            // For embedded style, add top padding to avoid text overlap
+            if (!m_label.IsEmpty()) {
+                const int embeddedHeaderHeight = 20; // Space for embedded text
+                sizerAreaY = embeddedHeaderHeight;
+                sizerAreaHeight -= embeddedHeaderHeight;
+            }
+            break;
+        case PanelHeaderStyle::NONE:
+            // No adjustment needed
+            break;
         }
 
         if (sizerAreaWidth < 0) sizerAreaWidth = 0;
         if (sizerAreaHeight < 0) sizerAreaHeight = 0;
-        
+
         m_sizer->SetDimension(sizerAreaX, sizerAreaY, sizerAreaWidth, sizerAreaHeight);
     }
 
@@ -303,41 +312,41 @@ void FlatUIPanel::SetPanelBackgroundColour(const wxColour& colour)
 void FlatUIPanel::SetBorderStyle(PanelBorderStyle style)
 {
     m_borderStyle = style;
-    
+
     if (style == PanelBorderStyle::NONE) {
         m_panelBorderTop = 0;
         m_panelBorderBottom = 0;
         m_panelBorderLeft = 0;
         m_panelBorderRight = 0;
-    } 
-    else if (m_panelBorderTop == 0 && m_panelBorderBottom == 0 && 
-             m_panelBorderLeft == 0 && m_panelBorderRight == 0) {
+    }
+    else if (m_panelBorderTop == 0 && m_panelBorderBottom == 0 &&
+        m_panelBorderLeft == 0 && m_panelBorderRight == 0) {
         switch (style) {
-            case PanelBorderStyle::THIN:
-                m_panelBorderTop = 1;
-                m_panelBorderBottom = 1;
-                m_panelBorderLeft = 1;
-                m_panelBorderRight = 1;
-                break;
-            case PanelBorderStyle::MEDIUM:
-                m_panelBorderTop = 2;
-                m_panelBorderBottom = 2;
-                m_panelBorderLeft = 2;
-                m_panelBorderRight = 2;
-                break;
-            case PanelBorderStyle::THICK:
-                m_panelBorderTop = 3;
-                m_panelBorderBottom = 3;
-                m_panelBorderLeft = 3;
-                m_panelBorderRight = 3;
-                break;
-            case PanelBorderStyle::ROUNDED:
-                break;
-            default:
-                break;
+        case PanelBorderStyle::THIN:
+            m_panelBorderTop = 1;
+            m_panelBorderBottom = 1;
+            m_panelBorderLeft = 1;
+            m_panelBorderRight = 1;
+            break;
+        case PanelBorderStyle::MEDIUM:
+            m_panelBorderTop = 2;
+            m_panelBorderBottom = 2;
+            m_panelBorderLeft = 2;
+            m_panelBorderRight = 2;
+            break;
+        case PanelBorderStyle::THICK:
+            m_panelBorderTop = 3;
+            m_panelBorderBottom = 3;
+            m_panelBorderLeft = 3;
+            m_panelBorderRight = 3;
+            break;
+        case PanelBorderStyle::ROUNDED:
+            break;
+        default:
+            break;
         }
     }
-    
+
     Refresh();
 }
 
@@ -469,66 +478,68 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
         return;
     }
 
-    LOG_DBG("Panel: " + m_label.ToStdString() + 
-            " BorderStyle: " + std::to_string((int)m_borderStyle) + 
-            " BorderWidths: " + std::to_string(m_panelBorderTop) + "," + 
-            std::to_string(m_panelBorderBottom) + "," + 
-            std::to_string(m_panelBorderLeft) + "," + 
-            std::to_string(m_panelBorderRight), "FlatUIPanel");
+    LOG_DBG("Panel: " + m_label.ToStdString() +
+        " BorderStyle: " + std::to_string((int)m_borderStyle) +
+        " BorderWidths: " + std::to_string(m_panelBorderTop) + "," +
+        std::to_string(m_panelBorderBottom) + "," +
+        std::to_string(m_panelBorderLeft) + "," +
+        std::to_string(m_panelBorderRight), "FlatUIPanel");
 
     if (m_borderStyle != PanelBorderStyle::NONE) {
         if (m_borderStyle == PanelBorderStyle::ROUNDED) {
             // For rounded style, use the maximum border width
-            int maxBorderWidth = wxMax(wxMax(m_panelBorderTop, m_panelBorderBottom), 
-                                      wxMax(m_panelBorderLeft, m_panelBorderRight));
+            int maxBorderWidth = wxMax(wxMax(m_panelBorderTop, m_panelBorderBottom),
+                wxMax(m_panelBorderLeft, m_panelBorderRight));
             if (maxBorderWidth > 0) {
                 gc->SetPen(wxPen(m_borderColour, maxBorderWidth));
                 gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
                 wxGraphicsPath path = gc->CreatePath();
-                path.AddRoundedRectangle(maxBorderWidth/2.0, maxBorderWidth/2.0, 
-                                       size.GetWidth() - maxBorderWidth, 
-                                       size.GetHeight() - maxBorderWidth, 5.0);
+                path.AddRoundedRectangle(maxBorderWidth / 2.0, maxBorderWidth / 2.0,
+                    size.GetWidth() - maxBorderWidth,
+                    size.GetHeight() - maxBorderWidth, 5.0);
                 gc->StrokePath(path);
             }
-        } else {
+        }
+        else {
             // Draw individual borders based on their widths
             if (m_panelBorderTop > 0) {
                 gc->SetPen(wxPen(m_borderColour, m_panelBorderTop));
-                gc->StrokeLine(0, m_panelBorderTop/2.0, size.GetWidth(), m_panelBorderTop/2.0);
+                gc->StrokeLine(0, m_panelBorderTop / 2.0, size.GetWidth(), m_panelBorderTop / 2.0);
             }
             if (m_panelBorderRight > 0) {
                 gc->SetPen(wxPen(m_borderColour, m_panelBorderRight));
-                gc->StrokeLine(size.GetWidth() - m_panelBorderRight/2.0, 0, 
-                              size.GetWidth() - m_panelBorderRight/2.0, size.GetHeight());
+                gc->StrokeLine(size.GetWidth() - m_panelBorderRight / 2.0, 0,
+                    size.GetWidth() - m_panelBorderRight / 2.0, size.GetHeight());
             }
             if (m_panelBorderBottom > 0) {
                 gc->SetPen(wxPen(m_borderColour, m_panelBorderBottom));
-                gc->StrokeLine(0, size.GetHeight() - m_panelBorderBottom/2.0, 
-                              size.GetWidth(), size.GetHeight() - m_panelBorderBottom/2.0);
+                gc->StrokeLine(0, size.GetHeight() - m_panelBorderBottom / 2.0,
+                    size.GetWidth(), size.GetHeight() - m_panelBorderBottom / 2.0);
             }
             if (m_panelBorderLeft > 0) {
                 gc->SetPen(wxPen(m_borderColour, m_panelBorderLeft));
-                gc->StrokeLine(m_panelBorderLeft/2.0, 0, m_panelBorderLeft/2.0, size.GetHeight());
+                gc->StrokeLine(m_panelBorderLeft / 2.0, 0, m_panelBorderLeft / 2.0, size.GetHeight());
             }
         }
-    } else {
+    }
+    else {
         if (m_panelBorderTop > 0) {
             gc->SetPen(wxPen(m_borderColour, m_panelBorderTop));
-            gc->StrokeLine(0, m_panelBorderTop/2.0, size.GetWidth(), m_panelBorderTop/2.0);
+            gc->StrokeLine(0, m_panelBorderTop / 2.0, size.GetWidth(), m_panelBorderTop / 2.0);
         }
         if (m_panelBorderRight > 0) {
             gc->SetPen(wxPen(m_borderColour, m_panelBorderRight));
-            gc->StrokeLine(size.GetWidth() - m_panelBorderRight/2.0, 0, 
-                          size.GetWidth() - m_panelBorderRight/2.0, size.GetHeight());
+            gc->StrokeLine(size.GetWidth() - m_panelBorderRight / 2.0, 0,
+                size.GetWidth() - m_panelBorderRight / 2.0, size.GetHeight());
         }
         if (m_panelBorderBottom > 0) {
             gc->SetPen(wxPen(m_borderColour, m_panelBorderBottom));
-            gc->StrokeLine(0, size.GetHeight() - m_panelBorderBottom/2.0, 
-                          size.GetWidth(), size.GetHeight() - m_panelBorderBottom/2.0);
+            gc->StrokeLine(0, size.GetHeight() - m_panelBorderBottom / 2.0,
+                size.GetWidth(), size.GetHeight() - m_panelBorderBottom / 2.0);
         }
         if (m_panelBorderLeft > 0) {
             gc->SetPen(wxPen(m_borderColour, m_panelBorderLeft));
-            gc->StrokeLine(m_panelBorderLeft/2.0, 0, m_panelBorderLeft/2.0, size.GetHeight());
+            gc->StrokeLine(m_panelBorderLeft / 2.0, 0, m_panelBorderLeft / 2.0, size.GetHeight());
         }
     }
 
@@ -541,9 +552,9 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
         case PanelHeaderStyle::TOP:
             gc->SetBrush(wxBrush(m_headerColour));
             gc->SetPen(*wxTRANSPARENT_PEN);
-            gc->DrawRectangle(0, 0, size.GetWidth(), FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
-            gc->DrawText(m_label, 0, (FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE - textHeight) / 2);
-            
+            gc->DrawRectangle(0, 0, size.GetWidth(), CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
+            gc->DrawText(m_label, 0, (CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) - textHeight) / 2);
+
             // Draw header borders
             gc->SetPen(wxPen(m_headerBorderColour, 1));
             if (m_headerBorderTop > 0) {
@@ -552,35 +563,35 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
             }
             if (m_headerBorderBottom > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
-                gc->StrokeLine(0, FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth(), FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+                gc->StrokeLine(0, CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), size.GetWidth(), CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
             }
             if (m_headerBorderLeft > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
-                gc->StrokeLine(0, 0, 0, FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+                gc->StrokeLine(0, 0, 0, CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
             }
             if (m_headerBorderRight > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
-                gc->StrokeLine(size.GetWidth(), 0, size.GetWidth(), FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+                gc->StrokeLine(size.GetWidth(), 0, size.GetWidth(), CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
             }
             break;
         case PanelHeaderStyle::LEFT:
             gc->SetBrush(wxBrush(m_headerColour));
             gc->SetPen(*wxTRANSPARENT_PEN);
-            gc->DrawRectangle(0, 0, FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetHeight());
+            gc->DrawRectangle(0, 0, CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), size.GetHeight());
             gc->PushState();
-            gc->Translate(FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE / 2, size.GetHeight() / 2);
+            gc->Translate(CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) / 2, size.GetHeight() / 2);
             gc->Rotate(-M_PI / 2);
             gc->DrawText(m_label, -textWidth / 2, -textHeight / 2);
             gc->PopState();
-            
+
             // Draw header borders
             if (m_headerBorderTop > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
-                gc->StrokeLine(0, 0, FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, 0);
+                gc->StrokeLine(0, 0, CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), 0);
             }
             if (m_headerBorderBottom > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
-                gc->StrokeLine(0, size.GetHeight(), FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetHeight());
+                gc->StrokeLine(0, size.GetHeight(), CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), size.GetHeight());
             }
             if (m_headerBorderLeft > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
@@ -588,65 +599,76 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
             }
             if (m_headerBorderRight > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
-                gc->StrokeLine(FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, 0, FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetHeight());
+                gc->StrokeLine(CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), 0, CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), size.GetHeight());
             }
             break;
         case PanelHeaderStyle::EMBEDDED:
             // Draw text with padding to avoid overlapping with child controls
-            {
-                const int textPadding = 5;
-                gc->DrawText(m_label, textPadding, textPadding);
-                
-                // For embedded style, draw borders around the text area if specified
-                if (m_headerBorderTop > 0 || m_headerBorderBottom > 0 || m_headerBorderLeft > 0 || m_headerBorderRight > 0) {
-                    const int embeddedHeaderHeight = 20;
-                    if (m_headerBorderTop > 0) {
-                        gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
-                        gc->StrokeLine(0, 0, size.GetWidth(), 0);
-                    }
-                    if (m_headerBorderBottom > 0) {
-                        gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
-                        gc->StrokeLine(0, embeddedHeaderHeight, size.GetWidth(), embeddedHeaderHeight);
-                    }
-                    if (m_headerBorderLeft > 0) {
-                        gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
-                        gc->StrokeLine(0, 0, 0, embeddedHeaderHeight);
-                    }
-                    if (m_headerBorderRight > 0) {
-                        gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
-                        gc->StrokeLine(size.GetWidth(), 0, size.GetWidth(), embeddedHeaderHeight);
-                    }
+        {
+            const int textPadding = 5;
+            gc->DrawText(m_label, textPadding, textPadding);
+
+            // For embedded style, draw borders around the text area if specified
+            if (m_headerBorderTop > 0 || m_headerBorderBottom > 0 || m_headerBorderLeft > 0 || m_headerBorderRight > 0) {
+                const int embeddedHeaderHeight = 20;
+                if (m_headerBorderTop > 0) {
+                    gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
+                    gc->StrokeLine(0, 0, size.GetWidth(), 0);
+                }
+                if (m_headerBorderBottom > 0) {
+                    gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
+                    gc->StrokeLine(0, embeddedHeaderHeight, size.GetWidth(), embeddedHeaderHeight);
+                }
+                if (m_headerBorderLeft > 0) {
+                    gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
+                    gc->StrokeLine(0, 0, 0, embeddedHeaderHeight);
+                }
+                if (m_headerBorderRight > 0) {
+                    gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
+                    gc->StrokeLine(size.GetWidth(), 0, size.GetWidth(), embeddedHeaderHeight);
                 }
             }
-            break;
+        }
+        break;
         case PanelHeaderStyle::BOTTOM_CENTERED:
             gc->SetBrush(wxBrush(m_headerColour));
             gc->SetPen(*wxTRANSPARENT_PEN);
             // Draw header bar at the bottom
-            gc->DrawRectangle(0, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth(), FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
-            
+            gc->DrawRectangle(0, size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE), size.GetWidth(), CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
+
             // Draw text centered in the bottom header bar
-            gc->DrawText(m_label, 
-                         (size.GetWidth() - textWidth) / 2, 
-                         size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE + (FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE - textHeight) / 2);
-            
+            gc->DrawText(m_label,
+                (size.GetWidth() - textWidth) / 2,
+                size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) + (CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) - textHeight) / 2);
+
             // Draw header borders
-			LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
+            LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
             if (m_headerBorderTop > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
-                gc->StrokeLine(FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE, size.GetWidth()- FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE);
+                gc->StrokeLine(CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING),
+                    size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE),
+                    size.GetWidth() - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING),
+                    size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE));
             }
             if (m_headerBorderBottom > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderBottom));
-                gc->StrokeLine(FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight(), size.GetWidth()- FLATUI_INNERBAR_BORDER_SPACING, size.GetHeight());
+                gc->StrokeLine(CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING),
+                    size.GetHeight(),
+                    size.GetWidth() - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING), size.GetHeight());
             }
             if (m_headerBorderLeft > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderLeft));
-                gc->StrokeLine(0, size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE - FLATUI_INNERBAR_BORDER_SPACING, 0, size.GetHeight()- FLATUI_INNERBAR_BORDER_SPACING);
+                gc->StrokeLine(0,
+                    size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING),
+                    0,
+                    size.GetHeight() - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING));
             }
             if (m_headerBorderRight > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderRight));
-                gc->StrokeLine(size.GetWidth(), size.GetHeight() - FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE- FLATUI_INNERBAR_BORDER_SPACING, size.GetWidth(), size.GetHeight()- FLATUI_INNERBAR_BORDER_SPACING);
+                gc->StrokeLine(size.GetWidth(),
+                    size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize", FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE) - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING),
+                    size.GetWidth(),
+                    size.GetHeight() - CFG_INT("PanelInnerBarBorderSpacing", FLATUI_INNERBAR_BORDER_SPACING));
             }
             break;
         }

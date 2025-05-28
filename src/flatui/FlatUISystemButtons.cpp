@@ -1,14 +1,20 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIFrame.h"
+#include "config/ConstantsConfig.h"
+#include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
+
+#include "config/ConstantsConfig.h"
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
       m_minimizeButtonHover(false),
       m_maximizeButtonHover(false),
       m_closeButtonHover(false),
-      m_buttonWidth(DEFAULT_BUTTON_WIDTH),
-      m_buttonSpacing(DEFAULT_BUTTON_SPACING)
+      m_buttonWidth(CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH)),
+      m_buttonSpacing(CFG_INT("SystemButtonSpacing", SYS_BUTTON_SPACING))
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     
@@ -19,8 +25,8 @@ FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
     Bind(wxEVT_MOTION, &FlatUISystemButtons::OnMouseMove, this);
     Bind(wxEVT_LEAVE_WINDOW, &FlatUISystemButtons::OnMouseLeave, this);
 
-    int requiredWidth = 3 * DEFAULT_BUTTON_WIDTH + 2 * DEFAULT_BUTTON_SPACING;
-    int buttonHeight = 30; 
+    int requiredWidth = GetRequiredWidth(m_buttonWidth, m_buttonSpacing);
+    int buttonHeight = CFG_INT("SystemButtonsButtonHeight", 30);
     
     SetMinSize(wxSize(requiredWidth, buttonHeight));
     SetSize(GetMinSize());
@@ -51,8 +57,8 @@ void FlatUISystemButtons::SetButtonRects(const wxRect& minimizeRect, const wxRec
 
     wxSize clientSize = GetClientSize();
     
-    int buttonWidth = 40; 
-    int buttonHeight = 30;
+    int buttonWidth = CFG_INT("SystemButtonHeight", SYS_BUTTON_HEIGHT);;
+    int buttonHeight = CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH);
     
     int sysButtonY = (clientSize.GetHeight() - buttonHeight) / 2;
     if (sysButtonY < 0) sysButtonY = 0;
@@ -133,8 +139,8 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     dc.Clear();
     
     wxSize currentSize = GetClientSize();
-    int currentButtonHeight = 30;
-    int currentButtonWidth = 40; 
+    int currentButtonHeight = CFG_INT("SystemButtonHeight", SYS_BUTTON_HEIGHT);
+    int currentButtonWidth = CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH);
     int currentButtonY = (currentSize.GetHeight() - currentButtonHeight) / 2;
     if (currentButtonY < 0) currentButtonY = 0;
     

@@ -5,6 +5,10 @@
 #include "flatui/FlatUIHomeMenu.h" // For the custom menu
 #include "flatui/FlatUIFrame.h"       // To get parent FlatFrame and content height
 #include "flatui/FlatUIBar.h"         // To get FlatUIBar height
+#include "config/ConstantsConfig.h"
+
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 // Known menu item IDs from FlatFrame (or define them in a shared constants header)
 // These should match the IDs used in FlatFrame's event handlers
@@ -14,7 +18,7 @@ FlatUIHomeSpace::FlatUIHomeSpace(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
       // m_menu(nullptr), // Removed
       m_hover(false),
-      m_buttonWidth(DEFAULT_BUTTON_WIDTH),
+      m_buttonWidth(CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH)),
       m_activeHomeMenu(nullptr) // Initialize m_activeHomeMenu
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT); // Important for custom painting
@@ -56,7 +60,7 @@ void FlatUIHomeSpace::OnPaint(wxPaintEvent& evt)
     wxColour finalBgColorToDraw;
 
     if (m_hover) { // m_menu check removed as it's no longer relevant for hover indication
-        finalBgColorToDraw = FLATUI_HOMESPACE_HOVER_BG_COLOUR; 
+        finalBgColorToDraw = CFG_COLOUR("HomeSpaceHoverBgColour", FLATUI_HOMESPACE_HOVER_BG_COLOUR); 
     } else {
         finalBgColorToDraw = parentBgColor; // In normal state, match parent background
     }
@@ -105,18 +109,17 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
     {
         if (m_activeHomeMenu) { 
             if (m_activeHomeMenu->IsShown()) {
-                m_activeHomeMenu->Hide(); 
                 m_hover = false; 
                 Refresh();
                 return; 
             } else {
                 wxPoint menuPos = ClientToScreen(wxPoint(0, m_buttonRect.GetBottom()));
                 
-                int menuContentHeight = 300; // Default height
+                int menuContentHeight = 420; // Default height
                 FlatUIFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
                 if (mainFrame) {
                     int frameHeight = mainFrame->GetClientSize().GetHeight();
-                    menuContentHeight = frameHeight - FLATUI_BUTTONBAR_TARGET_HEIGHT - FLATUI_BAR_TOP_MARGIN;
+                    menuContentHeight = frameHeight - CFG_INT("ButtonBarTargetHeight", FLATUI_BUTTONBAR_TARGET_HEIGHT) - CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
                     if (menuContentHeight < 50) { // Ensure a minimum height
                         menuContentHeight = 50;
                     }

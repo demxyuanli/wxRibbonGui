@@ -6,6 +6,10 @@
 #include <wx/graphics.h>
 #include <wx/display.h>
 #include <algorithm> // For std::min
+#include "config/ConstantsConfig.h"  
+
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 // Constants
 constexpr int ICON_TEXT_BELOW_TOP_MARGIN = 2;
@@ -31,9 +35,40 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     m_barBorderWidth(0),
     m_hoverEffectsEnabled(true)
 {
+    auto& cfg = ConstantsConfig::getInstance();
+
+    m_buttonBgColour         = CFG_COLOUR("ActBarBackgroundColour",     FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_buttonHoverBgColour    = CFG_COLOUR("ButtonbarDefaultHoverBgColour", FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR);
+    m_buttonPressedBgColour  = CFG_COLOUR("ButtonbarDefaultPressedBgColour", FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR);
+    m_buttonTextColour       = CFG_COLOUR("ButtonbarDefaultTextColour",    FLATUI_BUTTONBAR_DEFAULT_TEXT_COLOUR);
+    m_buttonBorderColour     = CFG_COLOUR("ButtonbarDefaultBorderColour",  FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR);
+    m_barBgColour            = CFG_COLOUR("ActBarBackgroundColour",      FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_barBorderColour        = CFG_COLOUR("ActBarBackgroundColour",      FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+
+
+    m_buttonBorderWidth      = CFG_INT("ButtonbarDefaultBorderWidth",      FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH);
+    m_buttonCornerRadius     = CFG_INT("ButtonbarDefaultCornerRadius",    FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS);
+    m_buttonSpacing          = CFG_INT("ButtonbarSpacing",              FLATUI_BUTTONBAR_SPACING);
+    m_buttonHorizontalPadding= CFG_INT("ButtonbarHorizontalPadding",     FLATUI_BUTTONBAR_HORIZONTAL_PADDING);
+    m_buttonVerticalPadding  = CFG_INT("ButtonbarInternalVerticalPadding",FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING);
+
+
+    m_dropdownArrowWidth     = CFG_INT("ButtonbarDropdownArrowWidth",     FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH);
+    m_dropdownArrowHeight    = CFG_INT("ButtonbarDropdownArrowHeight",    FLATUI_BUTTONBAR_DROPDOWN_ARROW_HEIGHT);
+
+
+    m_separatorWidth         = CFG_INT("ButtonbarSeparatorWidth",        FLATUI_BUTTONBAR_SEPARATOR_WIDTH);
+    m_separatorPadding       = CFG_INT("ButtonbarSeparatorPadding",      FLATUI_BUTTONBAR_SEPARATOR_PADDING);
+    m_separatorMargin        = CFG_INT("ButtonbarSeparatorMargin",       FLATUI_BUTTONBAR_SEPARATOR_MARGIN);
+
+
+    m_barHorizontalMargin    = CFG_INT("ButtonbarBarHorizontalMargin",  FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN);
+
+    int targetH = CFG_INT("ButtonbarTargetHeight", FLATUI_BUTTONBAR_TARGET_HEIGHT);
     SetFont(GetFlatUIDefaultFont());
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetMinSize(wxSize(FLATUI_BUTTONBAR_TARGET_HEIGHT * 2, FLATUI_BUTTONBAR_TARGET_HEIGHT));
+    SetMinSize(wxSize(targetH * 2, targetH));
+
     Bind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUIButtonBar::OnMouseMove, this);
@@ -117,9 +152,8 @@ int FlatUIButtonBar::CalculateButtonWidth(const ButtonInfo& button, wxDC& dc) co
     }
 
     if (button.isDropDown) {
-        buttonWidth += m_buttonHorizontalPadding + FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH;
-        // Add separator width and padding
-        buttonWidth += FLATUI_BUTTONBAR_SEPARATOR_WIDTH + 2 * FLATUI_BUTTONBAR_SEPARATOR_PADDING;
+        buttonWidth += m_buttonHorizontalPadding + m_dropdownArrowWidth;
+        buttonWidth += m_separatorWidth + 2 * m_separatorPadding;
     }
     return wxMax(buttonWidth, 2 * m_buttonHorizontalPadding);
 }
@@ -129,7 +163,7 @@ void FlatUIButtonBar::RecalculateLayout()
     Freeze();
     wxClientDC dc(this);
     dc.SetFont(GetFont());
-    int currentX = FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN;
+    int currentX = m_barHorizontalMargin;
 
     for (auto& button : m_buttons) {
         if (button.textSize != dc.GetTextExtent(button.label)) {
@@ -142,7 +176,7 @@ void FlatUIButtonBar::RecalculateLayout()
             currentX += m_buttonSpacing;
         }
     }
-    currentX += FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN;
+    currentX += m_barHorizontalMargin;
 
     wxSize currentMinSize = GetMinSize();
     if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != FLATUI_BUTTONBAR_TARGET_HEIGHT) {
@@ -172,7 +206,7 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
 {
     wxMemoryDC dc;
     dc.SetFont(GetFlatUIDefaultFont());
-    int totalWidth = FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN;
+    int totalWidth = m_barHorizontalMargin;
 
     for (const auto& button : m_buttons) {
         totalWidth += CalculateButtonWidth(button, dc);
@@ -180,10 +214,10 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
             totalWidth += m_buttonSpacing;
         }
     }
-    totalWidth += FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN;
+    totalWidth += m_barHorizontalMargin;
 
     if (m_buttons.empty()) {
-        totalWidth = FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN * 2;
+        totalWidth = m_barHorizontalMargin * 2;
         if (totalWidth == 0) totalWidth = 10;
     }
 
@@ -304,31 +338,29 @@ void FlatUIButtonBar::DrawButtonText(wxDC& dc, const ButtonInfo& button, const w
 
 void FlatUIButtonBar::DrawButtonDropdownArrow(wxDC& dc, const ButtonInfo& button, const wxRect& rect)
 {
-    int arrowX = rect.GetRight() - m_buttonHorizontalPadding - FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH;
-    int arrowY = rect.GetTop() + (rect.GetHeight() - FLATUI_BUTTONBAR_DROPDOWN_ARROW_HEIGHT) / 2;
-    wxPoint points[3] = {
+    int arrowX = rect.GetRight() - m_buttonHorizontalPadding - m_dropdownArrowWidth;
+    int arrowY = rect.GetTop() + (rect.GetHeight() - m_dropdownArrowHeight) / 2;
+    wxPoint pts[3] = {
         {arrowX, arrowY},
-        {arrowX + FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH, arrowY},
-        {arrowX + FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH / 2, arrowY + FLATUI_BUTTONBAR_DROPDOWN_ARROW_HEIGHT}
+        {arrowX + m_dropdownArrowWidth, arrowY},
+        {arrowX + m_dropdownArrowWidth/2, arrowY + m_dropdownArrowHeight}
     };
     dc.SetBrush(wxBrush(m_buttonTextColour));
     dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawPolygon(3, points);
+    dc.DrawPolygon(3, pts);
 }
 
 void FlatUIButtonBar::DrawButtonSeparator(wxDC& dc, const ButtonInfo& button, const wxRect& rect)
 {
-    // Calculate separator position: before the dropdown arrow
-    int separatorX = rect.GetRight() - m_buttonHorizontalPadding - FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH
-        - FLATUI_BUTTONBAR_SEPARATOR_PADDING - FLATUI_BUTTONBAR_SEPARATOR_WIDTH;
-    int topY = rect.GetTop() + FLATUI_BUTTONBAR_SEPARATOR_MARGIN;
-    int bottomY = rect.GetBottom() - FLATUI_BUTTONBAR_SEPARATOR_MARGIN;
-
-    dc.SetPen(wxPen(FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR, FLATUI_BUTTONBAR_SEPARATOR_WIDTH));
-    dc.DrawLine(separatorX, topY, separatorX, bottomY);
+    int sepX = rect.GetRight() - m_buttonHorizontalPadding - m_dropdownArrowWidth
+             - m_separatorPadding - m_separatorWidth;
+    int topY = rect.GetTop() + m_separatorMargin;
+    int botY = rect.GetBottom() - m_separatorMargin;
+    dc.SetPen(wxPen(m_buttonBorderColour, m_separatorWidth));
+    dc.DrawLine(sepX, topY, sepX, botY);
 
     LOG_INF(wxString::Format("Drawing separator at x=%d, y=%d to %d for button \"%s\"",
-        separatorX, topY, bottomY, button.label).ToStdString(),
+        sepX, topY, botY, button.label).ToStdString(),
         "FlatUIButtonBar");
 }
 

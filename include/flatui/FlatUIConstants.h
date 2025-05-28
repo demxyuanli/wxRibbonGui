@@ -12,6 +12,10 @@ const wxColour FLATUI_DEFAULT_BORDER_COLOUR(170, 170, 170);
 const wxColour FLATUI_DEFAULT_TEXT_COLOUR(100, 100, 100);
 const wxColour FLATUI_HIGHLIGHT_COLOUR(0, 120, 215); // Blueish highlight
 
+const wxColour FLATUI_WINDOW_MOTION_COLOR(150, 150, 150);
+
+const int PROFILESPACE_DEFAULT_WIDTH = 100;
+
 // Default Font Settings
 const int FLATUI_DEFAULT_FONT_SIZE = 8; // Adjusted for better readability
 const wxFontFamily FLATUI_DEFAULT_FONT_FAMILY = wxFONTFAMILY_SWISS;
@@ -37,6 +41,7 @@ const wxColour FLATUI_HOMESPACE_HOVER_BG_COLOUR(200, 200, 200);
 
 // FlatUIPanel Colors
 const wxColour FLATUI_PANEL_BORDER_COLOUR(200, 200, 200);
+const wxColour FLATUI_PANEL_SEPARATOR_COLOUR(200, 200, 200);
 const wxColour FLATUI_PANEL_HEADER_COLOUR(230, 230, 230);
 const wxColour FLATUI_PANEL_HEADER_TEXT_COLOUR(100, 100, 100);
 
@@ -89,11 +94,23 @@ const int FLATUI_PANEL_TARGET_HEIGHT = 60;
 const int FLATUI_PANEL_COLLAPSED_HEIGHT = 30;
 const int FLATUI_PANEL_DEFAULT_HEADER_AREA_SIZE = 20;
 const int FLATUI_INNERBAR_BORDER_SPACING = 5;
+const int FLATUI_PANEL_SEPARATOR_WIDTH = 1;
 
 // FlatUIPanel/Page Margin & Padding
 const int FLATUI_PANEL_MARGIN = 8;
 const int FLATUI_PANEL_PADDING = 8;
 const int FLATUI_PAGE_MARGIN = 8;
 const int FLATUI_PAGE_PADDING = 8;
+
+//SysButtons params
+
+const int SYS_BUTTON_WIDTH = 40;
+const int SYS_BUTTON_HEIGHT = 30;
+const int SYS_BUTTON_SPACING = 0;
+
+//HomeMenu Params
+const int HOMEMENU_HEIGHT = 25; 
+const int HOMEMENU_SEPARATOR_HEIGHT = 5;
+const int HOMEMENU_WIDTH = 240;
 
 #endif // FLATUI_CONSTANTS_H

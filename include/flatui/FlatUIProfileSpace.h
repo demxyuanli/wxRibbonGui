@@ -22,8 +22,6 @@ protected:
 private:
     wxWindow* m_childControl;
     int m_spaceWidth;
-
-    static const int DEFAULT_WIDTH = 100; // Default width for profile space
 };
 
 #endif // FLATUI_PROFILE_SPACE_H 

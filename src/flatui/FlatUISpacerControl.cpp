@@ -1,5 +1,10 @@
 #include "flatui/FlatUISpacerControl.h"
+#include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h>
+
+#include "config/ConstantsConfig.h"
+#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUISpacerControl::FlatUISpacerControl(wxWindow* parent, int width, wxWindowID id)
     : wxPanel(parent, id), m_width(width), m_drawSeparator(false), m_autoExpand(false),
@@ -78,13 +83,13 @@ void FlatUISpacerControl::OnPaint(wxPaintEvent& evt)
     
     if (m_drawSeparator)
     {
-        dc.SetPen(wxPen(wxColour(200, 200, 200), 1));
+        dc.SetPen(wxPen(wxColour(CFG_COLOUR("PanelSepatatorColor", FLATUI_PANEL_SEPARATOR_COLOUR)), CFG_INT("PanelSepatatorWidth", FLATUI_PANEL_SEPARATOR_WIDTH)));
         dc.DrawLine(size.GetWidth() / 2, 2, size.GetWidth() / 2, size.GetHeight() - 2);
     }
     
     if (m_canDragWindow && m_showDragFlag)
     {
-        wxPen dotPen(wxColour(150, 150, 150), 1, wxPENSTYLE_DOT);
+        wxPen dotPen(wxColour(CFG_COLOUR("WindowMotionColor", FLATUI_WINDOW_MOTION_COLOR)), 2, wxPENSTYLE_DOT);
         dc.SetPen(dotPen);
         
         int centerX = size.GetWidth() / 2;
