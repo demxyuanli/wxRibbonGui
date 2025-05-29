@@ -569,4 +569,36 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
         }
     }
     return totalWidth;
+}
+
+void FlatUIBar::ToggleFunctionSpaceVisibility()
+{
+    if (m_functionSpace) {
+        bool visible = m_functionSpace->IsShown();
+        bool newVisible = !visible;
+        m_functionSpace->Show(newVisible);
+        if (m_tabFunctionSpacer) {
+            m_tabFunctionSpacer->Show(newVisible);
+        }
+        if (IsShown()) {
+            UpdateElementPositionsAndSizes(GetClientSize());
+            Refresh();
+        }
+    }
+}
+
+void FlatUIBar::ToggleProfileSpaceVisibility()
+{
+    if (m_profileSpace) {
+        bool visible = m_profileSpace->IsShown();
+        bool newVisible = !visible;
+        m_profileSpace->Show(newVisible);
+        if (m_functionProfileSpacer) {
+            m_functionProfileSpacer->Show(newVisible);
+        }
+        if (IsShown()) {
+            UpdateElementPositionsAndSizes(GetClientSize());
+            Refresh();
+        }
+    }
 } 

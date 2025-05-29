@@ -65,6 +65,8 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     eventManager.bindButtonEvent(this, &FlatFrame::OnSearchExecute, ID_SearchExecute);
     eventManager.bindButtonEvent(this, &FlatFrame::OnUserProfile, ID_UserProfile);
     eventManager.bindButtonEvent(this, &FlatFrame::OnSettings, wxID_PREFERENCES);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnToggleFunctionSpace, ID_ToggleFunctionSpace);
+    eventManager.bindButtonEvent(this, &FlatFrame::OnToggleProfileSpace, ID_ToggleProfileSpace);
 
     if (m_searchCtrl) {
         m_searchCtrl->Bind(wxEVT_COMMAND_TEXT_ENTER, &FlatFrame::OnSearchTextEnter, this);
@@ -196,6 +198,11 @@ void FlatFrame::InitializeUI(const wxSize& size)
     buttonBar2->AddButton(wxID_HELP, "Help", helpBmp);
     buttonBar2->AddButton(wxID_INFO, "Info", infoBmp);
     panel2->AddButtonBar(buttonBar2, 0, wxEXPAND | wxALL, 5);
+    FlatUIButtonBar* toggleBar = new FlatUIButtonBar(panel2);
+    toggleBar->SetDisplayStyle(ButtonDisplayStyle::TEXT_ONLY);
+    toggleBar->AddButton(ID_ToggleFunctionSpace, "ToggleFunc");
+    toggleBar->AddButton(ID_ToggleProfileSpace, "ToggleProf");
+    panel2->AddButtonBar(toggleBar, 0, wxEXPAND | wxALL, 5);
     page1->AddPanel(panel2);
     m_ribbon->AddPage(page1);
 
@@ -363,6 +370,16 @@ void FlatFrame::OnSettings(wxCommandEvent& event)
     if (m_messageOutput) m_messageOutput->AppendText("Open Settings\n");
 }
 
+void FlatFrame::OnToggleFunctionSpace(wxCommandEvent& event)
+{
+    if (m_ribbon) m_ribbon->ToggleFunctionSpaceVisibility();
+}
+
+void FlatFrame::OnToggleProfileSpace(wxCommandEvent& event)
+{
+    if (m_ribbon) m_ribbon->ToggleProfileSpaceVisibility();
+}
+
 void FlatFrame::OnShowUIHierarchy(wxCommandEvent& event)
 {
     ShowUIHierarchy();
@@ -388,24 +405,8 @@ void FlatFrame::PrintUILayout(wxCommandEvent& event)
     wxLog* oldLog = wxLog::SetActiveTarget(new wxLogTextCtrl(m_messageOutput));
     LogUILayout(this); // Call inherited LogUILayout, starting from this FlatFrame instance
     wxLog::SetActiveTarget(oldLog);
-    // The new wxLogTextCtrl is managed by wxWidgets or should be deleted if oldLog was not nullptr.
-    // For safety, and since wxLog::SetActiveTarget returns the *previous* active target,
-    // we should delete the one we created if it's different from the one we restored.
     if (oldLog != wxLog::GetActiveTarget()) { 
-        // If oldLog was nullptr, wxLog::GetActiveTarget() will be our new wxLogTextCtrl.
-        // If oldLog was something else, we restored it, so our new one is no longer active target.
-        // This logic seems a bit off. The wxLogTextCtrl we created is owned by wxLog system until SetActiveTarget(oldLog).
-        // After restoring oldLog, the created wxLogTextCtrl should be deleted if we new'd it.
-        // However, wxLog::SetActiveTarget can take ownership. Let's assume it does for now,
-        // but typically you delete the logger you `new` unless ownership is clearly transferred.
-        // A safer approach: delete oldLog if it was our wxLogTextCtrl instance, but it is the *previous* one.
-        // The `new wxLogTextCtrl(m_messageOutput)` instance should be deleted after SetActiveTarget(oldLog)
-        // if oldLog is not that same instance. But wxWidgets might handle it.
-        // For now, let's keep it simple. wxWidgets usually handles deletion of log targets set this way.
     }
 }
 
-// PseudoMaximize, RestoreFromPseudoMaximize, DrawRubberBand, EraseRubberBand,
-// GetResizeModeForPosition, UpdateCursorForResizeMode are now in PlatUIFrame.
-// LogUILayout is also in PlatUIFrame and called directly.
 

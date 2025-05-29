@@ -274,3 +274,4 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
 
     evt.Skip();
 } 
+

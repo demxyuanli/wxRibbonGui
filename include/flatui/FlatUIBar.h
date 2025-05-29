@@ -109,6 +109,8 @@ public:
     // Custom Spaces
     void SetFunctionSpaceControl(wxWindow* funcControl, int width = -1);
     void SetProfileSpaceControl(wxWindow* profControl, int width = -1);
+    void ToggleFunctionSpaceVisibility();
+    void ToggleProfileSpaceVisibility();
     
     // Deprecated methods - use AddSpaceSeparator instead
     [[deprecated("Use AddSpaceSeparator(SPACER_TAB_FUNCTION, ...) instead")]]
@@ -149,6 +151,7 @@ public:
     void OnSize(wxSizeEvent& evt);
     void OnMouseDown(wxMouseEvent& evt); // Will primarily handle tab clicks now
     // OnMouseMove and OnMouseLeave might be less relevant here if sub-controls handle their own hover
+
 
     FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
 

@@ -18,7 +18,20 @@ else()
     message(FATAL_ERROR "wxWidgets not found!")
 endif()
 
+find_package(PkgConfig REQUIRED)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(LIBRSVG librsvg-2.0 IMPORTED_TARGET)
+    if(LIBRSVG_FOUND)
+        message(STATUS "Found librsvg-2.0, version ${LIBRSVG_VERSION}")
+    else()
+        message(WARNING "librsvg-2.0 not found. SVG rendering might be affected.")
+    endif()
+else()
+    message(WARNING "PkgConfig not found. Cannot search for librsvg-2.0.")
+endif()
+
 # 查找其他依赖
+find_package(NanoSVG CONFIG REQUIRED)
 find_package(utf8cpp CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 find_package(unofficial-theora CONFIG REQUIRED)
@@ -59,6 +72,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${JsonCpp_INCLUDE_DIRS}
 )
 
+if(LIBRSVG_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::LIBRSVG)
+    # You might also need to include directories if headers are not found automatically
+    # target_include_directories(wxgui_executable PRIVATE ${LIBRSVG_INCLUDE_DIRS})
+    # And add compile definitions if needed
+    # target_compile_definitions(wxgui_executable PRIVATE ${LIBRSVG_CFLAGS_OTHER})
+endif()
+
 # 链接库
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${CMAKE_THREAD_LIBS_INIT}
@@ -86,7 +107,7 @@ if(MSVC)
 
     # 复制扩展配置文件到目标目录
     set(CONFIG_FILES
-        "${CMAKE_SOURCE_DIR}/config/config.ini"
+        "${CMAKE_SOURCE_DIR}/config"
     )
     set(TARGET_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>)
     foreach(CONFIG_FILE ${CONFIG_FILES})

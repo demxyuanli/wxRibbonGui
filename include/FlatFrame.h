@@ -15,7 +15,9 @@ enum {
     ID_UserProfile, 
     ID_SearchExecute, 
     ID_ShowUIHierarchy, 
-    ID_Menu_PrintLayout_MainFrame 
+    ID_Menu_PrintLayout_MainFrame,
+    ID_ToggleFunctionSpace,
+    ID_ToggleProfileSpace
 };
 
 // The ResizeMode enum is now defined in FlatUIFrame.h (the new base class header)
@@ -43,6 +45,8 @@ public:
     void OnSearchTextEnter(wxCommandEvent& event);
     void OnUserProfile(wxCommandEvent& event);
     void OnSettings(wxCommandEvent& event);
+    void OnToggleFunctionSpace(wxCommandEvent& event);
+    void OnToggleProfileSpace(wxCommandEvent& event);
     void OnShowUIHierarchy(wxCommandEvent& event);
 
     void OnStartupTimer(wxTimerEvent& event);

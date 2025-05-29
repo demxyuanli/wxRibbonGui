@@ -41,6 +41,7 @@ protected:
     void DrawRubberBand(const wxRect& rect);
     void EraseRubberBand();
 
+
     // Member variables for custom dragging state
     bool m_dragging;
     wxPoint m_dragStartPos; // Relative to window's top-left for dragging
