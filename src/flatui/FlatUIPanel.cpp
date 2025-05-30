@@ -108,9 +108,9 @@ void FlatUIPanel::UpdatePanelSize()
     Refresh(false);
     Thaw();
 
-    LOG_INF("Updated panel: " + GetLabel().ToStdString() +
-        ", Size: (" + std::to_string(GetSize().GetWidth()) +
-        "," + std::to_string(GetSize().GetHeight()) + ")", "FlatUIPanel");
+    //LOG_INF("Updated panel: " + GetLabel().ToStdString() +
+    //    ", Size: (" + std::to_string(GetSize().GetWidth()) +
+    //    "," + std::to_string(GetSize().GetHeight()) + ")", "FlatUIPanel");
 }
 
 void FlatUIPanel::ResizeChildControls(int width, int height)
@@ -476,12 +476,12 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
         return;
     }
 
-    LOG_DBG("Panel: " + m_label.ToStdString() +
-        " BorderStyle: " + std::to_string((int)m_borderStyle) +
-        " BorderWidths: " + std::to_string(m_panelBorderTop) + "," +
-        std::to_string(m_panelBorderBottom) + "," +
-        std::to_string(m_panelBorderLeft) + "," +
-        std::to_string(m_panelBorderRight), "FlatUIPanel");
+    //LOG_DBG("Panel: " + m_label.ToStdString() +
+    //    " BorderStyle: " + std::to_string((int)m_borderStyle) +
+    //    " BorderWidths: " + std::to_string(m_panelBorderTop) + "," +
+    //    std::to_string(m_panelBorderBottom) + "," +
+    //    std::to_string(m_panelBorderLeft) + "," +
+    //    std::to_string(m_panelBorderRight), "FlatUIPanel");
 
     if (m_borderStyle != PanelBorderStyle::NONE) {
         if (m_borderStyle == PanelBorderStyle::ROUNDED) {

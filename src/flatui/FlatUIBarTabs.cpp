@@ -182,8 +182,8 @@ void FlatUIBar::SetTabStyle(TabStyle style)
     case TabStyle::DEFAULT:
         m_tabBorderTop = 2;
         m_tabBorderBottom = 0;
-        m_tabBorderLeft = 0;
-        m_tabBorderRight = 01;
+        m_tabBorderLeft = 1;
+        m_tabBorderRight = 1;
         break;
     case TabStyle::UNDERLINE:
         m_tabBorderTop = 0;

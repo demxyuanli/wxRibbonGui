@@ -3,7 +3,7 @@
 
 #include <wx/wx.h>
 
-class FlatUIFunctionSpace : public wxPanel // Inherit from wxPanel for easy child control management
+class FlatUIFunctionSpace : public wxControl // Inherit from wxPanel for easy child control management
 {
 public:
     FlatUIFunctionSpace(wxWindow* parent, wxWindowID id = wxID_ANY);
@@ -17,6 +17,7 @@ public:
     void SetSpaceWidth(int width);
     int GetSpaceWidth() const;
 
+
 protected:
     void OnSize(wxSizeEvent& evt); // To resize the child control to fill this panel
     // void OnPaint(wxPaintEvent& evt); // Optional: if custom background/border needed
@@ -25,7 +26,6 @@ private:
     wxWindow* m_childControl; // The actual functional control (e.g., search bar)
     int m_spaceWidth;         // Desired width for this space
 
-    static const int DEFAULT_WIDTH = 270; // Default width if not specified
 };
 
 #endif // FLATUI_FUNCTION_SPACE_H 

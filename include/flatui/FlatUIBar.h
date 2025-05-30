@@ -111,18 +111,11 @@ public:
     void SetProfileSpaceControl(wxWindow* profControl, int width = -1);
     void ToggleFunctionSpaceVisibility();
     void ToggleProfileSpaceVisibility();
+    void SetFunctionSpaceCenterAlign(bool center);
+    void SetProfileSpaceRightAlign(bool rightAlign);
     
-    // Deprecated methods - use AddSpaceSeparator instead
-    [[deprecated("Use AddSpaceSeparator(SPACER_TAB_FUNCTION, ...) instead")]]
-    void SetTabFunctionSpacer(int width, bool drawSeparator = false, bool dragFlag = true);
-    
-    [[deprecated("Use AddSpaceSeparator(SPACER_FUNCTION_PROFILE, ...) instead")]]
-    void SetFunctionProfileSpacer(int width, bool drawSeparator = false, bool dragFlag = true);
-    
-    [[deprecated("Use AddSpaceSeparator with autoExpand parameter instead")]]
     void SetTabFunctionSpacerAutoExpand(bool autoExpand);
     
-    [[deprecated("Use AddSpaceSeparator with autoExpand parameter instead")]]
     void SetFunctionProfileSpacerAutoExpand(bool autoExpand);
     
     // New unified spacer management
@@ -191,6 +184,7 @@ private:
     
     // Bar margin
     int m_barTopMargin;
+    int m_barBottomMargin;
     
     // --- Configuration for direct Tab drawing by FlatUIBar ---
     // static const int TAB_PADDING = 10; // Removed
@@ -213,6 +207,10 @@ private:
     void DrawBarSeparator(wxDC& dc);
     void PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset);
     void HandleTabAreaClick(const wxPoint& pos);
+
+    // 对齐控制标志
+    bool m_functionSpaceCenterAlign;
+    bool m_profileSpaceRightAlign;
 };
 
 #endif // FLATUIBAR_H 

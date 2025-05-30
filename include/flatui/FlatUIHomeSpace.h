@@ -32,6 +32,7 @@ private:
     bool m_hover;
     int m_buttonWidth;
     FlatUIHomeMenu* m_activeHomeMenu; // Pointer to the active menu
+
 };
 
 #endif // FLATUI_HOME_SPACE_H 

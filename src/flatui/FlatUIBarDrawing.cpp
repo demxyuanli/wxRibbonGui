@@ -25,7 +25,7 @@ void FlatUIBar::DrawBarSeparator(wxDC& dc)
     wxSize clientSize = GetClientSize();
     int padding = (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
     int barH = GetBarHeight();
-    dc.SetPen(wxPen(*wxBLACK, 1));
+    dc.SetPen(wxPen(*wxGREEN, 1));
     dc.DrawLine(padding, barH, clientSize.GetWidth() - padding, barH);
 }
 

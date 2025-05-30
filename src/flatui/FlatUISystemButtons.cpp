@@ -24,21 +24,15 @@ FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
     Bind(wxEVT_LEFT_DOWN, &FlatUISystemButtons::OnMouseDown, this);
     Bind(wxEVT_MOTION, &FlatUISystemButtons::OnMouseMove, this);
     Bind(wxEVT_LEAVE_WINDOW, &FlatUISystemButtons::OnMouseLeave, this);
-
-    int requiredWidth = GetRequiredWidth(m_buttonWidth, m_buttonSpacing);
-    int buttonHeight = CFG_INT("SystemButtonsButtonHeight", 30);
-    
-    SetMinSize(wxSize(requiredWidth, buttonHeight));
-    SetSize(GetMinSize());
 }
 
 FlatUISystemButtons::~FlatUISystemButtons() {}
 
-int FlatUISystemButtons::GetMyRequiredWidth() const {
-    return GetRequiredWidth(m_buttonWidth, m_buttonSpacing);
+int FlatUISystemButtons::GetRequiredWidth() const {
+    return GetAllRequiredWidth(m_buttonWidth, m_buttonSpacing);
 }
 
-int FlatUISystemButtons::GetRequiredWidth(int buttonWidth, int buttonSpacing) {
+int FlatUISystemButtons::GetAllRequiredWidth(int buttonWidth, int buttonSpacing) {
     return (buttonWidth * 3) + (buttonSpacing * 2);
 }
 
@@ -134,25 +128,31 @@ void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxStri
 void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
-    // GetParent()->GetBackgroundColour() might be better for the true parent bg
     dc.SetBackground(GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR));
     dc.Clear();
     
-    wxSize currentSize = GetClientSize();
-    int currentButtonHeight = CFG_INT("SystemButtonHeight", SYS_BUTTON_HEIGHT);
+    wxSize size = GetClientSize();
+    int contentX = 0;
+    int contentY = 0;
+    int contentW = size.GetWidth();
+    int contentH = size.GetHeight();
+    if (contentW < 0) contentW = 0;
+    if (contentH < 0) contentH = 0;
+    
     int currentButtonWidth = CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH);
-    int currentButtonY = (currentSize.GetHeight() - currentButtonHeight) / 2;
-    if (currentButtonY < 0) currentButtonY = 0;
+    int currentButtonHeight = CFG_INT("SystemButtonHeight", SYS_BUTTON_HEIGHT);
+    int currentButtonY = contentY + (contentH - currentButtonHeight) / 2;
+    if (currentButtonY < contentY) currentButtonY = contentY;
     
-    int xPos = currentSize.GetWidth(); 
-    
+    int xPos = contentX + contentW;
+
     xPos -= currentButtonWidth;
     m_closeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
     
     xPos -= m_buttonSpacing;
     xPos -= currentButtonWidth;
     m_maximizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
-    
+
     xPos -= m_buttonSpacing;
     xPos -= currentButtonWidth;
     m_minimizeButtonRect = wxRect(xPos, currentButtonY, currentButtonWidth, currentButtonHeight);
@@ -161,7 +161,6 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     bool isEffectivelyMaximized = topFrame ? topFrame->IsPseudoMaximized() : false;
 
     PaintButton(dc, m_minimizeButtonRect, "_", m_minimizeButtonHover);
-    // Pass the correct symbol based on whether it *should* be restore or maximize
     PaintButton(dc, m_maximizeButtonRect, isEffectivelyMaximized ? wxString(wchar_t(0x2750)) : wxString(wchar_t(0x2610)), m_maximizeButtonHover, false, isEffectivelyMaximized);
     PaintButton(dc, m_closeButtonRect, "X", m_closeButtonHover, true);
 }
@@ -240,4 +239,4 @@ void FlatUISystemButtons::OnMouseLeave(wxMouseEvent& evt)
         Update();
     }
     evt.Skip();
-} 
+}

@@ -40,7 +40,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_tabBorderBottom(0),
     m_tabBorderLeft(0),
     m_tabBorderRight(0),
-    m_tabCornerRadius(0)
+    m_tabCornerRadius(0),
+    m_functionSpaceCenterAlign(false),
+    m_profileSpaceRightAlign(false)
 {
     SetFont(GetFlatUIDefaultFont());
     auto& cfg = ConstantsConfig::getInstance();
@@ -53,6 +55,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour", FLATUI_BAR_ACTIVE_TEXT_COLOUR);
     m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour", FLATUI_BAR_INACTIVE_TEXT_COLOUR);
     m_barTopMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
+    m_barBottomMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -76,8 +79,8 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpace->SetDoubleBuffered(true);
     m_systemButtons->SetDoubleBuffered(true);
 
-    m_tabFunctionSpacer = new FlatUISpacerControl(this, 0);
-    m_functionProfileSpacer = new FlatUISpacerControl(this, 0);
+    m_tabFunctionSpacer = new FlatUISpacerControl(this, 10);
+    m_functionProfileSpacer = new FlatUISpacerControl(this, 10);
     m_tabFunctionSpacer->SetDoubleBuffered(true);
     m_functionProfileSpacer->SetDoubleBuffered(true);
 

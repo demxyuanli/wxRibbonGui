@@ -14,7 +14,7 @@ const wxColour FLATUI_HIGHLIGHT_COLOUR(0, 120, 215); // Blueish highlight
 
 const wxColour FLATUI_WINDOW_MOTION_COLOR(150, 150, 150);
 const wxColour FLATUI_FRAME_BORDER_COLOR(255, 100, 0);
-const int PROFILESPACE_DEFAULT_WIDTH = 100;
+const int SPACE_DEFAULT_WIDTH = 100;
 
 // Default Font Settings
 const int FLATUI_DEFAULT_FONT_SIZE = 8; // Adjusted for better readability

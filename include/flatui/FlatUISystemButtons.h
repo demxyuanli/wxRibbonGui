@@ -17,8 +17,9 @@ public:
     int GetConfiguredButtonWidth() const { return m_buttonWidth; }
     int GetConfiguredButtonSpacing() const { return m_buttonSpacing; }
 
-    int GetMyRequiredWidth() const;
-    static int GetRequiredWidth(int buttonWidth, int buttonSpacing);
+
+    int GetRequiredWidth() const;
+    static int GetAllRequiredWidth(int buttonWidth, int buttonSpacing);
 
     void OnPaint(wxPaintEvent& evt);
     void OnMouseDown(wxMouseEvent& evt);
@@ -40,7 +41,6 @@ private:
     wxFrame* GetTopLevelFrame() const;
     void HandleSystemButtonAction(const wxPoint& pos, wxMouseEvent& evt);
     void PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose = false, bool isMaximized = false);
-
 
 };
 

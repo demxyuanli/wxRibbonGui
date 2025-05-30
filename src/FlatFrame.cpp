@@ -151,7 +151,6 @@ void FlatFrame::InitializeUI(const wxSize& size)
     profilePanel->SetSizer(profileSizer);
     m_ribbon->SetProfileSpaceControl(profilePanel, 50);
 
-    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 15, false, true, true);
     m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_FUNCTION_PROFILE, 60, false, true, false);
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");

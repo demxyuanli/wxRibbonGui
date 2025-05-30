@@ -4,11 +4,11 @@
 #define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUIProfileSpace::FlatUIProfileSpace(wxWindow* parent, wxWindowID id)
-    : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE),
-      m_childControl(nullptr),
-      m_spaceWidth(CFG_INT("ProfileSpaceDefaulWidth", PROFILESPACE_DEFAULT_WIDTH))
+    : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
+    m_childControl(nullptr),
+    m_spaceWidth(CFG_INT("SpaceDefaulWidth", SPACE_DEFAULT_WIDTH))
 {
-    SetMinSize(wxSize(m_spaceWidth, wxDefaultCoord));
+
     Bind(wxEVT_SIZE, &FlatUIProfileSpace::OnSize, this);
     // Bind(wxEVT_PAINT, &FlatUIProfileSpace::OnPaint, this); // If custom painting needed
 }
@@ -26,8 +26,12 @@ void FlatUIProfileSpace::SetChildControl(wxWindow* child)
         if (m_childControl->GetParent() != this) {
             m_childControl->Reparent(this);
         }
-        m_childControl->SetPosition(wxPoint(0,0));
-        m_childControl->SetSize(GetClientSize());
+        wxSize panelSz = GetClientSize();
+        int w = panelSz.GetWidth();
+        int h = panelSz.GetHeight();
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
+        m_childControl->SetSize(w, h);
         m_childControl->Show();
     }
     Layout();
@@ -53,7 +57,12 @@ int FlatUIProfileSpace::GetSpaceWidth() const
 void FlatUIProfileSpace::OnSize(wxSizeEvent& evt)
 {
     if (m_childControl) {
-        m_childControl->SetSize(evt.GetSize());
+        wxSize sz = evt.GetSize();
+        int w = sz.GetWidth();
+        int h = sz.GetHeight();
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
+        m_childControl->SetSize(w, h);
     }
     evt.Skip();
 }

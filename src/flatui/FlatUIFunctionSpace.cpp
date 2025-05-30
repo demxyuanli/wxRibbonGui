@@ -1,13 +1,14 @@
 #include "flatui/FlatUIFunctionSpace.h"
+#include "flatui/FlatUIConstants.h"
+#include "config/ConstantsConfig.h"
 
+#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 FlatUIFunctionSpace::FlatUIFunctionSpace(wxWindow* parent, wxWindowID id)
-    : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE),
+    : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
       m_childControl(nullptr),
-      m_spaceWidth(DEFAULT_WIDTH)
+      m_spaceWidth(CFG_INT("SpaceDefaulWidth", SPACE_DEFAULT_WIDTH))
 {
-    // Set initial size hint, FlatUIBar will ultimately control it.
-    SetMinSize(wxSize(m_spaceWidth, wxDefaultCoord)); 
-    // Bind(wxEVT_PAINT, &FlatUIFunctionSpace::OnPaint, this); // Uncomment if custom painting is needed
+
     Bind(wxEVT_SIZE, &FlatUIFunctionSpace::OnSize, this);
 }
 
@@ -34,8 +35,13 @@ void FlatUIFunctionSpace::SetChildControl(wxWindow* child)
         if (m_childControl->GetParent() != this) {
             m_childControl->Reparent(this);
         }
-        m_childControl->SetPosition(wxPoint(0,0)); // Position at top-left of this panel
-        m_childControl->SetSize(GetClientSize());   // Fill this panel
+        // Apply margin inside this panel
+        wxSize panelSz = GetClientSize();
+        int w = panelSz.GetWidth();
+        int h = panelSz.GetHeight();
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
+        m_childControl->SetSize(w, h);
         m_childControl->Show();
     }
     Layout(); // Trigger layout for the panel itself if it had its own sizer (not in this simple case)
@@ -63,7 +69,13 @@ int FlatUIFunctionSpace::GetSpaceWidth() const
 void FlatUIFunctionSpace::OnSize(wxSizeEvent& evt)
 {
     if (m_childControl) {
-        m_childControl->SetSize(evt.GetSize()); // Resize child to fill the new size of this panel
+        // Resize child control with margin
+        wxSize sz = evt.GetSize();
+        int w = sz.GetWidth();
+        int h = sz.GetHeight();
+        if (w < 0) w = 0;
+        if (h < 0) h = 0;
+        m_childControl->SetSize(w, h);
     }
     evt.Skip(); // Allow other handlers for this event if any
 }

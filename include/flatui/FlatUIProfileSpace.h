@@ -3,7 +3,7 @@
 
 #include <wx/wx.h>
 
-class FlatUIProfileSpace : public wxPanel // Inherit from wxPanel
+class FlatUIProfileSpace : public wxControl // Inherit from wxPanel
 {
 public:
     FlatUIProfileSpace(wxWindow* parent, wxWindowID id = wxID_ANY);

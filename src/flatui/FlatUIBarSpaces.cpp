@@ -44,54 +44,6 @@ void FlatUIBar::SetProfileSpaceControl(wxWindow* profControl, int width)
     }
 }
 
-void FlatUIBar::SetTabFunctionSpacer(int width, bool drawSeparator, bool dragFlag)
-{
-    if (!m_tabFunctionSpacer) {
-        m_tabFunctionSpacer = new FlatUISpacerControl(this, width);
-        m_tabFunctionSpacer->SetCanDragWindow(true);
-        m_tabFunctionSpacer->SetDoubleBuffered(true);
-    }
-
-    if (width > 0) {
-        m_tabFunctionSpacer->SetSpacerWidth(width);
-        m_tabFunctionSpacer->SetDrawSeparator(drawSeparator);
-        m_tabFunctionSpacer->SetShowDragFlag(dragFlag);
-        m_tabFunctionSpacer->Show();
-    }
-    else {
-        m_tabFunctionSpacer->Hide();
-    }
-
-    if (IsShown()) {
-        UpdateElementPositionsAndSizes(GetClientSize());
-        Refresh();
-    }
-}
-
-void FlatUIBar::SetFunctionProfileSpacer(int width, bool drawSeparator, bool dragFlag)
-{
-    if (!m_functionProfileSpacer) {
-        m_functionProfileSpacer = new FlatUISpacerControl(this, width);
-        m_functionProfileSpacer->SetCanDragWindow(true);
-        m_functionProfileSpacer->SetDoubleBuffered(true);
-    }
-
-    if (width > 0) {
-        m_functionProfileSpacer->SetSpacerWidth(width);
-        m_functionProfileSpacer->SetDrawSeparator(drawSeparator);
-        m_functionProfileSpacer->SetShowDragFlag(dragFlag);
-        m_functionProfileSpacer->Show();
-    }
-    else {
-        m_functionProfileSpacer->Hide();
-    }
-
-    if (IsShown()) {
-        UpdateElementPositionsAndSizes(GetClientSize());
-        Refresh();
-    }
-}
-
 void FlatUIBar::SetTabFunctionSpacerAutoExpand(bool autoExpand)
 {
     if (m_tabFunctionSpacer) {
@@ -113,6 +65,24 @@ void FlatUIBar::SetFunctionProfileSpacerAutoExpand(bool autoExpand)
             UpdateElementPositionsAndSizes(GetClientSize());
             Refresh();
         }
+    }
+}
+
+void FlatUIBar::SetFunctionSpaceCenterAlign(bool center)
+{
+    m_functionSpaceCenterAlign = center;
+    if (IsShown()) {
+        UpdateElementPositionsAndSizes(GetClientSize());
+        Refresh();
+    }
+}
+
+void FlatUIBar::SetProfileSpaceRightAlign(bool rightAlign)
+{
+    m_profileSpaceRightAlign = rightAlign;
+    if (IsShown()) {
+        UpdateElementPositionsAndSizes(GetClientSize());
+        Refresh();
     }
 }
 
@@ -168,28 +138,28 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
     int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
     int currentX = barPadding;
-    int barStripHeight = GetBarHeight();
+    int barStripHeight = GetBarHeight() ;
+    int innerHeight = barStripHeight - m_barTopMargin - m_barBottomMargin;
     int elementY = m_barTopMargin;  // Use top margin instead of 0
 
-    // 1. HomeSpace
-    int homeActualWidth = 0;
-    if (m_homeSpace && m_homeSpace->IsShown()) {
-        homeActualWidth = m_homeSpace->GetButtonWidth();
-    }
-    m_homeSpace->SetPosition(wxPoint(currentX, elementY));
-    m_homeSpace->SetSize(homeActualWidth, barStripHeight);
-
-    if (homeActualWidth > 0) {
+    if (m_homeSpace) {
+        if (m_homeSpace->IsShown()) {
+            int bW = m_homeSpace->GetButtonWidth();
+            int totalW = bW;
+            int h = innerHeight;
+            if (h < 0) h = 0;
+            m_homeSpace->SetPosition(wxPoint(currentX, elementY));
+            m_homeSpace->SetSize(bW, innerHeight);
         m_homeSpace->Show(true);
-        currentX += homeActualWidth + elemSpacing;
+            currentX += totalW + elemSpacing;
+        } else {
+            m_homeSpace->Show(false);
     }
-    else {
-        m_homeSpace->Show(false);
     }
 
     int sysButtonsWidth = 0;
     if (m_systemButtons && m_systemButtons->IsShown()) {
-        sysButtonsWidth = m_systemButtons->GetMyRequiredWidth();
+        sysButtonsWidth = m_systemButtons->GetRequiredWidth();
     }
 
     int rightBoundary = barClientSz.GetWidth() - barPadding;
@@ -249,11 +219,11 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             autoSpacerWidth = wxMax(m_tabFunctionSpacer->GetSpacerWidth(), autoSpacerWidth);
 
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(autoSpacerWidth, barStripHeight);
+            m_tabFunctionSpacer->SetSize(autoSpacerWidth, innerHeight);
             currentX += autoSpacerWidth;
 
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-            m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
+            m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
             if (profileSpaceIsEffectivelyVisible) {
@@ -263,12 +233,12 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                         remainingSpace = wxMax(m_functionProfileSpacer->GetSpacerWidth(), remainingSpace);
 
                         m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                        m_functionProfileSpacer->SetSize(remainingSpace, barStripHeight);
+                        m_functionProfileSpacer->SetSize(remainingSpace, innerHeight);
                         currentX += remainingSpace;
                     }
                     else {
                         m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                        m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
+                        m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
                         currentX += m_functionProfileSpacer->GetSpacerWidth();
                     }
                 }
@@ -276,7 +246,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
                     currentX += elemSpacing;
                 }
                 m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-                m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
+                m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
                 m_profileSpace->Show(true);
             }
             else {
@@ -286,7 +256,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         else if (funcProfileSpacerAutoExpand && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
             if (tabFuncSpacerVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
+                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             }
             else {
@@ -294,16 +264,16 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             }
 
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-            m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
+            m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
             int autoSpacerWidth = rightBoundary - currentX - profileRequestedWidth;
             autoSpacerWidth = wxMax(m_functionProfileSpacer->GetSpacerWidth(), autoSpacerWidth);
             m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_functionProfileSpacer->SetSize(autoSpacerWidth, barStripHeight);
+            m_functionProfileSpacer->SetSize(autoSpacerWidth, innerHeight);
             currentX += autoSpacerWidth;
             m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-            m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
+            m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
             m_profileSpace->Show(true);
         }
         else {
@@ -363,7 +333,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
             if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
+                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             }
             else if (funcSpaceIsEffectivelyVisible) {
@@ -372,7 +342,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
             if (funcSpaceIsEffectivelyVisible) {
                 m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-                m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
+                m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
                 m_functionSpace->Show(true);
                 currentX += funcRequestedWidth;
             }
@@ -382,7 +352,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
             if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
                 m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
+                m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
                 currentX += m_functionProfileSpacer->GetSpacerWidth();
             }
             else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
@@ -390,7 +360,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             }
             else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
                 m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
+                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
                 currentX += m_tabFunctionSpacer->GetSpacerWidth();
             }
             else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
@@ -399,7 +369,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
             if (profileSpaceIsEffectivelyVisible) {
                 m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-                m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
+                m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
                 m_profileSpace->Show(true);
                 currentX += profileRequestedWidth;
             }
@@ -465,7 +435,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
         if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
+            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
         }
         else if (funcSpaceIsEffectivelyVisible) {
@@ -474,7 +444,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
         if (funcSpaceIsEffectivelyVisible) {
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-            m_functionSpace->SetSize(funcRequestedWidth, barStripHeight);
+            m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
         }
@@ -484,7 +454,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
         if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
             m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), barStripHeight);
+            m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
             currentX += m_functionProfileSpacer->GetSpacerWidth();
         }
         else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
@@ -492,7 +462,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
         else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), barStripHeight);
+            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
             currentX += m_tabFunctionSpacer->GetSpacerWidth();
         }
         else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
@@ -501,7 +471,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
         if (profileSpaceIsEffectivelyVisible) {
             m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-            m_profileSpace->SetSize(profileRequestedWidth, barStripHeight);
+            m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
             m_profileSpace->Show(true);
             currentX += profileRequestedWidth;
         }
@@ -510,8 +480,9 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
     if (sysButtonsWidth > 0) {
-        m_systemButtons->SetPosition(wxPoint(barClientSz.GetWidth() - barPadding - sysButtonsWidth, elementY));
-        m_systemButtons->SetSize(sysButtonsWidth, barStripHeight);
+        int ctrlX = barClientSz.GetWidth() - barPadding - sysButtonsWidth;
+        m_systemButtons->SetPosition(wxPoint(ctrlX, elementY));
+        m_systemButtons->SetSize(sysButtonsWidth, innerHeight);
         m_systemButtons->Show(true);
     }
     else {
@@ -547,7 +518,32 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
 
+    if (m_functionSpaceCenterAlign && m_functionSpace) {
+        if (m_functionSpace->IsShown()) {
+            int fxW = m_functionSpace->GetSize().GetWidth();
+            int fxX = (barClientSz.GetWidth() - fxW) / 2;
+            m_functionSpace->SetPosition(wxPoint(fxX, m_barTopMargin));
+        }
+    }
+    if (m_profileSpaceRightAlign && m_profileSpace) {
+        if (m_profileSpace->IsShown()) {
+            int profW = m_profileSpace->GetSize().GetWidth();
+            int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
+            int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
+            int sysButtonsWidth = m_systemButtons && m_systemButtons->IsShown()
+                ? m_systemButtons->GetRequiredWidth() : 0;
+            int rb = barClientSz.GetWidth() - barPadding;
+            if (sysButtonsWidth > 0) rb -= (sysButtonsWidth + elemSpacing);
+            int profX = rb - profW;
+            m_profileSpace->SetPosition(wxPoint(profX, m_barTopMargin));
+        }
+    }
+
     Refresh();
+    if (m_profileSpace && m_profileSpace->IsShown()) {
+        int profH = m_profileSpace->GetSize().GetHeight();
+        LOG_DBG("ProfileSpace height: " + std::to_string(profH), "FlatUIBar");
+    }
 }
 
 int FlatUIBar::CalculateTabsWidth(wxDC& dc) const

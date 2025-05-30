@@ -2,7 +2,7 @@
 #define FLATUI_SPACER_CONTROL_H
 
 #include <wx/wx.h>
-class FlatUISpacerControl : public wxPanel
+class FlatUISpacerControl : public wxControl
 {
 public:
     FlatUISpacerControl(wxWindow* parent, int width = 10, wxWindowID id = wxID_ANY);

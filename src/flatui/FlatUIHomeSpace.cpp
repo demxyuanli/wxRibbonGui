@@ -16,15 +16,11 @@
 
 FlatUIHomeSpace::FlatUIHomeSpace(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
-      // m_menu(nullptr), // Removed
       m_hover(false),
       m_buttonWidth(CFG_INT("SystemButtonWidth", SYS_BUTTON_WIDTH)),
       m_activeHomeMenu(nullptr) // Initialize m_activeHomeMenu
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT); // Important for custom painting
-
-   
-    SetMinSize(wxSize(m_buttonWidth, GetParent() ? GetParent()->GetClientSize().GetHeight() : 20)); // Initial min size
 }
 
 FlatUIHomeSpace::~FlatUIHomeSpace()
@@ -165,4 +161,4 @@ void FlatUIHomeSpace::OnHomeMenuClosed(FlatUIHomeMenu* closedMenu)
         m_hover = false; 
         Refresh();       
     }
-} 
+}

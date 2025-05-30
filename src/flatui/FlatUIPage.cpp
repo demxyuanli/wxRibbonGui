@@ -122,8 +122,7 @@ void FlatUIPage::RecalculatePageHeight()
         if (m_sizer) {
             m_sizer->SetDimension(0, 0, defaultSize.GetWidth(), defaultSize.GetHeight());
         }
-        LOG_INF("RecalculatePageHeight: Empty page " + GetLabel().ToStdString() +
-            ", Set default size: (100,100)", "FlatUIPage");
+        //LOG_INF("RecalculatePageHeight: Empty page " + GetLabel().ToStdString() + ", Set default size: (100,100)", "FlatUIPage");
         isRecalculating = false;
         Thaw();
         return;

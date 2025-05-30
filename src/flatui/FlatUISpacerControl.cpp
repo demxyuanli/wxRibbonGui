@@ -1,19 +1,19 @@
 #include "flatui/FlatUISpacerControl.h"
 #include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h>
-
+#include "logger/Logger.h"
 #include "config/ConstantsConfig.h"
 #define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
 #define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
 FlatUISpacerControl::FlatUISpacerControl(wxWindow* parent, int width, wxWindowID id)
-    : wxPanel(parent, id), m_width(width), m_drawSeparator(false), m_autoExpand(false),
-      m_canDragWindow(false), m_dragging(false)
+    : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
+    m_width(width),
+    m_drawSeparator(false),
+    m_autoExpand(false),
+    m_canDragWindow(false), m_dragging(false)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    
-    SetMinSize(wxSize(m_width, -1));
-    SetSize(wxSize(m_width, -1));
     
     Bind(wxEVT_PAINT, &FlatUISpacerControl::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &FlatUISpacerControl::OnLeftDown, this);
@@ -76,27 +76,22 @@ void FlatUISpacerControl::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
     wxSize size = GetSize();
-    
     wxColour bgColor = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
     dc.SetBackground(bgColor);
     dc.Clear();
     
+    int contentX = 0;
+    int contentY = 0;
+    int contentW = size.GetWidth();
+    int contentH = size.GetHeight();
+    if (contentW < 0) contentW = 0;
+    if (contentH < 0) contentH = 0;
+    
     if (m_drawSeparator)
     {
         dc.SetPen(wxPen(wxColour(CFG_COLOUR("PanelSepatatorColor", FLATUI_PANEL_SEPARATOR_COLOUR)), CFG_INT("PanelSepatatorWidth", FLATUI_PANEL_SEPARATOR_WIDTH)));
-        dc.DrawLine(size.GetWidth() / 2, 2, size.GetWidth() / 2, size.GetHeight() - 2);
-    }
-    
-    if (m_canDragWindow && m_showDragFlag)
-    {
-        wxPen dotPen(wxColour(CFG_COLOUR("WindowMotionColor", FLATUI_WINDOW_MOTION_COLOR)), 2, wxPENSTYLE_DOT);
-        dc.SetPen(dotPen);
-        
-        int centerX = size.GetWidth() / 2;
-        int centerY = size.GetHeight() / 2;
-        int handleHeight = 8;
-        
-        dc.DrawLine(centerX, centerY - handleHeight/2, centerX, centerY + handleHeight/2);
+        int x = contentX + contentW/2;
+        dc.DrawLine(x, contentY + 2, x, contentY + contentH - 2);
     }
 }
 
@@ -168,4 +163,4 @@ void FlatUISpacerControl::SetCanDragWindow(bool canDrag)
 { 
     m_canDragWindow = canDrag; 
     Refresh(); 
-} 
+}
