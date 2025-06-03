@@ -17,7 +17,7 @@
 #include <logger/Logger.h>
 #include "flatui/FlatUIConstants.h"
 #include "config/ConstantsConfig.h"
-#include <memory> // Required for std::unique_ptr and std::move
+
 #define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
 #define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
 
@@ -116,14 +116,11 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     // Ensure the initial page can be activated and displayed after all pages are added
     Bind(wxEVT_SHOW, [this](wxShowEvent& event) {
         if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
-            // Use timer instead of wxCallAfter - now with std::shared_ptr for copyable capture
-            auto oneShotTimer = std::make_shared<wxTimer>(this);
-            int timerId = oneShotTimer->GetId(); 
-            oneShotTimer->StartOnce(50); // Start before moving
-
-            Bind(wxEVT_TIMER, [this, keptTimer = oneShotTimer](wxTimerEvent&) {
+            // Use timer instead of wxCallAfter
+            wxTimer* timer = new wxTimer(this);
+            Bind(wxEVT_TIMER, [this, timer](wxTimerEvent&) {
                 if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-                    FlatUIPage* currentPage = m_pages[m_activePage].get();
+                    FlatUIPage* currentPage = m_pages[m_activePage];
                     currentPage->SetActive(true);
                     currentPage->Show();
 
@@ -143,11 +140,17 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
                     UpdateElementPositionsAndSizes(GetClientSize());
                     Refresh();
                 }
-                // shared_ptr keptTimer ensures timer lives at least until event handler is removed.
-            }, timerId);
+                delete timer; // Clean up the timer
+                }, timer->GetId());
+
+            timer->StartOnce(50); // 50ms delay
         }
         event.Skip();
-    });
+        });
+}
+
+FlatUIBar::~FlatUIBar()
+{
 }
 
 wxSize FlatUIBar::DoGetBestSize() const
@@ -157,8 +160,8 @@ wxSize FlatUIBar::DoGetBestSize() const
 
     // Add the height of the active page, if any
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage].get();
-        wxSize pageSize = currentPage->GetBestSize(); 
+        FlatUIPage* currentPage = m_pages[m_activePage];
+        wxSize pageSize = currentPage->GetBestSize(); // Assuming FlatUIPage also implements GetBestSize or similar
         bestSize.SetHeight(bestSize.GetHeight() + pageSize.GetHeight());
         // The width of the FlatUIBar should ideally be determined by its contents or parent sizer.
         // For now, let's take the page's width as a hint, but this might need refinement.
@@ -185,21 +188,22 @@ wxSize FlatUIBar::DoGetBestSize() const
     return bestSize;
 }
 
-void FlatUIBar::AddPage(std::unique_ptr<FlatUIPage> page)
+void FlatUIBar::AddPage(FlatUIPage* page)
 {
     if (!page) return;
 
-    FlatUIPage* pagePtr = page.get(); // Get raw pointer for operations before move
-    m_pages.push_back(std::move(page));
+    m_pages.push_back(page);
 
-    pagePtr->Hide();
+    page->Hide();
 
     if (m_pages.size() == 1) {
         m_activePage = 0;
-        pagePtr->SetActive(true);
+        // Ensure the first page is properly activated
+        page->SetActive(true);
     }
     else {
-        pagePtr->SetActive(false);
+        // Non-first pages are inactive by default
+        page->SetActive(false);
     }
 
     if (IsShown()) {
@@ -222,7 +226,7 @@ void FlatUIBar::SetActivePage(size_t index)
     m_activePage = index;
 
     // Activate the new page
-    FlatUIPage* currentPage = m_pages[m_activePage].get();
+    FlatUIPage* currentPage = m_pages[m_activePage];
     if (currentPage) {
         // Set the page position and size
         wxSize barClientSize = GetClientSize();
@@ -250,8 +254,8 @@ void FlatUIBar::SetActivePage(size_t index)
     }
 }
 
-size_t FlatUIBar::GetPageCount() const noexcept { return m_pages.size(); }
-FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index].get() : nullptr; }
+size_t FlatUIBar::GetPageCount() const { return m_pages.size(); }
+FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index] : nullptr; }
 
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {

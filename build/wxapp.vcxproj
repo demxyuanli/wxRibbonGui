@@ -1,0 +1,460 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{930360D3-A5B6-3E19-BD12-3738ECE02FF6}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <VcpkgEnabled>false</VcpkgEnabled>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>wxapp</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="do_not_import_user.props" Condition="exists('do_not_import_user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\source\repos\wxgui\build\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">wxapp.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">wxapp</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\source\repos\wxgui\build\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">wxapp.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">wxapp</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\source\repos\wxgui\build\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">wxapp.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">wxapp</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\source\repos\wxgui\build\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">wxapp.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">wxapp</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/repos/vcpkg/installed/x64-windows/lib/mswu" /external:I "D:/repos/vcpkg/installed/x64-windows/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/librsvg-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gdk-pixbuf-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pango-1.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/fribidi" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/harfbuzz" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/cairo" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pixman-1" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libcroco-0.6" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libxml2" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gio-win32-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/glib-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/lib/glib-2.0/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libpng16" /external:I "D:/repos/vcpkg/installed/x64-windows/include/utf8cpp"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>	Copying D:/source/repos/wxgui/config to D:/source/repos/wxgui/build/Debug</Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/Debug/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/debug/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config D:/source/repos/wxgui/build/Debug/
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\repos\vcpkg\installed\x64-windows\debug\lib\wxmsw32ud_core.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\wxbase32ud.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\wxmsw32ud_aui.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\wxmsw32ud_ribbon.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\wxmsw32ud_webview.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\wxmsw32ud_gl.lib;opengl32.lib;glu32.lib;gdiplus.lib;msimg32.lib;winmm.lib;comctl32.lib;uuid.lib;oleacc.lib;uxtheme.lib;rpcrt4.lib;shlwapi.lib;version.lib;wsock32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\jsoncpp.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\theora.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\theoradec.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\theoraenc.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\rsvg-2.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gdk_pixbuf-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;msimg32.lib;winmm.lib;shlwapi.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\ogg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 D:/repos/vcpkg/installed/x64-windows/debug/lib/libpng16d.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/zlibd.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/jpeg.lib</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/source/repos/wxgui/build/Debug/wxapp.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/source/repos/wxgui/build/Debug/wxapp.pdb</ProgramDataBaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/repos/vcpkg/installed/x64-windows/lib/mswu" /external:I "D:/repos/vcpkg/installed/x64-windows/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/librsvg-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gdk-pixbuf-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pango-1.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/fribidi" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/harfbuzz" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/cairo" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pixman-1" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libcroco-0.6" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libxml2" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gio-win32-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/glib-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/lib/glib-2.0/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libpng16" /external:I "D:/repos/vcpkg/installed/x64-windows/include/utf8cpp"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>	Copying D:/source/repos/wxgui/config to D:/source/repos/wxgui/build/Release</Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/Release/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config D:/source/repos/wxgui/build/Release/
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_core.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxbase32u.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_aui.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_ribbon.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_webview.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_gl.lib;opengl32.lib;glu32.lib;gdiplus.lib;msimg32.lib;winmm.lib;comctl32.lib;uuid.lib;oleacc.lib;uxtheme.lib;rpcrt4.lib;shlwapi.lib;version.lib;wsock32.lib;D:\repos\vcpkg\installed\x64-windows\lib\jsoncpp.lib;D:\repos\vcpkg\installed\x64-windows\lib\theora.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoradec.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoraenc.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\rsvg-2.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gdk_pixbuf-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;msimg32.lib;winmm.lib;shlwapi.lib;D:\repos\vcpkg\installed\x64-windows\lib\ogg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 D:/repos/vcpkg/installed/x64-windows/debug/lib/libpng16d.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/zlibd.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/jpeg.lib</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/source/repos/wxgui/build/Release/wxapp.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/source/repos/wxgui/build/Release/wxapp.pdb</ProgramDataBaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/repos/vcpkg/installed/x64-windows/lib/mswu" /external:I "D:/repos/vcpkg/installed/x64-windows/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/librsvg-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gdk-pixbuf-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pango-1.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/fribidi" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/harfbuzz" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/cairo" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pixman-1" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libcroco-0.6" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libxml2" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gio-win32-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/glib-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/lib/glib-2.0/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libpng16" /external:I "D:/repos/vcpkg/installed/x64-windows/include/utf8cpp"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>	Copying D:/source/repos/wxgui/config to D:/source/repos/wxgui/build/MinSizeRel</Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/MinSizeRel/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config D:/source/repos/wxgui/build/MinSizeRel/
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_core.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxbase32u.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_aui.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_ribbon.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_webview.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_gl.lib;opengl32.lib;glu32.lib;gdiplus.lib;msimg32.lib;winmm.lib;comctl32.lib;uuid.lib;oleacc.lib;uxtheme.lib;rpcrt4.lib;shlwapi.lib;version.lib;wsock32.lib;D:\repos\vcpkg\installed\x64-windows\lib\jsoncpp.lib;D:\repos\vcpkg\installed\x64-windows\lib\theora.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoradec.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoraenc.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\rsvg-2.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gdk_pixbuf-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;msimg32.lib;winmm.lib;shlwapi.lib;D:\repos\vcpkg\installed\x64-windows\lib\ogg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 D:/repos/vcpkg/installed/x64-windows/debug/lib/libpng16d.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/zlibd.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/jpeg.lib</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/source/repos/wxgui/build/MinSizeRel/wxapp.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/source/repos/wxgui/build/MinSizeRel/wxapp.pdb</ProgramDataBaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /external:I "D:/repos/vcpkg/installed/x64-windows/lib/mswu" /external:I "D:/repos/vcpkg/installed/x64-windows/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/librsvg-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gdk-pixbuf-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pango-1.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/fribidi" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/harfbuzz" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/cairo" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/pixman-1" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libcroco-0.6" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libxml2" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/gio-win32-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/glib-2.0" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/lib/glib-2.0/include" /external:I "D:/repos/vcpkg/installed/x64-windows/debug/../include/libpng16" /external:I "D:/repos/vcpkg/installed/x64-windows/include/utf8cpp"</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExternalWarningLevel>TurnOffAllWarnings</ExternalWarningLevel>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <SupportJustMyCode></SupportJustMyCode>
+      <UseFullPaths>false</UseFullPaths>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;LZMA_API_STATIC;XML_STATIC;UNICODE;_UNICODE;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\source\repos\wxgui\include;D:\repos\vcpkg\installed\x64-windows\lib\mswu;D:\repos\vcpkg\installed\x64-windows\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\librsvg-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gdk-pixbuf-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pango-1.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\fribidi;D:\repos\vcpkg\installed\x64-windows\debug\..\include\harfbuzz;D:\repos\vcpkg\installed\x64-windows\debug\..\include\cairo;D:\repos\vcpkg\installed\x64-windows\debug\..\include\pixman-1;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libcroco-0.6;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libxml2;D:\repos\vcpkg\installed\x64-windows\debug\..\include\gio-win32-2.0;D:\repos\vcpkg\installed\x64-windows\debug\..\include\glib-2.0;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0\include;D:\repos\vcpkg\installed\x64-windows\debug\..\include\libpng16;D:\repos\vcpkg\installed\x64-windows\include\utf8cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>	Copying D:/source/repos/wxgui/config to D:/source/repos/wxgui/build/RelWithDebInfo</Message>
+      <Command>setlocal
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -noprofile -executionpolicy Bypass -file D:/repos/vcpkg/scripts/buildsystems/msbuild/applocal.ps1 -targetBinary D:/source/repos/wxgui/build/RelWithDebInfo/wxapp.exe -installedDir D:/repos/vcpkg/installed/x64-windows/bin -OutVariable out
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different D:/source/repos/wxgui/config D:/source/repos/wxgui/build/RelWithDebInfo/
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_core.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxbase32u.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_aui.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_ribbon.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_webview.lib;D:\repos\vcpkg\installed\x64-windows\lib\wxmsw32u_gl.lib;opengl32.lib;glu32.lib;gdiplus.lib;msimg32.lib;winmm.lib;comctl32.lib;uuid.lib;oleacc.lib;uxtheme.lib;rpcrt4.lib;shlwapi.lib;version.lib;wsock32.lib;D:\repos\vcpkg\installed\x64-windows\lib\jsoncpp.lib;D:\repos\vcpkg\installed\x64-windows\lib\theora.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoradec.lib;D:\repos\vcpkg\installed\x64-windows\lib\theoraenc.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\rsvg-2.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gdk_pixbuf-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\intl.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\cairo.lib;gdi32.lib;dwrite.lib;d2d1.lib;windowscodecs.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gio-2.0.lib;dnsapi.lib;iphlpapi.lib;ws2_32.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\gobject-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\glib-2.0.lib;D:\repos\vcpkg\installed\x64-windows\debug\lib\iconv.lib;msimg32.lib;winmm.lib;shlwapi.lib;D:\repos\vcpkg\installed\x64-windows\lib\ogg.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 D:/repos/vcpkg/installed/x64-windows/debug/lib/libpng16d.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/zlibd.lib D:/repos/vcpkg/installed/x64-windows/debug/lib/jpeg.lib</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/source/repos/wxgui/build/RelWithDebInfo/wxapp.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/source/repos/wxgui/build/RelWithDebInfo/wxapp.pdb</ProgramDataBaseFile>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\source\repos\wxgui\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/source/repos/wxgui/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/wxgui -BD:/source/repos/wxgui/build --check-stamp-file D:/source/repos/wxgui/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindwxWidgets.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\UsewxWidgets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-config.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\wxwidgets\vcpkg-cmake-wrapper.cmake;D:\repos\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCXXCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeRCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\source\repos\wxgui\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/source/repos/wxgui/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/wxgui -BD:/source/repos/wxgui/build --check-stamp-file D:/source/repos/wxgui/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindwxWidgets.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\UsewxWidgets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-config.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\wxwidgets\vcpkg-cmake-wrapper.cmake;D:\repos\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCXXCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeRCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\source\repos\wxgui\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/source/repos/wxgui/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/wxgui -BD:/source/repos/wxgui/build --check-stamp-file D:/source/repos/wxgui/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindwxWidgets.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\UsewxWidgets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-config.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\wxwidgets\vcpkg-cmake-wrapper.cmake;D:\repos\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCXXCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeRCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\source\repos\wxgui\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/source/repos/wxgui/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/wxgui -BD:/source/repos/wxgui/build --check-stamp-file D:/source/repos/wxgui/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCXXInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeCommonLanguageInclude.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeFindDependencyMacro.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeGenericSystem.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeInitializeConfigs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeLanguageInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeRCInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\CMakeSystemSpecificInitialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Compiler\MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageHandleStandardArgs.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPackageMessage.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindPkgConfig.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\FindwxWidgets.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Linker\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-Initialize.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-C.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC-CXX.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows-MSVC.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\Windows.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\Platform\WindowsPaths.cmake;C:\Program Files\CMake\share\cmake-3.31\Modules\UsewxWidgets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-namespaced-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncpp-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\jsoncpp\jsoncppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\nanosvg\NanoSVGTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\ogg\OggTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-config.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-debug.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets-release.cmake;D:\repos\vcpkg\installed\x64-windows\share\unofficial-theora\unofficial-theora-targets.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfig.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppConfigVersion.cmake;D:\repos\vcpkg\installed\x64-windows\share\utf8cpp\utf8cppTargets.cmake;D:\repos\vcpkg\installed\x64-windows\share\wxwidgets\vcpkg-cmake-wrapper.cmake;D:\repos\vcpkg\scripts\buildsystems\vcpkg.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeCXXCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeRCCompiler.cmake;D:\source\repos\wxgui\build\CMakeFiles\3.31.7\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\source\repos\wxgui\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\source\repos\wxgui\src\MainApplication.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\FlatFrame.cpp" />
+    <ResourceCompile Include="D:\source\repos\wxgui\src\resource.rc" />
+    <ClCompile Include="D:\source\repos\wxgui\src\logger\Logger.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\ConfigManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\LoggerConfig.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\Coin3DConfig.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\config\ConstantsConfig.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\language\LanguageManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\BorderlessFrameLogic.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFrame.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBar.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarSpaces.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarTabs.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarDrawing.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIButtonBar.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIGallery.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPage.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPanel.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFunctionSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIProfileSpace.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISystemButtons.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIEventManager.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISpacerControl.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeMenu.cpp" />
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\UIHierarchyDebugger.cpp" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="D:\source\repos\wxgui\build\ZERO_CHECK.vcxproj">
+      <Project>{701BAC54-0DCC-3B43-A9E0-A7B8D7240D65}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

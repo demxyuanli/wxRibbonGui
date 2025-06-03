@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\source\repos\wxgui\src\MainApplication.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\FlatFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\logger\Logger.cpp">
+      <Filter>Source Files\logger</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\config\ConfigManager.cpp">
+      <Filter>Source Files\config</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\config\LoggerConfig.cpp">
+      <Filter>Source Files\config</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\config\Coin3DConfig.cpp">
+      <Filter>Source Files\config</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\config\ConstantsConfig.cpp">
+      <Filter>Source Files\config</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\language\LanguageManager.cpp">
+      <Filter>Source Files\language</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\BorderlessFrameLogic.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFrame.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBar.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarSpaces.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarTabs.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIBarDrawing.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIButtonBar.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIGallery.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPage.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIPanel.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeSpace.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIFunctionSpace.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIProfileSpace.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISystemButtons.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIEventManager.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUISpacerControl.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\FlatUIHomeMenu.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\source\repos\wxgui\src\flatui\UIHierarchyDebugger.cpp">
+      <Filter>Source Files\flatui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\source\repos\wxgui\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="D:\source\repos\wxgui\src\resource.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{482ED99A-DCF2-3453-992D-F2C8801946EE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\config">
+      <UniqueIdentifier>{40E533D8-F817-3875-ACFA-2381463F76AB}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\flatui">
+      <UniqueIdentifier>{E875CF04-EBEA-3598-BD8C-D7387BFCFD25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\language">
+      <UniqueIdentifier>{8E15E3B2-582B-3CE7-8728-EA8FDC65A1B1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\logger">
+      <UniqueIdentifier>{1FD4F94A-9B89-3B0E-B530-9011D1B53181}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

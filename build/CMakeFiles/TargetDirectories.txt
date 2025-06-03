@@ -1,0 +1,3 @@
+D:/source/repos/wxgui/build/CMakeFiles/wxapp.dir
+D:/source/repos/wxgui/build/CMakeFiles/ALL_BUILD.dir
+D:/source/repos/wxgui/build/CMakeFiles/ZERO_CHECK.dir

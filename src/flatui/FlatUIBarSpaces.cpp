@@ -490,7 +490,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
     if (m_activePage < m_pages.size() && m_pages[m_activePage])
     {
-        auto* currentPage = m_pages[m_activePage].get();
+        FlatUIPage* currentPage = m_pages[m_activePage];
+
         currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
 
         int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
@@ -554,7 +555,7 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
         if (!m_pages[i]) continue;
-        auto* page = m_pages[i].get();
+        FlatUIPage* page = m_pages[i];
         wxString label = page->GetLabel();
         wxSize labelSize = dc.GetTextExtent(label);
         totalWidth += labelSize.GetWidth() + tabPadding * 2;
