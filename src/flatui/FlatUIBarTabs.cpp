@@ -28,7 +28,7 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
         int currentX = tabStartX;
         for (size_t i = 0; i < m_pages.size(); ++i) {
             if (!m_pages[i]) continue;
-            FlatUIPage* page = m_pages[i];
+            FlatUIPage* page = m_pages[i].get();
             wxSize labelSize = dc.GetTextExtent(page->GetLabel());
             int tabWidth = labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2;
             wxRect rect(currentX, 0, tabWidth, barH);
@@ -56,7 +56,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
     {
         if (!m_pages[i]) continue;
 
-        FlatUIPage* page = m_pages[i];
+        FlatUIPage* page = m_pages[i].get();
         wxString label = page->GetLabel();
         wxSize labelSize = dc.GetTextExtent(label);
         int tabWidth = labelSize.GetWidth() + tabPadding * 2;
@@ -217,7 +217,7 @@ void FlatUIBar::SetTabBorderWidths(int top, int bottom, int left, int right)
     Refresh();
 }
 
-void FlatUIBar::GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const
+void FlatUIBar::GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const noexcept
 {
     top = m_tabBorderTop;
     bottom = m_tabBorderBottom;

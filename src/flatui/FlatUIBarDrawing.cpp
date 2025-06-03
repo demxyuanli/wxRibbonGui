@@ -4,6 +4,7 @@
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
 #include <string>
+#include <memory>
 #include "logger/Logger.h"
 #include "flatui/FlatUIConstants.h"
 #include "config/ConstantsConfig.h"
@@ -51,30 +52,27 @@ void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)
         return;
     }
 
-    // Try to get the actual DC type and create appropriate graphics context
-    wxGraphicsContext* gc = nullptr;
+    std::unique_ptr<wxGraphicsContext> gc;
 
     if (wxAutoBufferedPaintDC* paintDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
-        gc = wxGraphicsContext::Create(*paintDC);
+        gc.reset(wxGraphicsContext::Create(*paintDC));
     }
     else if (wxClientDC* clientDC = dynamic_cast<wxClientDC*>(&dc)) {
-        gc = wxGraphicsContext::Create(*clientDC);
+        gc.reset(wxGraphicsContext::Create(*clientDC));
     }
     else if (wxMemoryDC* memDC = dynamic_cast<wxMemoryDC*>(&dc)) {
-        gc = wxGraphicsContext::Create(*memDC);
+        gc.reset(wxGraphicsContext::Create(*memDC));
     }
     else if (wxWindowDC* winDC = dynamic_cast<wxWindowDC*>(&dc)) {
-        gc = wxGraphicsContext::Create(*winDC);
+        gc.reset(wxGraphicsContext::Create(*winDC));
     }
     else if (wxAutoBufferedPaintDC* bufferedDC = dynamic_cast<wxAutoBufferedPaintDC*>(&dc)) {
-        // wxAutoBufferedPaintDC derives from wxMemoryDC or wxPaintDC
-        gc = wxGraphicsContext::Create(*bufferedDC);
+        gc.reset(wxGraphicsContext::Create(*bufferedDC));
     }
     else {
-        // If we can't determine the DC type, try creating from the window
         wxWindow* win = dc.GetWindow();
         if (win) {
-            gc = wxGraphicsContext::Create(win);
+            gc.reset(wxGraphicsContext::Create(win));
         }
     }
 
@@ -203,6 +201,4 @@ void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)
     }
     break;
     }
-
-    delete gc;
 } 

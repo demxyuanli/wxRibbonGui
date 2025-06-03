@@ -19,6 +19,7 @@
 #include <wx/splitter.h>
 #include <wx/sizer.h>
 #include <string>
+#include <memory>
 
 #ifdef __WXMSW__
 #include <windows.h>
@@ -203,7 +204,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     toggleBar->AddButton(ID_ToggleProfileSpace, "ToggleProf");
     panel2->AddButtonBar(toggleBar, 0, wxEXPAND | wxALL, 5);
     page1->AddPanel(panel2);
-    m_ribbon->AddPage(page1);
+    m_ribbon->AddPage(std::unique_ptr<FlatUIPage>(page1));
 
     FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
     FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
@@ -214,7 +215,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     buttonBar3->AddButton(wxID_PASTE, "Paste", pasteBmp);
     panel3->AddButtonBar(buttonBar3);
     page3->AddPanel(panel3);
-    m_ribbon->AddPage(page3);
+    m_ribbon->AddPage(std::unique_ptr<FlatUIPage>(page3));
 
     FlatUIPage* page4 = new FlatUIPage(m_ribbon, "View");
     FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
@@ -226,7 +227,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     buttonBar4->AddButton(wxID_SELECTALL, "Select", selectAllBmp);
     panel4->AddButtonBar(buttonBar4);
     page4->AddPanel(panel4);
-    m_ribbon->AddPage(page4);
+    m_ribbon->AddPage(std::unique_ptr<FlatUIPage>(page4));
 
     FlatUIPage* page5 = new FlatUIPage(m_ribbon, "Help");
     FlatUIPanel* panel5 = new FlatUIPanel(page5, "HelpPanel", wxVERTICAL);
@@ -238,7 +239,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     buttonBar5->AddButton(wxID_STOP, "Stop", stopBmp);
     panel5->AddButtonBar(buttonBar5);
     page5->AddPanel(panel5);
-    m_ribbon->AddPage(page5);
+    m_ribbon->AddPage(std::unique_ptr<FlatUIPage>(page5));
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(m_ribbon, 0, wxEXPAND | wxALL, 2);
