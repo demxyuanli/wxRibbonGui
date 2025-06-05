@@ -37,7 +37,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionProfileSpacer(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
-    m_tabBorderTop(2),
+    m_tabBorderTop(CFG_INT("BarTabBorderTop", FLATUI_BAR_TAB_BORDER_TOP)),
     m_tabBorderBottom(0),
     m_tabBorderLeft(0),
     m_tabBorderRight(0),
@@ -45,6 +45,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpaceCenterAlign(false),
     m_profileSpaceRightAlign(false)
 {
+    SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(GetFlatUIDefaultFont());
     auto& cfg = ConstantsConfig::getInstance();
     m_tabBorderColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
@@ -75,6 +76,12 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpace = new FlatUIProfileSpace(this, wxID_ANY);
     m_systemButtons = new FlatUISystemButtons(this, wxID_ANY);
 
+    // Set names for all controls
+    m_homeSpace->SetName("HomeSpace");
+    m_functionSpace->SetName("FunctionSpace");
+    m_profileSpace->SetName("ProfileSpace");
+    m_systemButtons->SetName("SystemButtons");
+
     m_homeSpace->SetDoubleBuffered(true);
     m_functionSpace->SetDoubleBuffered(true);
     m_profileSpace->SetDoubleBuffered(true);
@@ -82,6 +89,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
 
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 10);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 10);
+    m_tabFunctionSpacer->SetName("TabFunctionSpacer");
+    m_functionProfileSpacer->SetName("FunctionProfileSpacer");
+
     m_tabFunctionSpacer->SetDoubleBuffered(true);
     m_functionProfileSpacer->SetDoubleBuffered(true);
 
@@ -159,6 +169,7 @@ wxSize FlatUIBar::DoGetBestSize() const
     bestSize.SetHeight(GetBarHeight() + m_barTopMargin); // Include top margin
 
     // Add the height of the active page, if any
+
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
         FlatUIPage* currentPage = m_pages[m_activePage];
         wxSize pageSize = currentPage->GetBestSize(); // Assuming FlatUIPage also implements GetBestSize or similar

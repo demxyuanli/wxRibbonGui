@@ -37,7 +37,7 @@ public:
     void BuildMenuLayout(); // To add items to the sizer
     
     // Controls showing the popup at a specific position and size
-    void ShowAt(const wxPoint& pos, int contentHeight);
+    void ShowAt(const wxPoint& pos, int contentHeight, bool& isShow);
     virtual bool Close(bool force = true); // Keep for consistency, will mostly call Hide()
 
     FlatUIFrame* GetEventSinkFrame() const { return m_eventSinkFrame; } // Getter for event sink frame
