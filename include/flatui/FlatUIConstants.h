@@ -6,7 +6,7 @@
 
 // Global Colors
 const wxColour FLATUI_PRIMARY_FRAME_BORDER_COLOUR(230, 200, 0);
-const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(240, 240, 240); // Primary background for active content
+const wxColour FLATUI_PRIMARY_CONTENT_BG_COLOUR(250, 250, 250); // Primary background for active content
 const wxColour FLATUI_DEFAULT_BG_COLOUR(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
 const wxColour FLATUI_DEFAULT_BORDER_COLOUR(170, 170, 170);
 const wxColour FLATUI_DEFAULT_TEXT_COLOUR(100, 100, 100);
@@ -62,6 +62,7 @@ const int FLATUI_BAR_TAB_PADDING = 10;
 const int FLATUI_BAR_TAB_SPACING = 0;
 const int FLATUI_BAR_ELEMENT_SPACING = 5;
 const int FLATUI_BAR_PADDING = 0;
+const int FLATUI_BAR_TAB_BORDER_TOP = 2;
 
 // FlatUIButtonBar
 const int FLATUI_BUTTONBAR_TARGET_HEIGHT = 30;

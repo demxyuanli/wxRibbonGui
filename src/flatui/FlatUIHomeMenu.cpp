@@ -69,7 +69,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
             m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight", HOMEMENU_SEPARATOR_HEIGHT)-1)/2 );
         } else {
             wxPanel* itemPanel = new wxPanel(m_panel, wxID_ANY);
-            itemPanel->SetBackgroundColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR);
+            itemPanel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
             wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
             
             if(itemInfo.icon.IsOk()){
@@ -178,8 +178,8 @@ void FlatUIHomeMenu::OnPaint(wxPaintEvent& event)
     wxAutoBufferedPaintDC dc(m_panel);
     int w, h;
     m_panel->GetSize(&w, &h);
-    dc.SetPen(wxPen(FLATUI_BAR_TAB_BORDER_COLOUR, 1));
-    dc.DrawLine(w - 1, 0, w - 1, h);
+    dc.SetPen(wxPen(*wxGREEN, 1));
+    dc.DrawRectangle(0, 0, w, h);
 }
 
 void FlatUIHomeMenu::OnMouseMotion(wxMouseEvent& event)
@@ -200,7 +200,7 @@ void FlatUIHomeMenu::SendItemCommand(int id)
     }
 }
 
-void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight)
+void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight, bool& isShow)
 {
     SetPosition(pos);
     SetSize(wxSize(CFG_INT("HomeMenuWidth", HOMEMENU_WIDTH), contentHeight));
@@ -215,6 +215,7 @@ void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight)
         // This could indicate a deeper issue or a need to defer SetFocus.
         wxLogDebug(wxT("FlatUIHomeMenu::ShowAt - Window not shown on screen when trying to SetFocus."));
     }
+    isShow = true;
 }
 
 bool FlatUIHomeMenu::Close(bool force)

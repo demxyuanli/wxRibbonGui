@@ -26,10 +26,13 @@ public:
     void SetHomeMenu(FlatUIHomeMenu* menu);
     FlatUIHomeMenu* GetActiveHomeMenu() const { return m_activeHomeMenu; }
 
+    void SetShow(bool isShow) { m_show = isShow; }
+
 private:
     wxBitmap m_icon;
     wxRect m_buttonRect;
     bool m_hover;
+    bool m_show = false;
     int m_buttonWidth;
     FlatUIHomeMenu* m_activeHomeMenu; // Pointer to the active menu
 

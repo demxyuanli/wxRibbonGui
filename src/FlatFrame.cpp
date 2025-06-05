@@ -126,7 +126,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
         wxLogError("FlatUIHomeSpace is not available to attach the menu.");
     }
 
-    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 15, false, true, true);
+    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 30, false, true, true);
 
     wxPanel* searchPanel = new wxPanel(m_ribbon);
     wxBoxSizer* searchSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -152,7 +152,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     profilePanel->SetSizer(profileSizer);
     m_ribbon->SetProfileSpaceControl(profilePanel, 50);
 
-    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_FUNCTION_PROFILE, 60, false, true, false);
+    m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_FUNCTION_PROFILE, 30, false, true, true);
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);

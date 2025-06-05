@@ -209,7 +209,6 @@ private:
     void PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset);
     void HandleTabAreaClick(const wxPoint& pos);
 
-    // 对齐控制标志
     bool m_functionSpaceCenterAlign;
     bool m_profileSpaceRightAlign;
 };

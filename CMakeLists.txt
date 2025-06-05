@@ -107,7 +107,7 @@ if(MSVC)
 
     # 复制扩展配置文件到目标目录
     set(CONFIG_FILES
-        "${CMAKE_SOURCE_DIR}/config"
+        "${CMAKE_SOURCE_DIR}/config/config.ini"
     )
     set(TARGET_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>)
     foreach(CONFIG_FILE ${CONFIG_FILES})

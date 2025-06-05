@@ -90,15 +90,18 @@ void FlatUIBar::AddSpaceSeparator(SpacerLocation location, int width, bool drawS
 {
     FlatUISpacerControl** targetSpacer = nullptr;
     wxString logLocation;
+    wxString spacerName;
 
     switch (location) {
     case SPACER_TAB_FUNCTION:
         targetSpacer = &m_tabFunctionSpacer;
         logLocation = "TabFunction";
+        spacerName = "TabFunctionSpacer";
         break;
     case SPACER_FUNCTION_PROFILE:
         targetSpacer = &m_functionProfileSpacer;
         logLocation = "FunctionProfile";
+        spacerName = "FunctionProfileSpacer";
         break;
     default:
         LOG_ERR("FlatUIBar::AddSpaceSeparator - Invalid location specified", "FlatUIBar");
@@ -107,6 +110,7 @@ void FlatUIBar::AddSpaceSeparator(SpacerLocation location, int width, bool drawS
 
     if (!*targetSpacer) {
         *targetSpacer = new FlatUISpacerControl(this, width);
+        (*targetSpacer)->SetName(spacerName);
         (*targetSpacer)->SetCanDragWindow(canDrag);
         (*targetSpacer)->SetDoubleBuffered(true);
     }
@@ -134,52 +138,71 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         return; // Components not ready
     }
 
+    // Ensure all controls have proper names
+    if (m_homeSpace) m_homeSpace->SetName("HomeSpace");
+    if (m_systemButtons) m_systemButtons->SetName("SystemButtons");
+    if (m_functionSpace) m_functionSpace->SetName("FunctionSpace");
+    if (m_profileSpace) m_profileSpace->SetName("ProfileSpace");
+    if (m_tabFunctionSpacer) m_tabFunctionSpacer->SetName("TabFunctionSpacer");
+    if (m_functionProfileSpacer) m_functionProfileSpacer->SetName("FunctionProfileSpacer");
+
     wxClientDC dc(this);
     int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
     int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
-    int currentX = barPadding;
-    int barStripHeight = GetBarHeight() ;
+    int currentX = barPadding; // Initial currentX before homeSpace
+    int barStripHeight = GetBarHeight();
     int innerHeight = barStripHeight - m_barTopMargin - m_barBottomMargin;
-    int elementY = m_barTopMargin;  // Use top margin instead of 0
+    int elementY = m_barTopMargin;
 
-    if (m_homeSpace) {
-        if (m_homeSpace->IsShown()) {
-            int bW = m_homeSpace->GetButtonWidth();
-            int totalW = bW;
-            int h = innerHeight;
-            if (h < 0) h = 0;
-            m_homeSpace->SetPosition(wxPoint(currentX, elementY));
-            m_homeSpace->SetSize(bW, innerHeight);
+    // Home Space (Leftmost)
+    if (m_homeSpace && m_homeSpace->IsShown()) {
+        int bW = m_homeSpace->GetButtonWidth();
+        m_homeSpace->SetPosition(wxPoint(currentX, elementY));
+        m_homeSpace->SetSize(bW, innerHeight);
         m_homeSpace->Show(true);
-            currentX += totalW + elemSpacing;
-        } else {
-            m_homeSpace->Show(false);
+        currentX += bW + elemSpacing;
     }
+    else {
+        if (m_homeSpace) m_homeSpace->Show(false);
     }
 
+    // System Buttons (Rightmost) - Calculate position first
     int sysButtonsWidth = 0;
     if (m_systemButtons && m_systemButtons->IsShown()) {
         sysButtonsWidth = m_systemButtons->GetRequiredWidth();
-    }
-
-    int rightBoundary = barClientSz.GetWidth() - barPadding;
-    if (sysButtonsWidth > 0) {
-        rightBoundary -= (sysButtonsWidth + elemSpacing);
+        int ctrlX = barClientSz.GetWidth() - barPadding - sysButtonsWidth;
+        m_systemButtons->SetPosition(wxPoint(ctrlX, elementY));
+        m_systemButtons->SetSize(sysButtonsWidth, innerHeight);
+        m_systemButtons->Show(true);
     }
     else {
-        m_systemButtons->Show(false);
+        if (m_systemButtons) m_systemButtons->Show(false);
     }
 
-    bool tabFuncSpacerVisible = m_tabFunctionSpacer && m_tabFunctionSpacer->IsShown();
-    bool tabFuncSpacerAutoExpand = tabFuncSpacerVisible && m_tabFunctionSpacer->GetAutoExpand();
+    // Calculate right boundary for flexible elements (excluding system buttons)
+    int rightBoundaryForFlexibleElements = barClientSz.GetWidth() - barPadding;
+    if (sysButtonsWidth > 0) {
+        rightBoundaryForFlexibleElements -= (sysButtonsWidth + elemSpacing);
+    }
 
-    bool funcProfileSpacerVisible = m_functionProfileSpacer && m_functionProfileSpacer->IsShown();
-    bool funcProfileSpacerAutoExpand = funcProfileSpacerVisible && m_functionProfileSpacer->GetAutoExpand();
+    // Tabs
+    int tabsNeededWidth = CalculateTabsWidth(dc);
+    if (tabsNeededWidth > 0) {
+        m_tabAreaRect = wxRect(currentX, elementY, tabsNeededWidth, barStripHeight);
+        currentX += tabsNeededWidth + elemSpacing;
+    }
+    else {
+        m_tabAreaRect = wxRect();
+    }
 
+    // Get visibility and requested widths for function and profile spaces
     int funcRequestedWidth = 0;
     bool funcSpaceIsEffectivelyVisible = m_functionSpace && m_functionSpace->IsShown() && m_functionSpace->GetChildControl();
     if (funcSpaceIsEffectivelyVisible) {
         funcRequestedWidth = m_functionSpace->GetSpaceWidth();
+    }
+    else {
+        if (m_functionSpace) m_functionSpace->Show(false);
     }
 
     int profileRequestedWidth = 0;
@@ -187,307 +210,173 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     if (profileSpaceIsEffectivelyVisible) {
         profileRequestedWidth = m_profileSpace->GetSpaceWidth();
     }
+    else {
+        if (m_profileSpace) m_profileSpace->Show(false);
+    }
 
-    if (tabFuncSpacerAutoExpand || funcProfileSpacerAutoExpand) {
-        int tabsNeededWidth = CalculateTabsWidth(dc);
+    // Get spacer states
+    bool tabFuncSpacerVisible = m_tabFunctionSpacer && m_tabFunctionSpacer->IsShown();
+    bool tabFuncSpacerAutoExpand = tabFuncSpacerVisible && m_tabFunctionSpacer->GetAutoExpand();
+    bool funcProfileSpacerVisible = m_functionProfileSpacer && m_functionProfileSpacer->IsShown();
+    bool funcProfileSpacerAutoExpand = funcProfileSpacerVisible && m_functionProfileSpacer->GetAutoExpand();
 
-        if (tabsNeededWidth > 0) {
-            m_tabAreaRect = wxRect(currentX, elementY, tabsNeededWidth, barStripHeight);
-            currentX += tabsNeededWidth + elemSpacing;
+    // Calculate total width needed for all elements
+    int totalFixedWidth = 0;
+    if (funcSpaceIsEffectivelyVisible) {
+        totalFixedWidth += funcRequestedWidth;
+    }
+    if (profileSpaceIsEffectivelyVisible) {
+        totalFixedWidth += profileRequestedWidth;
+        if (funcSpaceIsEffectivelyVisible) {
+            totalFixedWidth += elemSpacing; // Spacing between function and profile
         }
-        else {
-            m_tabAreaRect = wxRect();
-        }
+    }
 
-        if (tabFuncSpacerAutoExpand && funcSpaceIsEffectivelyVisible) {
-            int reservedWidthAfterTabFunc = 0;
+    // Calculate available space for flexible elements
+    int availableWidth = rightBoundaryForFlexibleElements - currentX;
+    availableWidth = wxMax(0, availableWidth);
 
-            reservedWidthAfterTabFunc += funcRequestedWidth;
+    // Calculate remaining space to distribute
+    int remainingSpace = availableWidth - totalFixedWidth;
+    remainingSpace = wxMax(0, remainingSpace);
 
-            if (profileSpaceIsEffectivelyVisible) {
-                reservedWidthAfterTabFunc += profileRequestedWidth;
+    // --- Core Layout Logic ---
+    if (m_functionSpaceCenterAlign && funcSpaceIsEffectivelyVisible) {
+        // Calculate space distribution for centering
+        int spaceBeforeFunction = remainingSpace / 2;
+        int spaceAfterFunction = remainingSpace - spaceBeforeFunction;
 
-                if (funcProfileSpacerVisible && !funcProfileSpacerAutoExpand) {
-                    reservedWidthAfterTabFunc += m_functionProfileSpacer->GetSpacerWidth();
-                }
-                else if (!funcProfileSpacerVisible) {
-                    reservedWidthAfterTabFunc += elemSpacing;
-                }
+        // Position tabFunctionSpacer (left spacer)
+        if (tabFuncSpacerVisible) {
+            int spacerWidth = m_tabFunctionSpacer->GetSpacerWidth();
+            if (tabFuncSpacerAutoExpand) {
+                spacerWidth = spaceBeforeFunction;
             }
-
-            int autoSpacerWidth = rightBoundary - currentX - reservedWidthAfterTabFunc;
-            autoSpacerWidth = wxMax(m_tabFunctionSpacer->GetSpacerWidth(), autoSpacerWidth);
-
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(autoSpacerWidth, innerHeight);
-            currentX += autoSpacerWidth;
+            m_tabFunctionSpacer->SetSize(spacerWidth, innerHeight);
+            m_tabFunctionSpacer->Show(true);
+            currentX += spacerWidth;
+        }
+        else if (spaceBeforeFunction > 0) {
+            currentX += spaceBeforeFunction;
+        }
 
+        // Position function space
+        if (funcSpaceIsEffectivelyVisible) {
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
-            if (profileSpaceIsEffectivelyVisible) {
-                if (funcProfileSpacerVisible) {
-                    if (funcProfileSpacerAutoExpand) {
-                        int remainingSpace = rightBoundary - currentX - profileRequestedWidth;
-                        remainingSpace = wxMax(m_functionProfileSpacer->GetSpacerWidth(), remainingSpace);
+        }
 
-                        m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                        m_functionProfileSpacer->SetSize(remainingSpace, innerHeight);
-                        currentX += remainingSpace;
-                    }
-                    else {
-                        m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                        m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
-                        currentX += m_functionProfileSpacer->GetSpacerWidth();
-                    }
-                }
-                else {
-                    currentX += elemSpacing;
-                }
-                m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-                m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
-                m_profileSpace->Show(true);
-            }
-            else {
-                m_profileSpace->Show(false);
+        // Add spacing between function and profile if both are visible
+        if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
+            currentX += elemSpacing;
+        }
+
+        // Calculate the actual space available for the right spacer
+        int rightSpacerAvailableSpace = 0;
+        if (profileSpaceIsEffectivelyVisible) {
+            // Calculate space between function space and profile space
+            rightSpacerAvailableSpace = rightBoundaryForFlexibleElements - currentX - profileRequestedWidth;
+            if (funcSpaceIsEffectivelyVisible) {
+                rightSpacerAvailableSpace -= elemSpacing; // Account for spacing between function and profile
             }
         }
-        else if (funcProfileSpacerAutoExpand && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            if (tabFuncSpacerVisible) {
-                m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
-                currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            }
-            else {
-                currentX += elemSpacing;
-            }
+        rightSpacerAvailableSpace = wxMax(0, rightSpacerAvailableSpace);
 
-            m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-            m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
-            m_functionSpace->Show(true);
-            currentX += funcRequestedWidth;
-            int autoSpacerWidth = rightBoundary - currentX - profileRequestedWidth;
-            autoSpacerWidth = wxMax(m_functionProfileSpacer->GetSpacerWidth(), autoSpacerWidth);
+        // Position functionProfileSpacer (right spacer)
+        if (funcProfileSpacerVisible) {
+            int spacerWidth = m_functionProfileSpacer->GetSpacerWidth();
+            if (funcProfileSpacerAutoExpand) {
+                spacerWidth = rightSpacerAvailableSpace;
+            }
             m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_functionProfileSpacer->SetSize(autoSpacerWidth, innerHeight);
-            currentX += autoSpacerWidth;
-            m_profileSpace->SetPosition(wxPoint(currentX, elementY));
+            m_functionProfileSpacer->SetSize(spacerWidth, innerHeight);
+            m_functionProfileSpacer->Show(true);
+            currentX += spacerWidth;
+        }
+        else if (rightSpacerAvailableSpace > 0) {
+            currentX += rightSpacerAvailableSpace;
+        }
+
+        // Position profile space at the right (before system buttons)
+        if (profileSpaceIsEffectivelyVisible) {
+            int profileX = rightBoundaryForFlexibleElements - profileRequestedWidth;
+            m_profileSpace->SetPosition(wxPoint(profileX, elementY));
             m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
             m_profileSpace->Show(true);
         }
-        else {
-            int tabsNeededWidth = CalculateTabsWidth(dc);
-            int availableWidthForTabs = rightBoundary - currentX;
-
-            int reservedWidth = 0;
-
-            if (funcSpaceIsEffectivelyVisible) {
-                reservedWidth += funcRequestedWidth;
-                if (tabFuncSpacerVisible) {
-                    reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
+    }
+    else {
+        // Sequential layout logic
+        // Position tabFunctionSpacer
+        if (tabFuncSpacerVisible) {
+            int spacerWidth = m_tabFunctionSpacer->GetSpacerWidth();
+            if (tabFuncSpacerAutoExpand) {
+                // Calculate available space for both spacers
+                int availableSpaceForSpacers = rightBoundaryForFlexibleElements - currentX;
+                if (profileSpaceIsEffectivelyVisible) {
+                    availableSpaceForSpacers -= (profileRequestedWidth + elemSpacing);
                 }
-                else {
-                    reservedWidth += elemSpacing;
-                }
-            }
-
-            if (profileSpaceIsEffectivelyVisible) {
-                reservedWidth += profileRequestedWidth;
                 if (funcSpaceIsEffectivelyVisible) {
-                    if (funcProfileSpacerVisible) {
-                        reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
-                    }
-                    else {
-                        reservedWidth += elemSpacing;
-                    }
+                    availableSpaceForSpacers -= (funcRequestedWidth + elemSpacing);
                 }
-                else {
-                    if (tabFuncSpacerVisible) {
-                        reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-                    }
-                    else {
-                        reservedWidth += elemSpacing;
-                    }
-                }
+                availableSpaceForSpacers = wxMax(0, availableSpaceForSpacers);
+                spacerWidth = availableSpaceForSpacers / 2; // Use half of available space
             }
-
-            availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
-
-            int tabsWidth = 0;
-            if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
-                tabsWidth = availableWidthForTabs; // It takes all available tab space
-            }
-            else { // Multiple pages, or no pages needing width
-                tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
-            }
-            tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
-
-            if (tabsWidth > 0) {
-                m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
-                currentX += tabsWidth;
-            }
-            else {
-                m_tabAreaRect = wxRect();
-            }
-
-            if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
-                m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
-                currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            }
-            else if (funcSpaceIsEffectivelyVisible) {
-                currentX += elemSpacing;
-            }
-
-            if (funcSpaceIsEffectivelyVisible) {
-                m_functionSpace->SetPosition(wxPoint(currentX, elementY));
-                m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
-                m_functionSpace->Show(true);
-                currentX += funcRequestedWidth;
-            }
-            else {
-                m_functionSpace->Show(false);
-            }
-
-            if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-                m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
-                currentX += m_functionProfileSpacer->GetSpacerWidth();
-            }
-            else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-                currentX += elemSpacing;
-            }
-            else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
-                m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-                m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
-                currentX += m_tabFunctionSpacer->GetSpacerWidth();
-            }
-            else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-                currentX += elemSpacing;
-            }
-
-            if (profileSpaceIsEffectivelyVisible) {
-                m_profileSpace->SetPosition(wxPoint(currentX, elementY));
-                m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
-                m_profileSpace->Show(true);
-                currentX += profileRequestedWidth;
-            }
-            else {
-                m_profileSpace->Show(false);
-            }
-        }
-    }
-    else {
-        int tabsNeededWidth = CalculateTabsWidth(dc);
-        int availableWidthForTabs = rightBoundary - currentX;
-
-        int reservedWidth = 0;
-
-        if (funcSpaceIsEffectivelyVisible) {
-            reservedWidth += funcRequestedWidth;
-            if (tabFuncSpacerVisible) {
-                reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-            }
-            else {
-                reservedWidth += elemSpacing;
-            }
-        }
-
-        if (profileSpaceIsEffectivelyVisible) {
-            reservedWidth += profileRequestedWidth;
-            if (funcSpaceIsEffectivelyVisible) {
-                if (funcProfileSpacerVisible) {
-                    reservedWidth += m_functionProfileSpacer->GetSpacerWidth();
-                }
-                else {
-                    reservedWidth += elemSpacing;
-                }
-            }
-            else {
-                if (tabFuncSpacerVisible) {
-                    reservedWidth += m_tabFunctionSpacer->GetSpacerWidth();
-                }
-                else {
-                    reservedWidth += elemSpacing;
-                }
-            }
-        }
-
-        availableWidthForTabs = wxMax(0, availableWidthForTabs - reservedWidth);
-
-        int tabsWidth = 0;
-        if (m_pages.size() == 1 && tabsNeededWidth > 0) { // If only one page AND it needs some width
-            tabsWidth = availableWidthForTabs; // It takes all available tab space
-        }
-        else { // Multiple pages, or no pages needing width
-            tabsWidth = wxMin(tabsNeededWidth, availableWidthForTabs);
-        }
-        tabsWidth = wxMax(0, tabsWidth); // Ensure not negative
-
-        if (tabsWidth > 0) {
-            m_tabAreaRect = wxRect(currentX, elementY, tabsWidth, barStripHeight);
-            currentX += tabsWidth;
-        }
-        else {
-            m_tabAreaRect = wxRect();
-        }
-
-        if (tabFuncSpacerVisible && funcSpaceIsEffectivelyVisible) {
             m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
-            currentX += m_tabFunctionSpacer->GetSpacerWidth();
-        }
-        else if (funcSpaceIsEffectivelyVisible) {
-            currentX += elemSpacing;
+            m_tabFunctionSpacer->SetSize(spacerWidth, innerHeight);
+            m_tabFunctionSpacer->Show(true);
+            currentX += spacerWidth;
         }
 
+        // Position function space
         if (funcSpaceIsEffectivelyVisible) {
+            if (currentX > barPadding) { // Add spacing if there are elements before
+                currentX += elemSpacing;
+            }
             m_functionSpace->SetPosition(wxPoint(currentX, elementY));
             m_functionSpace->SetSize(funcRequestedWidth, innerHeight);
             m_functionSpace->Show(true);
             currentX += funcRequestedWidth;
         }
-        else {
-            m_functionSpace->Show(false);
-        }
 
-        if (funcProfileSpacerVisible && funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_functionProfileSpacer->SetSize(m_functionProfileSpacer->GetSpacerWidth(), innerHeight);
-            currentX += m_functionProfileSpacer->GetSpacerWidth();
-        }
-        else if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += elemSpacing;
-        }
-        else if (!funcSpaceIsEffectivelyVisible && tabFuncSpacerVisible && profileSpaceIsEffectivelyVisible) {
-            m_tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            m_tabFunctionSpacer->SetSize(m_tabFunctionSpacer->GetSpacerWidth(), innerHeight);
-            currentX += m_tabFunctionSpacer->GetSpacerWidth();
-        }
-        else if (!funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += elemSpacing;
-        }
-
+        // Calculate available space for right spacer
+        int rightSpacerAvailableSpace = 0;
         if (profileSpaceIsEffectivelyVisible) {
-            m_profileSpace->SetPosition(wxPoint(currentX, elementY));
+            rightSpacerAvailableSpace = rightBoundaryForFlexibleElements - currentX - profileRequestedWidth;
+            if (funcSpaceIsEffectivelyVisible) {
+                rightSpacerAvailableSpace -= elemSpacing; // Account for spacing between function and profile
+            }
+        }
+        rightSpacerAvailableSpace = wxMax(0, rightSpacerAvailableSpace);
+
+        // Position functionProfileSpacer
+        if (funcProfileSpacerVisible) {
+            int spacerWidth = m_functionProfileSpacer->GetSpacerWidth();
+            if (funcProfileSpacerAutoExpand) {
+                spacerWidth = rightSpacerAvailableSpace;
+            }
+            if (funcSpaceIsEffectivelyVisible) {
+                currentX += elemSpacing;
+            }
+            m_functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
+            m_functionProfileSpacer->SetSize(spacerWidth, innerHeight);
+            m_functionProfileSpacer->Show(true);
+            currentX += spacerWidth;
+        }
+
+        // Position profile space at the right (before system buttons)
+        if (profileSpaceIsEffectivelyVisible) {
+            int profileX = rightBoundaryForFlexibleElements - profileRequestedWidth;
+            m_profileSpace->SetPosition(wxPoint(profileX, elementY));
             m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
             m_profileSpace->Show(true);
-            currentX += profileRequestedWidth;
-        }
-        else {
-            m_profileSpace->Show(false);
         }
     }
-    if (sysButtonsWidth > 0) {
-        int ctrlX = barClientSz.GetWidth() - barPadding - sysButtonsWidth;
-        m_systemButtons->SetPosition(wxPoint(ctrlX, elementY));
-        m_systemButtons->SetSize(sysButtonsWidth, innerHeight);
-        m_systemButtons->Show(true);
-    }
-    else {
-        m_systemButtons->Show(false);
-    }
+
+    // Page handling (below the bar)
     if (m_activePage < m_pages.size() && m_pages[m_activePage])
     {
         auto* currentPage = m_pages[m_activePage].get();
@@ -517,32 +406,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
 
-    if (m_functionSpaceCenterAlign && m_functionSpace) {
-        if (m_functionSpace->IsShown()) {
-            int fxW = m_functionSpace->GetSize().GetWidth();
-            int fxX = (barClientSz.GetWidth() - fxW) / 2;
-            m_functionSpace->SetPosition(wxPoint(fxX, m_barTopMargin));
-        }
-    }
-    if (m_profileSpaceRightAlign && m_profileSpace) {
-        if (m_profileSpace->IsShown()) {
-            int profW = m_profileSpace->GetSize().GetWidth();
-            int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
-            int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
-            int sysButtonsWidth = m_systemButtons && m_systemButtons->IsShown()
-                ? m_systemButtons->GetRequiredWidth() : 0;
-            int rb = barClientSz.GetWidth() - barPadding;
-            if (sysButtonsWidth > 0) rb -= (sysButtonsWidth + elemSpacing);
-            int profX = rb - profW;
-            m_profileSpace->SetPosition(wxPoint(profX, m_barTopMargin));
-        }
-    }
-
-    Refresh();
-    if (m_profileSpace && m_profileSpace->IsShown()) {
-        int profH = m_profileSpace->GetSize().GetHeight();
-        LOG_DBG("ProfileSpace height: " + std::to_string(profH), "FlatUIBar");
-    }
+    Refresh(); // Re-draw the bar itself
 }
 
 int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
