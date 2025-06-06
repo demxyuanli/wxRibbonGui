@@ -4,9 +4,8 @@
 #ifdef __WXMSW__
 #include <windows.h> // For Windows specific GDI calls for rubber band
 #endif
-#include <flatui/FlatUIConstants.h>
 #include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 
 wxBEGIN_EVENT_TABLE(BorderlessFrameLogic, wxFrame)
     EVT_LEFT_DOWN(BorderlessFrameLogic::OnLeftDown)
@@ -27,7 +26,7 @@ BorderlessFrameLogic::BorderlessFrameLogic(wxWindow* parent, wxWindowID id, cons
     SetDoubleBuffered(true);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR));
+    SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
     // Register event filter
     this->PushEventHandler(new BorderlessFrameLogicEventFilter(this));
     Refresh(); // Ensure background is painted initially
@@ -352,7 +351,7 @@ void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
     wxAutoBufferedPaintDC dc(this);
     dc.Clear(); // Fill background before drawing border
     wxSize sz = GetClientSize();
-    dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColour", FLATUI_FRAME_BORDER_COLOR), 1));
+    dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColour"), 1));
     dc.DrawLine(0, 0, sz.x, 0);           
     dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1); 
     dc.DrawLine(0, 0, 0, sz.y);           

@@ -1,10 +1,9 @@
 #include "flatui/FlatUISpacerControl.h"
-#include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h>
 #include "logger/Logger.h"
 #include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 
 FlatUISpacerControl::FlatUISpacerControl(wxWindow* parent, int width, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
@@ -89,7 +88,7 @@ void FlatUISpacerControl::OnPaint(wxPaintEvent& evt)
     
     if (m_drawSeparator)
     {
-        dc.SetPen(wxPen(wxColour(CFG_COLOUR("PanelSepatatorColor", FLATUI_PANEL_SEPARATOR_COLOUR)), CFG_INT("PanelSepatatorWidth", FLATUI_PANEL_SEPARATOR_WIDTH)));
+        dc.SetPen(wxPen(wxColour(CFG_COLOUR("PanelSepatatorColor")), CFG_INT("PanelSepatatorWidth")));
         int x = contentX + contentW/2;
         dc.DrawLine(x, contentY + 2, x, contentY + contentH - 2);
     }

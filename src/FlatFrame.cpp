@@ -10,8 +10,8 @@
 #include "flatui/FlatUIProfileSpace.h"
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUICustomControl.h"
-#include "flatui/FlatUIConstants.h"
 #include "flatui/UIHierarchyDebugger.h"
+#include "config/ConstantsConfig.h"  
 #include <wx/display.h>
 #include "logger/Logger.h"
 #include <wx/aui/aui.h>
@@ -24,6 +24,11 @@
 #ifdef __WXMSW__
 #include <windows.h>
 #endif
+
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 // These are now defined in FlatFrame.h as enum members.
 
@@ -98,7 +103,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     int barHeight = FlatUIBar::GetBarHeight();
     m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 3));
-    wxFont defaultFont = GetFlatUIDefaultFont();
+    wxFont defaultFont = CFG_DEFAULTFONT();
     m_ribbon->SetDoubleBuffered(true);
     m_ribbon->SetTabStyle(FlatUIBar::TabStyle::DEFAULT);
     m_ribbon->SetTabBorderColour(wxColour(200, 200, 200));
@@ -106,7 +111,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     m_ribbon->SetActiveTabTextColour(wxColour(50, 50, 50));
     m_ribbon->SetInactiveTabTextColour(wxColour(100, 100, 100));
     m_ribbon->SetTabBorderStyle(FlatUIBar::TabBorderStyle::SOLID);
-    m_ribbon->SetTabBorderWidths(2, 0, 0, 0);
+    m_ribbon->SetTabBorderWidths(2, 0, 1, 1);
     m_ribbon->SetTabBorderTopColour(wxColour(0, 120, 215));
     m_ribbon->SetTabCornerRadius(0);
     m_ribbon->SetHomeButtonWidth(30);
@@ -156,7 +161,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);
-    panel1->SetFont(FLATUI_DEFAULT_FONT_FACE_NAME);
+    panel1->SetFont(CFG_FONTNAME());
     panel1->SetPanelBorderWidths(0, 0, 0, 1);
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel1->SetHeaderColour(*wxWHITE);
@@ -186,7 +191,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     page1->AddPanel(panel1);
 
     FlatUIPanel* panel2 = new FlatUIPanel(page1, "SecondPanel", wxHORIZONTAL);
-    panel2->SetFont(FLATUI_DEFAULT_FONT_FACE_NAME);
+    panel2->SetFont(CFG_FONTNAME());
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel2->SetHeaderColour(*wxWHITE);
@@ -256,7 +261,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     SetClientSize(size); // Default size
     Layout();
 
-    int ribbonMinHeight = FlatUIBar::GetBarHeight() + FLATUI_PANEL_TARGET_HEIGHT + 10;
+    int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
     m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
     m_ribbon->InvalidateBestSize();
     Layout();

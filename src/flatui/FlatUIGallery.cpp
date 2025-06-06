@@ -1,13 +1,12 @@
 #include "flatui/FlatUIGallery.h"
-#include "flatui/FlatUIConstants.h"
 #include "flatui/FlatUIPanel.h"
 #include "flatui/FlatUIEventManager.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
 #include "config/ConstantsConfig.h"  
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 
 FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
@@ -33,11 +32,11 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     auto& cfg = ConstantsConfig::getInstance();
-    m_galleryBgColour     = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
-    m_galleryBorderColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
-    m_itemSpacing         = CFG_INT("GalleryItemSpacing", FLATUI_GALLERY_ITEM_SPACING);
-    int targetH           = CFG_INT("GalleryTargetHeight", FLATUI_GALLERY_TARGET_HEIGHT);
-    int horizMargin       = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
+    m_galleryBgColour     = CFG_COLOUR("ActBarBackgroundColour");
+    m_galleryBorderColour = CFG_COLOUR("ActBarBackgroundColour");
+    m_itemSpacing         = CFG_INT("GalleryItemSpacing");
+    int targetH           = CFG_INT("GalleryTargetHeight");
+    int horizMargin       = CFG_INT("GalleryHorizontalMargin");
     SetMinSize(wxSize(targetH * 2, targetH));
 
     Bind(wxEVT_PAINT, &FlatUIGallery::OnPaint, this);
@@ -90,7 +89,7 @@ void FlatUIGallery::AddItem(const wxBitmap& bitmap, int id)
 wxSize FlatUIGallery::DoGetBestSize() const
 {
     wxSize size;
-    int horizMargin = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
+    int horizMargin = CFG_INT("GalleryHorizontalMargin");
     int totalWidth = horizMargin;
     bool hasItems = false;
     int itemCount = 0;
@@ -108,7 +107,7 @@ wxSize FlatUIGallery::DoGetBestSize() const
 
     if (m_hasDropdown) totalWidth += m_dropdownWidth;
 
-    int targetH = CFG_INT("GalleryTargetHeight", FLATUI_GALLERY_TARGET_HEIGHT);
+    int targetH = CFG_INT("GalleryTargetHeight");
     return wxSize(totalWidth, targetH);
 }
 
@@ -151,8 +150,8 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
         return;
     }
 
-    int x = CFG_INT("GalleryHorizontalMargin", FLATUI_GALLERY_HORIZONTAL_MARGIN);
-    int y = (size.GetHeight() - FLATUI_BUTTONBAR_ICON_SIZE - 2 * m_itemPadding) / 2;
+    int x = CFG_INT("GalleryHorizontalMargin");
+    int y = (size.GetHeight() - CFG_INT("ButtonbarIconSize") - 2 * m_itemPadding) / 2;
 
     for (size_t i = 0; i < m_items.size(); ++i) {
         auto& item = m_items[i];

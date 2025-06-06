@@ -1,11 +1,10 @@
 #include "flatui/FlatUIBar.h"
 #include "flatui/FlatUIPage.h"
-#include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h>
 #include <string>
 #include "config/ConstantsConfig.h"
-#define CFG_INT(key, def) ConstantsConfig::getInstance().getIntValue(key, def)
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
+#define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 
 void FlatUIBar::PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset)
 {
@@ -15,13 +14,13 @@ void FlatUIBar::PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset)
 void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
 {
     int barH = GetBarHeight();
-    int tabStartX = (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
+    int tabStartX = (CFG_INT("BarPadding"));
     if (m_homeSpace && m_homeSpace->IsShown()) {
-        tabStartX = m_homeSpace->GetRect().GetRight() + FLATUI_BAR_ELEMENT_SPACING;
+        tabStartX = m_homeSpace->GetRect().GetRight() + CFG_INT("BarElementSpacing");
     }
-    int tabEndX = GetClientSize().GetWidth() - (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
+    int tabEndX = GetClientSize().GetWidth() - (CFG_INT("BarPadding"));
     if (m_systemButtons && m_systemButtons->IsShown()) {
-        tabEndX = m_systemButtons->GetRect().GetLeft() - FLATUI_BAR_ELEMENT_SPACING;
+        tabEndX = m_systemButtons->GetRect().GetLeft() - CFG_INT("BarElementSpacing");
     }
     wxClientDC dc(this);
     if (pos.y >= 0 && pos.y < barH && pos.x >= tabStartX && pos.x < tabEndX) {
@@ -30,13 +29,13 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
             if (!m_pages[i]) continue;
             FlatUIPage* page = m_pages[i].get();
             wxSize labelSize = dc.GetTextExtent(page->GetLabel());
-            int tabWidth = labelSize.GetWidth() + FLATUI_BAR_TAB_PADDING * 2;
+            int tabWidth = labelSize.GetWidth() + CFG_INT("BarTabPadding") * 2;
             wxRect rect(currentX, 0, tabWidth, barH);
             if (rect.Contains(pos)) {
                 SetActivePage(i);
                 break;
             }
-            currentX += tabWidth + FLATUI_BAR_TAB_SPACING;
+            currentX += tabWidth + CFG_INT("BarTabSpacing");
             if (currentX >= tabEndX) break;
         }
     }
@@ -45,8 +44,8 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
 void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffsetInOut)
 {
     int tabYPos = m_barTopMargin;  // Use top margin
-    int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
-    int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
+    int tabPadding = CFG_INT("BarTabPadding");
+    int tabSpacing = CFG_INT("BarTabSpacing");
     int barEffectiveHeight = GetBarHeight();
     int initialXOffset = currentXOffsetInOut;
 
@@ -86,6 +85,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
                         dc.SetPen(wxPen(m_tabBorderTopColour, m_tabBorderTop));
                         dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop / 2,
                             tabRect.GetRight() + 1, tabRect.GetTop() + m_tabBorderTop / 2);
+
                     }
                     if (m_tabBorderLeft > 0) {
                         dc.SetPen(wxPen(m_tabBorderLeftColour, m_tabBorderLeft));
@@ -111,7 +111,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
 
                 // Draw bottom border only
                 if (m_tabBorderBottom > 0) {
-                    dc.SetPen(wxPen(FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR, m_tabBorderBottom));
+                    dc.SetPen(wxPen(m_tabBorderBottomColour, m_tabBorderBottom));
                     dc.DrawLine(tabRect.GetLeft(), tabRect.GetBottom() - m_tabBorderBottom / 2,
                         tabRect.GetRight() + 1, tabRect.GetBottom() - m_tabBorderBottom / 2);
                 }
@@ -321,4 +321,4 @@ void FlatUIBar::SetBarTopMargin(int margin)
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();
     }
-} 
+}

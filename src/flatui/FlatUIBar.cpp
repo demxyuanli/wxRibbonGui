@@ -15,15 +15,16 @@
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
 #include <logger/Logger.h>
-#include "flatui/FlatUIConstants.h"
 #include "config/ConstantsConfig.h"
 #include <memory> // Required for std::unique_ptr and std::move
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 int FlatUIBar::GetBarHeight()
 {
-    return CFG_INT("BarRenderHeight", FLATUI_BAR_RENDER_HEIGHT);
+    return CFG_INT("BarRenderHeight");
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -37,7 +38,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionProfileSpacer(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
-    m_tabBorderTop(CFG_INT("BarTabBorderTop", FLATUI_BAR_TAB_BORDER_TOP)),
+    m_tabBorderTop(CFG_INT("BarTabBorderTop")),
     m_tabBorderBottom(0),
     m_tabBorderLeft(0),
     m_tabBorderRight(0),
@@ -46,18 +47,18 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpaceRightAlign(false)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
-    SetFont(GetFlatUIDefaultFont());
+    SetFont(CFG_DEFAULTFONT());
     auto& cfg = ConstantsConfig::getInstance();
-    m_tabBorderColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour", FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR);
-    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderLeftColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderRightColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_activeTabBgColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR);
-    m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour", FLATUI_BAR_ACTIVE_TEXT_COLOUR);
-    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour", FLATUI_BAR_INACTIVE_TEXT_COLOUR);
-    m_barTopMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
-    m_barBottomMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
+    m_tabBorderColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour");
+    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderLeftColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderRightColour = CFG_COLOUR("BarTabBorderColour");
+    m_activeTabBgColour = CFG_COLOUR("ActBarBackgroundColour");
+    m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour");
+    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour");
+    m_barTopMargin = CFG_INT("BarTopMargin");
+    m_barBottomMargin = CFG_INT("BarBottomMargin");
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
