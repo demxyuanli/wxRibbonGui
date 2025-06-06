@@ -1,10 +1,9 @@
 #include "flatui/FlatUIBar.h"
-#include "flatui/FlatUIConstants.h"
 #include <wx/dcbuffer.h>
 #include "config/ConstantsConfig.h"
 #include "logger/Logger.h"
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 
 void FlatUIBar::SetHomeButtonMenu(wxMenu* menu)
 {
@@ -147,8 +146,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     if (m_functionProfileSpacer) m_functionProfileSpacer->SetName("FunctionProfileSpacer");
 
     wxClientDC dc(this);
-    int barPadding = CFG_INT("BarPadding", FLATUI_BAR_PADDING);
-    int elemSpacing = CFG_INT("BarElementSpacing", FLATUI_BAR_ELEMENT_SPACING);
+    int barPadding = CFG_INT("BarPadding");
+    int elemSpacing = CFG_INT("BarElementSpacing");
     int currentX = barPadding; // Initial currentX before homeSpace
     int barStripHeight = GetBarHeight();
     int innerHeight = barStripHeight - m_barTopMargin - m_barBottomMargin;
@@ -156,9 +155,9 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
     // Home Space (Leftmost)
     if (m_homeSpace && m_homeSpace->IsShown()) {
-        int bW = m_homeSpace->GetButtonWidth();
-        m_homeSpace->SetPosition(wxPoint(currentX, elementY));
-        m_homeSpace->SetSize(bW, innerHeight);
+            int bW = m_homeSpace->GetButtonWidth();
+            m_homeSpace->SetPosition(wxPoint(currentX, elementY));
+            m_homeSpace->SetSize(bW, innerHeight);
         m_homeSpace->Show(true);
         currentX += bW + elemSpacing;
     }
@@ -209,8 +208,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     bool profileSpaceIsEffectivelyVisible = m_profileSpace && m_profileSpace->IsShown() && m_profileSpace->GetChildControl();
     if (profileSpaceIsEffectivelyVisible) {
         profileRequestedWidth = m_profileSpace->GetSpaceWidth();
-    }
-    else {
+        }
+        else {
         if (m_profileSpace) m_profileSpace->Show(false);
     }
 
@@ -225,7 +224,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     if (funcSpaceIsEffectivelyVisible) {
         totalFixedWidth += funcRequestedWidth;
     }
-    if (profileSpaceIsEffectivelyVisible) {
+            if (profileSpaceIsEffectivelyVisible) {
         totalFixedWidth += profileRequestedWidth;
         if (funcSpaceIsEffectivelyVisible) {
             totalFixedWidth += elemSpacing; // Spacing between function and profile
@@ -259,7 +258,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
         else if (spaceBeforeFunction > 0) {
             currentX += spaceBeforeFunction;
-        }
+                    }
 
         // Position function space
         if (funcSpaceIsEffectivelyVisible) {
@@ -271,8 +270,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
         // Add spacing between function and profile if both are visible
         if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += elemSpacing;
-        }
+                currentX += elemSpacing;
+            }
 
         // Calculate the actual space available for the right spacer
         int rightSpacerAvailableSpace = 0;
@@ -295,31 +294,31 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
             m_functionProfileSpacer->SetSize(spacerWidth, innerHeight);
             m_functionProfileSpacer->Show(true);
             currentX += spacerWidth;
-        }
+            }
         else if (rightSpacerAvailableSpace > 0) {
             currentX += rightSpacerAvailableSpace;
-        }
+            }
 
         // Position profile space at the right (before system buttons)
-        if (profileSpaceIsEffectivelyVisible) {
+            if (profileSpaceIsEffectivelyVisible) {
             int profileX = rightBoundaryForFlexibleElements - profileRequestedWidth;
             m_profileSpace->SetPosition(wxPoint(profileX, elementY));
-            m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
-            m_profileSpace->Show(true);
+                m_profileSpace->SetSize(profileRequestedWidth, innerHeight);
+                m_profileSpace->Show(true);
         }
     }
     else {
         // Sequential layout logic
         // Position tabFunctionSpacer
-        if (tabFuncSpacerVisible) {
+            if (tabFuncSpacerVisible) {
             int spacerWidth = m_tabFunctionSpacer->GetSpacerWidth();
             if (tabFuncSpacerAutoExpand) {
                 // Calculate available space for both spacers
                 int availableSpaceForSpacers = rightBoundaryForFlexibleElements - currentX;
-                if (profileSpaceIsEffectivelyVisible) {
+        if (profileSpaceIsEffectivelyVisible) {
                     availableSpaceForSpacers -= (profileRequestedWidth + elemSpacing);
                 }
-                if (funcSpaceIsEffectivelyVisible) {
+            if (funcSpaceIsEffectivelyVisible) {
                     availableSpaceForSpacers -= (funcRequestedWidth + elemSpacing);
                 }
                 availableSpaceForSpacers = wxMax(0, availableSpaceForSpacers);
@@ -412,8 +411,8 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
 
 int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
 {
-    int tabPadding = CFG_INT("BarTabPadding", FLATUI_BAR_TAB_PADDING);
-    int tabSpacing = CFG_INT("BarTabSpacing", FLATUI_BAR_TAB_SPACING);
+    int tabPadding = CFG_INT("BarTabPadding");
+    int tabSpacing = CFG_INT("BarTabSpacing");
     int totalWidth = 0;
     if (m_pages.empty()) return 0;
     for (size_t i = 0; i < m_pages.size(); ++i)

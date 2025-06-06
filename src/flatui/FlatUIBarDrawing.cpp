@@ -5,17 +5,16 @@
 #include <wx/dcclient.h>
 #include <string>
 #include "logger/Logger.h"
-#include "flatui/FlatUIConstants.h"
 #include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def) ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
 
 void FlatUIBar::DrawBackground(wxDC& dc)
 {
     wxSize clientSize = GetClientSize();
-    int padding = (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
+    int padding = (CFG_INT("BarPadding"));
     int barH = GetBarHeight();
-    dc.SetBrush(CFG_COLOUR("BarBackgroundColour", FLATUI_BAR_BACKGROUND_COLOUR));
+    dc.SetBrush(CFG_COLOUR("BarBackgroundColour"));
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(padding, 0, clientSize.GetWidth() - 2 * padding, barH);
 }
@@ -23,7 +22,7 @@ void FlatUIBar::DrawBackground(wxDC& dc)
 void FlatUIBar::DrawBarSeparator(wxDC& dc)
 {
     wxSize clientSize = GetClientSize();
-    int padding = (CFG_INT("BarPadding", FLATUI_BAR_PADDING));
+    int padding = (CFG_INT("BarPadding"));
     int barH = GetBarHeight();
     dc.SetPen(wxPen(*wxGREEN, 1));
     dc.DrawLine(padding, barH, clientSize.GetWidth() - padding, barH);

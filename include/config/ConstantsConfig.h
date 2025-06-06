@@ -4,6 +4,7 @@
 #include "config/ConfigManager.h"
 #include <wx/colour.h>
 #include <wx/string.h>
+#include <wx/wx.h>
 #include <map>
 #include <vector>
 #include <string>
@@ -13,26 +14,20 @@ public:
     static ConstantsConfig& getInstance();
 
     void initialize(ConfigManager& config);
-
-    const wxColour& getPrimaryFrameBorderColour() const;
-    const wxColour& getPrimaryContentBgColour() const;
-    int getBarTopMargin() const;
     const wxString& getDefaultFontFaceName() const;
     int getDefaultFontSize() const;
 
-    std::string getStringValue(const std::string& key, const std::string& defaultValue = "") const;
-    int getIntValue(const std::string& key, int defaultValue) const;
-    double getDoubleValue(const std::string& key, double defaultValue) const;
-    wxColour getColourValue(const std::string& key, const wxColour& defaultValue) const;
+    std::string getStringValue(const std::string& key) const;
+    int getIntValue(const std::string& key) const;
+    double getDoubleValue(const std::string& key) const;
+    wxColour getColourValue(const std::string& key) const;
+    wxFont getDefaultFont() const;
 
 private:
     ConstantsConfig();
     ConstantsConfig(const ConstantsConfig&) = delete;
     ConstantsConfig& operator=(const ConstantsConfig&) = delete;
 
-    wxColour primaryFrameBorderColour;
-    wxColour primaryContentBgColour;
-    int barTopMargin;
     wxString defaultFontFaceName;
     int defaultFontSize;
 

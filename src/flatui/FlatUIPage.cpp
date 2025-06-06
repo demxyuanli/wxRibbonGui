@@ -1,23 +1,24 @@
 #include "flatui/FlatUIPage.h"
-#include "flatui/FlatUIConstants.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUIPanel.h"
 #include "flatui/FlatUIBar.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 #include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
     m_label(label),
     m_isActive(false)
 {
-    SetFont(GetFlatUIDefaultFont());
+    SetFont(CFG_DEFAULTFONT());
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    wxColour bg = CFG_COLOUR("ActBarBackgroundColour", FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    wxColour bg = CFG_COLOUR("ActBarBackgroundColour");
     SetBackgroundColour(bg);
     m_backgroundColour = bg;
 
@@ -55,7 +56,7 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
 
     dc.Clear();
 
-    dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour", FLATUI_PANEL_BORDER_COLOUR), CFG_INT("PanelBorderWidth", 1)));
+    dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour"), CFG_INT("PanelBorderWidth")));
 
     //dc.DrawLine(2, 0, size.GetWidth()-2, 0);
 

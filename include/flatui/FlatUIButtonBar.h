@@ -7,7 +7,6 @@
 #include <wx/menu.h>
 #include <wx/dcbuffer.h>
 #include "logger/Logger.h"
-#include "flatui/FlatUIConstants.h"
 
 class FlatUIPanel;
 

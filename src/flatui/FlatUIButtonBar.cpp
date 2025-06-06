@@ -1,5 +1,4 @@
 #include "flatui/FlatUIButtonBar.h"
-#include "flatui/FlatUIConstants.h"
 #include "flatui/FlatUIPanel.h"
 #include "flatui/FlatUIEventManager.h"
 #include <wx/dcbuffer.h>
@@ -8,64 +7,63 @@
 #include <algorithm> // For std::min
 #include "config/ConstantsConfig.h"  
 
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
-// Constants
-constexpr int ICON_TEXT_BELOW_TOP_MARGIN = 2;
-constexpr int ICON_TEXT_BELOW_SPACING = 1;
+int targetH = -1;
 
 FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_displayStyle(ButtonDisplayStyle::ICON_TEXT_BESIDE),
     m_buttonStyle(ButtonStyle::DEFAULT),
     m_buttonBorderStyle(ButtonBorderStyle::SOLID),
-    m_buttonBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-    m_buttonHoverBgColour(FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR),
-    m_buttonPressedBgColour(FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR),
-    m_buttonTextColour(FLATUI_BUTTONBAR_DEFAULT_TEXT_COLOUR),
-    m_buttonBorderColour(FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR),
-    m_barBgColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-    m_barBorderColour(FLATUI_ACT_BAR_BACKGROUND_COLOUR),
-    m_buttonBorderWidth(FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH),
-    m_buttonCornerRadius(FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS),
-    m_buttonSpacing(FLATUI_BUTTONBAR_SPACING),
-    m_buttonHorizontalPadding(FLATUI_BUTTONBAR_HORIZONTAL_PADDING),
-    m_buttonVerticalPadding(FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING),
+    m_buttonBgColour(CFG_COLOUR("ActBarBackgroundColour")),
+    m_buttonHoverBgColour(CFG_COLOUR("ButtonbarDefaultHoverBgColour")),
+    m_buttonPressedBgColour(CFG_COLOUR("ButtonbarDefaultPressedBgColour")),
+    m_buttonTextColour(CFG_COLOUR("ButtonbarDefaultTextColour")),
+    m_buttonBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")),
+    m_barBgColour(CFG_COLOUR("BarBackgroundColour")),
+    m_barBorderColour(CFG_COLOUR("BarBorderColour")),
+    m_buttonBorderWidth(CFG_INT("ButtonbarDefaultBorderWidth")),
+    m_buttonCornerRadius(CFG_INT("ButtonbarDefaultCornerRadius")),
+    m_buttonSpacing(CFG_INT("ButtonbarSpacing")),
+    m_buttonHorizontalPadding(CFG_INT("ButtonbarHorizontalPadding")),
+    m_buttonVerticalPadding(CFG_INT("ButtonbarInternalVerticalPadding")),
     m_barBorderWidth(0),
     m_hoverEffectsEnabled(true)
 {
-    auto& cfg = ConstantsConfig::getInstance();
-
-    m_buttonBgColour         = CFG_COLOUR("ActBarBackgroundColour",     FLATUI_ACT_BAR_BACKGROUND_COLOUR);
-    m_buttonHoverBgColour    = CFG_COLOUR("ButtonbarDefaultHoverBgColour", FLATUI_BUTTONBAR_DEFAULT_HOVER_BG_COLOUR);
-    m_buttonPressedBgColour  = CFG_COLOUR("ButtonbarDefaultPressedBgColour", FLATUI_BUTTONBAR_DEFAULT_PRESSED_BG_COLOUR);
-    m_buttonTextColour       = CFG_COLOUR("ButtonbarDefaultTextColour",    FLATUI_BUTTONBAR_DEFAULT_TEXT_COLOUR);
-    m_buttonBorderColour     = CFG_COLOUR("ButtonbarDefaultBorderColour",  FLATUI_BUTTONBAR_DEFAULT_BORDER_COLOUR);
-    m_barBgColour            = CFG_COLOUR("ActBarBackgroundColour",      FLATUI_ACT_BAR_BACKGROUND_COLOUR);
-    m_barBorderColour        = CFG_COLOUR("ActBarBackgroundColour",      FLATUI_ACT_BAR_BACKGROUND_COLOUR);
+    m_buttonBgColour = CFG_COLOUR("ActBarBackgroundColour");
+    m_buttonHoverBgColour = CFG_COLOUR("ButtonbarDefaultHoverBgColour");
+    m_buttonPressedBgColour = CFG_COLOUR("ButtonbarDefaultPressedBgColour");
+    m_buttonTextColour = CFG_COLOUR("ButtonbarDefaultTextColour");
+    m_buttonBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour");
+    m_barBgColour = CFG_COLOUR("BarBackgroundColour");
+    m_barBorderColour = CFG_COLOUR("BarBorderColour");
 
 
-    m_buttonBorderWidth      = CFG_INT("ButtonbarDefaultBorderWidth",      FLATUI_BUTTONBAR_DEFAULT_BORDER_WIDTH);
-    m_buttonCornerRadius     = CFG_INT("ButtonbarDefaultCornerRadius",    FLATUI_BUTTONBAR_DEFAULT_CORNER_RADIUS);
-    m_buttonSpacing          = CFG_INT("ButtonbarSpacing",              FLATUI_BUTTONBAR_SPACING);
-    m_buttonHorizontalPadding= CFG_INT("ButtonbarHorizontalPadding",     FLATUI_BUTTONBAR_HORIZONTAL_PADDING);
-    m_buttonVerticalPadding  = CFG_INT("ButtonbarInternalVerticalPadding",FLATUI_BUTTONBAR_INTERNAL_VERTICAL_PADDING);
+    m_buttonBorderWidth = CFG_INT("ButtonbarDefaultBorderWidth");
+    m_buttonCornerRadius = CFG_INT("ButtonbarDefaultCornerRadius");
+    m_buttonSpacing = CFG_INT("ButtonbarSpacing");
+    m_buttonHorizontalPadding = CFG_INT("ButtonbarHorizontalPadding");
+    m_buttonVerticalPadding = CFG_INT("ButtonbarInternalVerticalPadding");
 
 
-    m_dropdownArrowWidth     = CFG_INT("ButtonbarDropdownArrowWidth",     FLATUI_BUTTONBAR_DROPDOWN_ARROW_WIDTH);
-    m_dropdownArrowHeight    = CFG_INT("ButtonbarDropdownArrowHeight",    FLATUI_BUTTONBAR_DROPDOWN_ARROW_HEIGHT);
+    m_dropdownArrowWidth = CFG_INT("ButtonbarDropdownArrowWidth");
+    m_dropdownArrowHeight = CFG_INT("ButtonbarDropdownArrowHeight");
 
 
-    m_separatorWidth         = CFG_INT("ButtonbarSeparatorWidth",        FLATUI_BUTTONBAR_SEPARATOR_WIDTH);
-    m_separatorPadding       = CFG_INT("ButtonbarSeparatorPadding",      FLATUI_BUTTONBAR_SEPARATOR_PADDING);
-    m_separatorMargin        = CFG_INT("ButtonbarSeparatorMargin",       FLATUI_BUTTONBAR_SEPARATOR_MARGIN);
+    m_separatorWidth = CFG_INT("ButtonbarSeparatorWidth");
+    m_separatorPadding = CFG_INT("ButtonbarSeparatorPadding");
+    m_separatorMargin = CFG_INT("ButtonbarSeparatorMargin");
 
 
-    m_barHorizontalMargin    = CFG_INT("ButtonbarBarHorizontalMargin",  FLATUI_BUTTONBAR_BAR_HORIZONTAL_MARGIN);
+    m_barHorizontalMargin = CFG_INT("ButtonbarBarHorizontalMargin");
 
-    int targetH = CFG_INT("ButtonbarTargetHeight", FLATUI_BUTTONBAR_TARGET_HEIGHT);
-    SetFont(GetFlatUIDefaultFont());
+    targetH = CFG_INT("ButtonbarTargetHeight");
+
+    SetFont(CFG_DEFAULTFONT());
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetMinSize(wxSize(targetH * 2, targetH));
 
@@ -84,7 +82,7 @@ void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& b
     ButtonInfo button;
     button.id = id;
     button.label = label;
-    int imgw = FLATUI_BUTTONBAR_ICON_SIZE;
+    int imgw = CFG_INT("ButtonbarIconSize");
     if (bitmap.IsOk() && (bitmap.GetWidth() != imgw || bitmap.GetHeight() != imgw)) {
         button.icon = wxBitmap(bitmap.ConvertToImage().Rescale(imgw, imgw, wxIMAGE_QUALITY_HIGH));
     }
@@ -166,7 +164,7 @@ void FlatUIButtonBar::RecalculateLayout()
             button.textSize = dc.GetTextExtent(button.label);
         }
         int buttonWidth = CalculateButtonWidth(button, dc);
-        button.rect = wxRect(currentX, 0, buttonWidth, FLATUI_BUTTONBAR_TARGET_HEIGHT);
+        button.rect = wxRect(currentX, 0, buttonWidth, targetH);
         currentX += buttonWidth;
         if (&button != &m_buttons.back()) {
             currentX += m_buttonSpacing;
@@ -175,8 +173,8 @@ void FlatUIButtonBar::RecalculateLayout()
     currentX += m_barHorizontalMargin;
 
     wxSize currentMinSize = GetMinSize();
-    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != FLATUI_BUTTONBAR_TARGET_HEIGHT) {
-        SetMinSize(wxSize(currentX, FLATUI_BUTTONBAR_TARGET_HEIGHT));
+    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != targetH) {
+        SetMinSize(wxSize(currentX, targetH));
         InvalidateBestSize();
         if (auto* parentPanel = dynamic_cast<FlatUIPanel*>(GetParent())) {
             parentPanel->UpdatePanelSize();
@@ -201,7 +199,7 @@ void FlatUIButtonBar::SetDisplayStyle(ButtonDisplayStyle style)
 wxSize FlatUIButtonBar::DoGetBestSize() const
 {
     wxMemoryDC dc;
-    dc.SetFont(GetFlatUIDefaultFont());
+    dc.SetFont(CFG_DEFAULTFONT());
     int totalWidth = m_barHorizontalMargin;
 
     for (const auto& button : m_buttons) {
@@ -217,7 +215,7 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
         if (totalWidth == 0) totalWidth = 10;
     }
 
-    return wxSize(totalWidth, FLATUI_BUTTONBAR_TARGET_HEIGHT);
+    return wxSize(totalWidth, targetH);
 }
 
 void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
@@ -228,7 +226,7 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
 
     if (m_buttons.empty() && IsShown()) {
         dc.SetTextForeground(wxColour(120, 120, 120));
-        wxString text = "Button Bar";
+        wxString text = "BtnBar";
         wxSize textSize = dc.GetTextExtent(text);
         dc.DrawText(text, (GetSize().GetWidth() - textSize.GetWidth()) / 2,
             (GetSize().GetHeight() - textSize.GetHeight()) / 2);
@@ -283,7 +281,7 @@ void FlatUIButtonBar::DrawButtonIcon(wxDC& dc, const ButtonInfo& button, const w
     case ButtonDisplayStyle::ICON_TEXT_BELOW:
     {
         int iconX = rect.GetLeft() + (rect.GetWidth() - iconWidth) / 2;
-        int iconY = rect.GetTop() + ICON_TEXT_BELOW_TOP_MARGIN;
+        int iconY = rect.GetTop() + CFG_INT("IconTextBelowTopMargin");
         dc.DrawBitmap(button.icon, iconX, iconY, true);
         break;
     }
@@ -314,7 +312,7 @@ void FlatUIButtonBar::DrawButtonText(wxDC& dc, const ButtonInfo& button, const w
     case ButtonDisplayStyle::ICON_TEXT_BELOW:
     {
         int textX = rect.GetLeft() + (rect.GetWidth() - button.textSize.GetWidth()) / 2;
-        int textY = rect.GetTop() + ICON_TEXT_BELOW_TOP_MARGIN + (button.icon.IsOk() ? button.icon.GetHeight() + ICON_TEXT_BELOW_SPACING : 0);
+        int textY = rect.GetTop() + CFG_INT("IconTextBelowTopMargin") + (button.icon.IsOk() ? button.icon.GetHeight() + CFG_INT("IconTextBelowSpacing") : 0);
         if (textY + button.textSize.GetHeight() <= rect.GetBottom()) {
             dc.DrawText(button.label, textX, textY);
         }
@@ -339,7 +337,7 @@ void FlatUIButtonBar::DrawButtonDropdownArrow(wxDC& dc, const ButtonInfo& button
     wxPoint pts[3] = {
         {arrowX, arrowY},
         {arrowX + m_dropdownArrowWidth, arrowY},
-        {arrowX + m_dropdownArrowWidth/2, arrowY + m_dropdownArrowHeight}
+        {arrowX + m_dropdownArrowWidth / 2, arrowY + m_dropdownArrowHeight}
     };
     dc.SetBrush(wxBrush(m_buttonTextColour));
     dc.SetPen(*wxTRANSPARENT_PEN);
@@ -349,7 +347,7 @@ void FlatUIButtonBar::DrawButtonDropdownArrow(wxDC& dc, const ButtonInfo& button
 void FlatUIButtonBar::DrawButtonSeparator(wxDC& dc, const ButtonInfo& button, const wxRect& rect)
 {
     int sepX = rect.GetRight() - m_buttonHorizontalPadding - m_dropdownArrowWidth
-             - m_separatorPadding - m_separatorWidth;
+        - m_separatorPadding - m_separatorWidth;
     int topY = rect.GetTop() + m_separatorMargin;
     int botY = rect.GetBottom() - m_separatorMargin;
     dc.SetPen(wxPen(m_buttonBorderColour, m_separatorWidth));
@@ -455,7 +453,7 @@ void FlatUIButtonBar::OnMouseDown(wxMouseEvent& evt)
             if (button.menu) {
                 // Align menu with button's left-bottom corner
                 wxPoint menuPos = button.rect.GetBottomLeft();
-                menuPos.y += FLATUI_BUTTONBAR_MENU_VERTICAL_OFFSET;
+                menuPos.y += CFG_INT("ButtonbarMenuVerticalOffset");
                 // Log client and screen coordinates
                 wxPoint screenMenuPos = ClientToScreen(menuPos);
                 PopupMenu(button.menu, menuPos);

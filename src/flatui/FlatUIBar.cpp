@@ -15,15 +15,16 @@
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
 #include <logger/Logger.h>
-#include "flatui/FlatUIConstants.h"
 #include "config/ConstantsConfig.h"
-
-#define CFG_COLOUR(key, def) ConstantsConfig::getInstance().getColourValue(key, def)
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+#include <memory> // Required for std::unique_ptr and std::move
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 int FlatUIBar::GetBarHeight()
 {
-    return CFG_INT("BarRenderHeight", FLATUI_BAR_RENDER_HEIGHT);
+    return CFG_INT("BarRenderHeight");
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
@@ -37,7 +38,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionProfileSpacer(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
-    m_tabBorderTop(CFG_INT("BarTabBorderTop", FLATUI_BAR_TAB_BORDER_TOP)),
+    m_tabBorderTop(CFG_INT("BarTabBorderTop")),
     m_tabBorderBottom(0),
     m_tabBorderLeft(0),
     m_tabBorderRight(0),
@@ -46,18 +47,18 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpaceRightAlign(false)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
-    SetFont(GetFlatUIDefaultFont());
+    SetFont(CFG_DEFAULTFONT());
     auto& cfg = ConstantsConfig::getInstance();
-    m_tabBorderColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour", FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR);
-    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderLeftColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_tabBorderRightColour = CFG_COLOUR("BarTabBorderColour", FLATUI_BAR_TAB_BORDER_COLOUR);
-    m_activeTabBgColour = CFG_COLOUR("ActBarBackgroundColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR);
-    m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour", FLATUI_BAR_ACTIVE_TEXT_COLOUR);
-    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour", FLATUI_BAR_INACTIVE_TEXT_COLOUR);
-    m_barTopMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
-    m_barBottomMargin = CFG_INT("BarTopMargin", FLATUI_BAR_TOP_MARGIN);
+    m_tabBorderColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour");
+    m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderLeftColour = CFG_COLOUR("BarTabBorderColour");
+    m_tabBorderRightColour = CFG_COLOUR("BarTabBorderColour");
+    m_activeTabBgColour = CFG_COLOUR("ActBarBackgroundColour");
+    m_activeTabTextColour = CFG_COLOUR("BarActiveTextColour");
+    m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour");
+    m_barTopMargin = CFG_INT("BarTopMargin");
+    m_barBottomMargin = CFG_INT("BarBottomMargin");
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -126,11 +127,14 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     // Ensure the initial page can be activated and displayed after all pages are added
     Bind(wxEVT_SHOW, [this](wxShowEvent& event) {
         if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
-            // Use timer instead of wxCallAfter
-            wxTimer* timer = new wxTimer(this);
-            Bind(wxEVT_TIMER, [this, timer](wxTimerEvent&) {
+            // Use timer instead of wxCallAfter - now with std::shared_ptr for copyable capture
+            auto oneShotTimer = std::make_shared<wxTimer>(this);
+            int timerId = oneShotTimer->GetId(); 
+            oneShotTimer->StartOnce(50); // Start before moving
+
+            Bind(wxEVT_TIMER, [this, keptTimer = oneShotTimer](wxTimerEvent&) {
                 if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-                    FlatUIPage* currentPage = m_pages[m_activePage];
+                    FlatUIPage* currentPage = m_pages[m_activePage].get();
                     currentPage->SetActive(true);
                     currentPage->Show();
 
@@ -150,17 +154,11 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
                     UpdateElementPositionsAndSizes(GetClientSize());
                     Refresh();
                 }
-                delete timer; // Clean up the timer
-                }, timer->GetId());
-
-            timer->StartOnce(50); // 50ms delay
+                // shared_ptr keptTimer ensures timer lives at least until event handler is removed.
+            }, timerId);
         }
         event.Skip();
-        });
-}
-
-FlatUIBar::~FlatUIBar()
-{
+    });
 }
 
 wxSize FlatUIBar::DoGetBestSize() const
@@ -171,8 +169,8 @@ wxSize FlatUIBar::DoGetBestSize() const
     // Add the height of the active page, if any
 
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage];
-        wxSize pageSize = currentPage->GetBestSize(); // Assuming FlatUIPage also implements GetBestSize or similar
+        FlatUIPage* currentPage = m_pages[m_activePage].get();
+        wxSize pageSize = currentPage->GetBestSize(); 
         bestSize.SetHeight(bestSize.GetHeight() + pageSize.GetHeight());
         // The width of the FlatUIBar should ideally be determined by its contents or parent sizer.
         // For now, let's take the page's width as a hint, but this might need refinement.
@@ -199,22 +197,21 @@ wxSize FlatUIBar::DoGetBestSize() const
     return bestSize;
 }
 
-void FlatUIBar::AddPage(FlatUIPage* page)
+void FlatUIBar::AddPage(std::unique_ptr<FlatUIPage> page)
 {
     if (!page) return;
 
-    m_pages.push_back(page);
+    FlatUIPage* pagePtr = page.get(); // Get raw pointer for operations before move
+    m_pages.push_back(std::move(page));
 
-    page->Hide();
+    pagePtr->Hide();
 
     if (m_pages.size() == 1) {
         m_activePage = 0;
-        // Ensure the first page is properly activated
-        page->SetActive(true);
+        pagePtr->SetActive(true);
     }
     else {
-        // Non-first pages are inactive by default
-        page->SetActive(false);
+        pagePtr->SetActive(false);
     }
 
     if (IsShown()) {
@@ -237,7 +234,7 @@ void FlatUIBar::SetActivePage(size_t index)
     m_activePage = index;
 
     // Activate the new page
-    FlatUIPage* currentPage = m_pages[m_activePage];
+    FlatUIPage* currentPage = m_pages[m_activePage].get();
     if (currentPage) {
         // Set the page position and size
         wxSize barClientSize = GetClientSize();
@@ -265,8 +262,8 @@ void FlatUIBar::SetActivePage(size_t index)
     }
 }
 
-size_t FlatUIBar::GetPageCount() const { return m_pages.size(); }
-FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index] : nullptr; }
+size_t FlatUIBar::GetPageCount() const noexcept { return m_pages.size(); }
+FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index].get() : nullptr; }
 
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {

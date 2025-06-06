@@ -29,7 +29,7 @@ static wxFont GetFlatUIDefaultFont()
 }
 
 // FlatUIBar Colors
-const wxColour FLATUI_BAR_BACKGROUND_COLOUR(220, 220, 220);
+const wxColour FLATUI_BAR_BACKGROUND_COLOUR(240, 240, 240);
 const wxColour FLATUI_ACT_BAR_BACKGROUND_COLOUR(*wxWHITE);
 const wxColour FLATUI_BAR_TAB_BORDER_COLOUR(170, 170, 170);
 const wxColour FLATUI_BAR_ACTIVE_TAB_TOP_BORDER_COLOUR(180, 180, 180);
@@ -57,6 +57,7 @@ const wxColour FLATUI_BUTTONBAR_PANEL_BORDER_COLOUR(200, 200, 200);
 // Sizes & Spacing
 // FlatUIBar
 const int FLATUI_BAR_TOP_MARGIN = 2;
+const int FLATUI_BAR_BOTTOM_MARGIN = 0;
 const int FLATUI_BAR_RENDER_HEIGHT = 30;
 const int FLATUI_BAR_TAB_PADDING = 10;
 const int FLATUI_BAR_TAB_SPACING = 0;

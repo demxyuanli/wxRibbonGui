@@ -1,7 +1,9 @@
 #include "config/ConstantsConfig.h"
 #include "config/ConfigManager.h"
-#include "flatui/FlatUIConstants.h"
 #include <sstream>
+
+#include <wx/wx.h>
+#include <wx/settings.h>
 
 ConstantsConfig& ConstantsConfig::getInstance() {
     static ConstantsConfig instance;
@@ -9,39 +11,30 @@ ConstantsConfig& ConstantsConfig::getInstance() {
 }
 
 ConstantsConfig::ConstantsConfig()
-    : primaryFrameBorderColour(FLATUI_PRIMARY_FRAME_BORDER_COLOUR),
-      primaryContentBgColour(FLATUI_PRIMARY_CONTENT_BG_COLOUR),
-      barTopMargin(FLATUI_BAR_TOP_MARGIN),
-      defaultFontFaceName(FLATUI_DEFAULT_FONT_FACE_NAME),
-      defaultFontSize(FLATUI_DEFAULT_FONT_SIZE)
+    : defaultFontFaceName(""),
+      defaultFontSize(8)
 {
 }
 
 void ConstantsConfig::initialize(ConfigManager& config) {
-    auto readColour = [&](const std::string& key, const wxColour& def) {
-        std::string defaultStr = std::to_string(def.Red()) + "," +
-                                 std::to_string(def.Green()) + "," +
-                                 std::to_string(def.Blue());
-        std::string val = config.getString("FlatUIConstants", key, defaultStr);
-        std::istringstream ss(val);
-        int r, g, b;
-        char comma;
-        if (ss >> r >> comma >> g >> comma >> b) {
-            return wxColour(r, g, b);
+    auto readColour = [&](const std::string& key) {
+        std::string val = config.getString("FlatUIConstants", key, "");
+        if (!val.empty()) {
+            std::istringstream ss(val);
+            int r, g, b;
+            char comma;
+            if (ss >> r >> comma >> g >> comma >> b) {
+                return wxColour(r, g, b);
+            }
         }
-        return def;
+        return wxColour(255, 0, 0); 
     };
 
-    primaryFrameBorderColour = readColour("PrimaryFrameBorderColour", FLATUI_PRIMARY_FRAME_BORDER_COLOUR);
-    primaryContentBgColour = readColour("PrimaryContentBgColour", FLATUI_PRIMARY_CONTENT_BG_COLOUR);
 
-    barTopMargin = config.getInt("FlatUIConstants", "BarTopMargin", FLATUI_BAR_TOP_MARGIN);
-
-    std::string face = config.getString("FlatUIConstants", "DefaultFontFaceName",
-                                        FLATUI_DEFAULT_FONT_FACE_NAME.ToStdString());
+    std::string face = config.getString("FlatUIConstants", "DefaultFontFaceName", "");
     defaultFontFaceName = wxString(face);
 
-    defaultFontSize = config.getInt("FlatUIConstants", "DefaultFontSize", FLATUI_DEFAULT_FONT_SIZE);
+    defaultFontSize = config.getInt("FlatUIConstants", "DefaultFontSize", 8);
 
     {
         auto keys = config.getKeys("FlatUIConstants");
@@ -51,17 +44,6 @@ void ConstantsConfig::initialize(ConfigManager& config) {
     }
 }
 
-const wxColour& ConstantsConfig::getPrimaryFrameBorderColour() const {
-    return primaryFrameBorderColour;
-}
-
-const wxColour& ConstantsConfig::getPrimaryContentBgColour() const {
-    return primaryContentBgColour;
-}
-
-int ConstantsConfig::getBarTopMargin() const {
-    return barTopMargin;
-}
 
 const wxString& ConstantsConfig::getDefaultFontFaceName() const {
     return defaultFontFaceName;
@@ -71,30 +53,30 @@ int ConstantsConfig::getDefaultFontSize() const {
     return defaultFontSize;
 }
 
-std::string ConstantsConfig::getStringValue(const std::string& key, const std::string& defaultValue) const {
+std::string ConstantsConfig::getStringValue(const std::string& key) const {
     auto it = configMap.find(key);
     if (it != configMap.end() && !it->second.empty()) return it->second;
-    return defaultValue;
+    return "";
 }
 
-int ConstantsConfig::getIntValue(const std::string& key, int defaultValue) const {
+int ConstantsConfig::getIntValue(const std::string& key) const {
     auto it = configMap.find(key);
     if (it != configMap.end()) {
         try { return std::stoi(it->second); } catch (...) {}
     }
-    return defaultValue;
+    return -1;
 }
 
-double ConstantsConfig::getDoubleValue(const std::string& key, double defaultValue) const {
+double ConstantsConfig::getDoubleValue(const std::string& key) const {
     auto it = configMap.find(key);
     if (it != configMap.end()) {
         try { return std::stod(it->second); } catch (...) {}
     }
-    return defaultValue;
+    return -1.0;
 }
 
-wxColour ConstantsConfig::getColourValue(const std::string& key, const wxColour& defaultValue) const {
-    std::string val = getStringValue(key, "");
+wxColour ConstantsConfig::getColourValue(const std::string& key) const {
+    std::string val = getStringValue(key);
     if (!val.empty()) {
         std::istringstream ss(val);
         int r, g, b;
@@ -103,5 +85,9 @@ wxColour ConstantsConfig::getColourValue(const std::string& key, const wxColour&
             return wxColour(r, g, b);
         }
     }
-    return defaultValue;
-} 
+    return wxColour(255, 0, 0);
+}
+
+wxFont ConstantsConfig::getDefaultFont() const {
+    return wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+}
