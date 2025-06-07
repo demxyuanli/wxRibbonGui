@@ -1,5 +1,6 @@
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 #include <wx/settings.h> // For system colours
+#include <wx/display.h> 
 #include "flatui/FlatUIHomeMenu.h" // For the custom menu
 #include "flatui/FlatUIFrame.h"       // To get parent FlatFrame and content height
 #include "flatui/FlatUIBar.h"         // To get FlatUIBar height
@@ -116,10 +117,32 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
                 int menuContentHeight = 420; // Default height
                 FlatUIFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();
                 if (mainFrame) {
+                    // Get frame's screen position and size
+                    wxPoint framePos = mainFrame->GetScreenPosition();
+                    wxSize frameSize = mainFrame->GetSize();
+                    int frameBottom = framePos.y + frameSize.GetHeight();
+                    
+                    // Calculate available height from menu position to frame bottom
+                    int availableHeight = frameBottom - menuPos.y; 
+                    
                     int frameHeight = mainFrame->GetClientSize().GetHeight();
-                    menuContentHeight = frameHeight - CFG_INT("ButtonBarTargetHeight") - CFG_INT("BarTopMargin");
+                    int calculatedHeight = frameHeight - CFG_INT("ButtonBarTargetHeight") - CFG_INT("BarTopMargin");
+                    
+                    // Use the smaller of calculated height and available height
+                    menuContentHeight = wxMin(calculatedHeight, availableHeight);
+                    
                     if (menuContentHeight < 50) { // Ensure a minimum height
                         menuContentHeight = 50;
+                        // If minimum height still exceeds available space, move menu up
+                        if (menuPos.y + menuContentHeight > frameBottom - 10) {
+                            menuPos.y = frameBottom - menuContentHeight - 10;
+                            // Make sure menu doesn't go above the button
+                            wxPoint buttonScreenPos = ClientToScreen(wxPoint(0, 0));
+                            if (menuPos.y < buttonScreenPos.y + m_buttonRect.GetHeight()) {
+                                menuPos.y = buttonScreenPos.y + m_buttonRect.GetHeight() + 3;
+                                menuContentHeight = frameBottom - menuPos.y - 10;
+                            }
+                        }
                     }
                 }
                 else {
