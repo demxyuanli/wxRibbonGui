@@ -38,7 +38,7 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     m_buttonHoverBgColour = CFG_COLOUR("ButtonbarDefaultHoverBgColour");
     m_buttonPressedBgColour = CFG_COLOUR("ButtonbarDefaultPressedBgColour");
     m_buttonTextColour = CFG_COLOUR("ButtonbarDefaultTextColour");
-    m_buttonBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour"); 
+    m_buttonBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour");
     m_btnBarBgColour = CFG_COLOUR("ButtonbarDefaultBgColour");
     m_btnBarBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour");
 
@@ -83,12 +83,7 @@ void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& b
     button.id = id;
     button.label = label;
     int imgw = CFG_INT("ButtonbarIconSize");
-    if (bitmap.IsOk() && (bitmap.GetWidth() != imgw || bitmap.GetHeight() != imgw)) {
-        button.icon = wxBitmap(bitmap.ConvertToImage().Rescale(imgw, imgw, wxIMAGE_QUALITY_HIGH));
-    }
-    else {
-        button.icon = bitmap;
-    }
+    button.icon = bitmap;
     button.menu = menu;
     button.isDropDown = (menu != nullptr);
 
@@ -107,23 +102,26 @@ int FlatUIButtonBar::CalculateButtonWidth(const ButtonInfo& button, wxDC& dc) co
 {
     int buttonWidth = 0;
     int iconWidth = button.icon.IsOk() ? button.icon.GetWidth() : 0;
+    const int STANDARD_BUTTON_SIZE = 24; // Standard button size 24x24
 
     switch (m_displayStyle) {
     case ButtonDisplayStyle::ICON_ONLY:
-        buttonWidth = button.icon.IsOk() ? iconWidth + 2 * m_buttonHorizontalPadding
-            : 2 * m_buttonHorizontalPadding;
+        // Fixed 24x24 button size regardless of icon size
+        buttonWidth = STANDARD_BUTTON_SIZE;
         break;
     case ButtonDisplayStyle::TEXT_ONLY:
+        // Text width + padding
         buttonWidth = !button.label.empty() ? button.textSize.GetWidth() + 2 * m_buttonHorizontalPadding
             : 2 * m_buttonHorizontalPadding;
         break;
     case ButtonDisplayStyle::ICON_TEXT_BELOW:
+        // Button width is 24 + text width (whichever is larger) + padding
         buttonWidth = m_buttonHorizontalPadding;
         if (button.icon.IsOk() && !button.label.empty()) {
-            buttonWidth += wxMax(iconWidth, button.textSize.GetWidth());
+            buttonWidth += wxMax(STANDARD_BUTTON_SIZE, button.textSize.GetWidth());
         }
         else if (button.icon.IsOk()) {
-            buttonWidth += iconWidth;
+            buttonWidth += STANDARD_BUTTON_SIZE;
         }
         else if (!button.label.empty()) {
             buttonWidth += button.textSize.GetWidth();
@@ -131,25 +129,22 @@ int FlatUIButtonBar::CalculateButtonWidth(const ButtonInfo& button, wxDC& dc) co
         buttonWidth += m_buttonHorizontalPadding;
         break;
     case ButtonDisplayStyle::ICON_TEXT_BESIDE:
-        buttonWidth = m_buttonHorizontalPadding;
-        if (button.icon.IsOk()) {
-            buttonWidth += iconWidth;
-        }
+        // 24 (button area) + text width + padding
+        buttonWidth = STANDARD_BUTTON_SIZE;
         if (!button.label.empty()) {
-            if (button.icon.IsOk()) {
-                buttonWidth += m_buttonHorizontalPadding;
-            }
-            buttonWidth += button.textSize.GetWidth();
+            buttonWidth += m_buttonHorizontalPadding + button.textSize.GetWidth();
         }
         buttonWidth += m_buttonHorizontalPadding;
         break;
     }
 
+    // Add dropdown arrow and separator width if needed
     if (button.isDropDown) {
         buttonWidth += m_buttonHorizontalPadding + m_dropdownArrowWidth;
         buttonWidth += m_separatorWidth + 2 * m_separatorPadding;
     }
-    return wxMax(buttonWidth, 2 * m_buttonHorizontalPadding);
+
+    return wxMax(buttonWidth, STANDARD_BUTTON_SIZE);
 }
 
 void FlatUIButtonBar::RecalculateLayout()
@@ -158,13 +153,24 @@ void FlatUIButtonBar::RecalculateLayout()
     wxClientDC dc(this);
     dc.SetFont(GetFont());
     int currentX = m_btnBarHorizontalMargin;
+    const int STANDARD_BUTTON_HEIGHT = 24; // Standard button height
 
     for (auto& button : m_buttons) {
         if (button.textSize != dc.GetTextExtent(button.label)) {
             button.textSize = dc.GetTextExtent(button.label);
         }
         int buttonWidth = CalculateButtonWidth(button, dc);
-        button.rect = wxRect(currentX, 0, buttonWidth, targetH);
+
+        // Button height calculation based on display style
+        int buttonHeight = STANDARD_BUTTON_HEIGHT;
+        if (m_displayStyle == ButtonDisplayStyle::ICON_TEXT_BELOW) {
+            // Icon above text mode needs extra height for text
+            if (button.icon.IsOk() && !button.label.empty()) {
+                buttonHeight = STANDARD_BUTTON_HEIGHT + button.textSize.GetHeight() + CFG_INT("IconTextBelowSpacing");
+            }
+        }
+
+        button.rect = wxRect(currentX, 0, buttonWidth, buttonHeight);
         currentX += buttonWidth;
         if (&button != &m_buttons.back()) {
             currentX += m_buttonSpacing;
@@ -172,9 +178,15 @@ void FlatUIButtonBar::RecalculateLayout()
     }
     currentX += m_btnBarHorizontalMargin;
 
+    // Calculate overall button bar height (max of all button heights)
+    int maxButtonHeight = STANDARD_BUTTON_HEIGHT;
+    for (const auto& button : m_buttons) {
+        maxButtonHeight = wxMax(maxButtonHeight, button.rect.GetHeight());
+    }
+
     wxSize currentMinSize = GetMinSize();
-    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != targetH) {
-        SetMinSize(wxSize(currentX, targetH));
+    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != maxButtonHeight) {
+        SetMinSize(wxSize(currentX, maxButtonHeight));
         InvalidateBestSize();
         if (auto* parentPanel = dynamic_cast<FlatUIPanel*>(GetParent())) {
             parentPanel->UpdatePanelSize();
@@ -269,17 +281,20 @@ void FlatUIButtonBar::DrawButtonIcon(wxDC& dc, const ButtonInfo& button, const w
 
     int iconWidth = button.icon.GetWidth();
     int iconHeight = button.icon.GetHeight();
+    const int STANDARD_BUTTON_SIZE = 24;
 
     switch (m_displayStyle) {
     case ButtonDisplayStyle::ICON_ONLY:
     {
-        int iconX = rect.GetLeft() + (rect.GetWidth() - iconWidth) / 2;
-        int iconY = rect.GetTop() + (rect.GetHeight() - iconHeight) / 2;
+        // Center the original-sized icon within the 24x24 button area
+        int iconX = rect.GetLeft() + (STANDARD_BUTTON_SIZE - iconWidth) / 2;
+        int iconY = rect.GetTop() + (STANDARD_BUTTON_SIZE - iconHeight) / 2;
         dc.DrawBitmap(button.icon, iconX, iconY, true);
         break;
     }
     case ButtonDisplayStyle::ICON_TEXT_BELOW:
     {
+        // Center the icon horizontally within the button width
         int iconX = rect.GetLeft() + (rect.GetWidth() - iconWidth) / 2;
         int iconY = rect.GetTop() + CFG_INT("IconTextBelowTopMargin");
         dc.DrawBitmap(button.icon, iconX, iconY, true);
@@ -287,7 +302,8 @@ void FlatUIButtonBar::DrawButtonIcon(wxDC& dc, const ButtonInfo& button, const w
     }
     case ButtonDisplayStyle::ICON_TEXT_BESIDE:
     {
-        int iconX = rect.GetLeft() + m_buttonHorizontalPadding;
+        // Center the icon within the 24px button area on the left
+        int iconX = rect.GetLeft() + (STANDARD_BUTTON_SIZE - iconWidth) / 2;
         int iconY = rect.GetTop() + (rect.GetHeight() - iconHeight) / 2;
         dc.DrawBitmap(button.icon, iconX, iconY, true);
         break;
@@ -301,6 +317,8 @@ void FlatUIButtonBar::DrawButtonText(wxDC& dc, const ButtonInfo& button, const w
 {
     if (button.label.empty()) return;
 
+    const int STANDARD_BUTTON_SIZE = 24;
+
     switch (m_displayStyle) {
     case ButtonDisplayStyle::TEXT_ONLY:
     {
@@ -312,7 +330,8 @@ void FlatUIButtonBar::DrawButtonText(wxDC& dc, const ButtonInfo& button, const w
     case ButtonDisplayStyle::ICON_TEXT_BELOW:
     {
         int textX = rect.GetLeft() + (rect.GetWidth() - button.textSize.GetWidth()) / 2;
-        int textY = rect.GetTop() + CFG_INT("IconTextBelowTopMargin") + (button.icon.IsOk() ? button.icon.GetHeight() + CFG_INT("IconTextBelowSpacing") : 0);
+        int textY = rect.GetTop() + CFG_INT("IconTextBelowTopMargin") +
+            (button.icon.IsOk() ? button.icon.GetHeight() + CFG_INT("IconTextBelowSpacing") : 0);
         if (textY + button.textSize.GetHeight() <= rect.GetBottom()) {
             dc.DrawText(button.label, textX, textY);
         }
@@ -320,7 +339,8 @@ void FlatUIButtonBar::DrawButtonText(wxDC& dc, const ButtonInfo& button, const w
     }
     case ButtonDisplayStyle::ICON_TEXT_BESIDE:
     {
-        int textX = rect.GetLeft() + m_buttonHorizontalPadding + (button.icon.IsOk() ? button.icon.GetWidth() + m_buttonHorizontalPadding : 0);
+        // Text starts after the 24px button area
+        int textX = rect.GetLeft() + STANDARD_BUTTON_SIZE + m_buttonHorizontalPadding;
         int textY = rect.GetTop() + (rect.GetHeight() - button.textSize.GetHeight()) / 2;
         dc.DrawText(button.label, textX, textY);
         break;
@@ -560,7 +580,7 @@ void FlatUIButtonBar::SetBtnBarBackgroundColour(const wxColour& colour)
     Refresh();
 }
 
-void FlatUIButtonBar::SetBtnBarBorderColour(const wxColour & colour)
+void FlatUIButtonBar::SetBtnBarBorderColour(const wxColour& colour)
 {
     m_btnBarBorderColour = colour;
     Refresh();
