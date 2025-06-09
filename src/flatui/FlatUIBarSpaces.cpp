@@ -246,7 +246,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         int spaceAfterFunction = remainingSpace - spaceBeforeFunction;
 
         // Position tabFunctionSpacer (left spacer)
-        if (tabFuncSpacerVisible) {
+        if (tabFuncSpacerVisible) { 
             int spacerWidth = m_tabFunctionSpacer->GetSpacerWidth();
             if (tabFuncSpacerAutoExpand) {
                 spacerWidth = spaceBeforeFunction;
@@ -415,6 +415,7 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
     int tabSpacing = CFG_INT("BarTabSpacing");
     int totalWidth = 0;
     if (m_pages.empty()) return 0;
+
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
         if (!m_pages[i]) continue;
@@ -427,6 +428,11 @@ int FlatUIBar::CalculateTabsWidth(wxDC& dc) const
             totalWidth += tabSpacing;
         }
     }
+    // Add extra space for the right border of the last tab
+    if (!m_pages.empty() && m_tabBorderRight > 0) {
+        totalWidth += 1;  // Reserve space for right border
+    }
+
     return totalWidth;
 }
 

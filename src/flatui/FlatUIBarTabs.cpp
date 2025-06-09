@@ -43,10 +43,10 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
 
 void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffsetInOut)
 {
-    int tabYPos = m_barTopMargin;  // Use top margin
+    int tabYPos = m_barTopMargin + m_tabTopSpacing;  // Use top margin
     int tabPadding = CFG_INT("BarTabPadding");
     int tabSpacing = CFG_INT("BarTabSpacing");
-    int barEffectiveHeight = GetBarHeight();
+    int barEffectiveHeight = GetBarHeight() - m_tabTopSpacing; 
     int initialXOffset = currentXOffsetInOut;
 
     dc.SetFont(GetFont());
@@ -89,13 +89,13 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
                     }
                     if (m_tabBorderLeft > 0) {
                         dc.SetPen(wxPen(m_tabBorderLeftColour, m_tabBorderLeft));
-                        dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + m_tabBorderTop,
-                            tabRect.GetLeft(), tabRect.GetBottom());
+                        dc.DrawLine(tabRect.GetLeft() , tabRect.GetTop() + m_tabBorderTop,
+                            tabRect.GetLeft() , tabRect.GetBottom());
                     }
                     if (m_tabBorderRight > 0) {
                         dc.SetPen(wxPen(m_tabBorderRightColour, m_tabBorderRight));
-                        dc.DrawLine(tabRect.GetRight(), tabRect.GetTop() + m_tabBorderTop,
-                            tabRect.GetRight(), tabRect.GetBottom());
+                        dc.DrawLine(tabRect.GetRight() + 1 , tabRect.GetTop() + m_tabBorderTop,
+                            tabRect.GetRight() + 1, tabRect.GetBottom());
                     }
                 }
                 else {
@@ -317,6 +317,15 @@ void FlatUIBar::SetTabBorderRightWidth(int width)
 void FlatUIBar::SetBarTopMargin(int margin)
 {
     m_barTopMargin = margin;
+    if (IsShown()) {
+        UpdateElementPositionsAndSizes(GetClientSize());
+        Refresh();
+    }
+}
+
+void FlatUIBar::SetBarBottomMargin(int margin)
+{
+    m_barBottomMargin = margin;
     if (IsShown()) {
         UpdateElementPositionsAndSizes(GetClientSize());
         Refresh();

@@ -29,6 +29,8 @@ public:
     FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
     virtual ~FlatFrame();
 
+    void LoadSVGIcons(wxWindow* parent, wxSizer* sizer);
+    wxBitmap LoadHighQualityBitmap(const wxString& resourceName, const wxSize& targetSize);
     // Override mouse events IF FlatFrame needs specific behavior beyond PlatUIFrame
     // For example, to prevent dragging when m_homeMenu is shown.
     void OnLeftDown(wxMouseEvent& event) override;

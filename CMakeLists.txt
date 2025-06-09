@@ -105,20 +105,18 @@ if(MSVC)
         LINK_FLAGS "/SUBSYSTEM:WINDOWS"
     )
 
-    # 复制扩展配置文件到目标目录
-    set(CONFIG_FILES
-        "${CMAKE_SOURCE_DIR}/config/config.ini"
-    )
+    # 复制 config 目录及其所有子目录和文件到目标目录
+    set(CONFIG_SOURCE_DIR "${CMAKE_SOURCE_DIR}/config")
     set(TARGET_DIR $<TARGET_FILE_DIR:${PROJECT_NAME}>)
-    foreach(CONFIG_FILE ${CONFIG_FILES})
-        add_custom_command(
-            TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${CONFIG_FILE}"
-                    "${TARGET_DIR}/"
-            COMMENT "Copying ${CONFIG_FILE} to ${TARGET_DIR}"
-        )
-    endforeach()
+    
+    # 使用 copy_directory 命令复制整个目录
+    add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CONFIG_SOURCE_DIR}"
+                "${TARGET_DIR}/config"
+        COMMENT "Copying config directory and all subdirectories to ${TARGET_DIR}/config"
+    )
 endif()
 
 # 调试依赖路径

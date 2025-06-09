@@ -7,7 +7,7 @@
 #include <wx/sizer.h>
 #include <wx/settings.h>
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
-
+#include "config/SvgIconManager.h"
 #include "config/ConstantsConfig.h"
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
@@ -15,13 +15,13 @@
 #define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupTransientWindow)
-    EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
-    EVT_KILL_FOCUS(FlatUIHomeMenu::OnKillFocus)
+EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
+EVT_KILL_FOCUS(FlatUIHomeMenu::OnKillFocus)
 wxEND_EVENT_TABLE()
 
 FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame)
     : wxPopupTransientWindow(parent, wxBORDER_NONE),
-      m_eventSinkFrame(eventSinkFrame)
+    m_eventSinkFrame(eventSinkFrame)
 {
     // Enable paint background style for auto-buffered drawing
     SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -41,7 +41,7 @@ FlatUIHomeMenu::FlatUIHomeMenu(wxWindow* parent, FlatUIFrame* eventSinkFrame)
     m_panel->Bind(wxEVT_PAINT, &FlatUIHomeMenu::OnPaint, this);
 }
 
-FlatUIHomeMenu::~FlatUIHomeMenu() 
+FlatUIHomeMenu::~FlatUIHomeMenu()
 {
 }
 
@@ -67,13 +67,14 @@ void FlatUIHomeMenu::BuildMenuLayout()
         if (itemInfo.isSeparator) {
             wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(CFG_INT("HomeMenuWidth") - 10, 1));
             separator->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour"));
-            m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight")-1)/2 );
-        } else {
+            m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight") - 1) / 2);
+        }
+        else {
             wxPanel* itemPanel = new wxPanel(m_panel, wxID_ANY);
             itemPanel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
             wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-            
-            if(itemInfo.icon.IsOk()){
+
+            if (itemInfo.icon.IsOk()) {
                 wxStaticBitmap* sb = new wxStaticBitmap(itemPanel, wxID_ANY, itemInfo.icon);
                 hsizer->Add(sb, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
             }
@@ -93,9 +94,9 @@ void FlatUIHomeMenu::BuildMenuLayout()
                 }
                 SendItemCommand(item_id);
                 Close();
-                event.Skip(); 
-            });
-             st->Bind(wxEVT_LEFT_DOWN, [this, item_id = itemInfo.id](wxMouseEvent& event) {
+                event.Skip();
+                });
+            st->Bind(wxEVT_LEFT_DOWN, [this, item_id = itemInfo.id](wxMouseEvent& event) {
                 if (item_id == wxID_EXIT) {
                     event.SetId(item_id); // SetId might still be useful if other handlers check it
                     event.Skip();
@@ -103,9 +104,9 @@ void FlatUIHomeMenu::BuildMenuLayout()
                 }
                 SendItemCommand(item_id);
                 Close();
-                event.SetId(item_id); 
-                event.Skip(); 
-            });
+                event.SetId(item_id);
+                event.Skip();
+                });
         }
     }
 
@@ -120,13 +121,13 @@ void FlatUIHomeMenu::BuildMenuLayout()
     m_itemSizer->AddStretchSpacer(1); // This will push subsequent items to the bottom
 
     // Helper lambda to create and add menu item panels (similar to the loop above)
-    auto createAndAddFixedMenuItemPanel = 
+    auto createAndAddFixedMenuItemPanel =
         [this](const wxString& text, int id, const wxBitmap& icon) {
         wxPanel* itemPanel = new wxPanel(m_panel, wxID_ANY);
         itemPanel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
         wxBoxSizer* hsizer = new wxBoxSizer(wxHORIZONTAL);
-        
-        if(icon.IsOk()){
+
+        if (icon.IsOk()) {
             // For fixed items, ensure icon is scaled if necessary, though 16x16 is standard
             wxStaticBitmap* sb = new wxStaticBitmap(itemPanel, wxID_ANY, icon);
             hsizer->Add(sb, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
@@ -145,30 +146,29 @@ void FlatUIHomeMenu::BuildMenuLayout()
             Close();
             event.SetId(item_id);
             event.Skip();
-        });
+            });
         st->Bind(wxEVT_LEFT_DOWN, [this, item_id = id](wxMouseEvent& event) {
             SendItemCommand(item_id);
             Close();
             event.SetId(item_id);
-            event.Skip(); 
-        });
-    };
-    
+            event.Skip();
+            });
+        };
+
     auto addFixedSeparatorToSizer = [&]() {
         wxPanel* separator = new wxPanel(m_panel, wxID_ANY, wxDefaultPosition, wxSize(CFG_INT("HomeMenuWidth") - 10, 1));
         separator->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour"));
-        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight")-1)/2 );
-    };
+        m_itemSizer->Add(separator, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP | wxBOTTOM, (CFG_INT("HomeMenuSeparatorHeight") - 1) / 2);
+        };
 
     // Add fixed bottom items
-    createAndAddFixedMenuItemPanel("Settings", wxID_PREFERENCES, 
-        wxArtProvider::GetBitmap(wxART_EXECUTABLE_FILE, wxART_MENU, wxSize(16,16)));
+    createAndAddFixedMenuItemPanel("Settings", wxID_PREFERENCES, SVG_ICON("settings", wxSize(16, 16)));
     addFixedSeparatorToSizer();
-    createAndAddFixedMenuItemPanel("About", wxID_ABOUT, 
-        wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_MENU, wxSize(16,16)));
+    createAndAddFixedMenuItemPanel("Person Profiles", wxID_PREFERENCES, SVG_ICON("person", wxSize(16, 16)));
     addFixedSeparatorToSizer();
-    createAndAddFixedMenuItemPanel("E&xit", wxID_EXIT, 
-        wxArtProvider::GetBitmap(wxART_QUIT, wxART_MENU, wxSize(16,16)));
+    createAndAddFixedMenuItemPanel("About", wxID_ABOUT, SVG_ICON("about", wxSize(16, 16)));
+    addFixedSeparatorToSizer();
+    createAndAddFixedMenuItemPanel("E&xit", wxID_EXIT, SVG_ICON("exit", wxSize(16, 16)));
 
     m_panel->Layout(); // Tell the panel's sizer to arrange children
     // No Fit() or SetSize() needed here, as frame's size is fixed and panel expands.
@@ -193,8 +193,9 @@ void FlatUIHomeMenu::SendItemCommand(int id)
     if (m_eventSinkFrame && id != wxID_ANY && id != wxID_SEPARATOR) {
         wxCommandEvent cmdEvent(wxEVT_MENU, id);
         if (id == wxID_EXIT) {
-            cmdEvent.SetEventObject(m_eventSinkFrame); 
-        } else {
+            cmdEvent.SetEventObject(m_eventSinkFrame);
+        }
+        else {
             cmdEvent.SetEventObject(this);
         }
         wxPostEvent(m_eventSinkFrame, cmdEvent);
@@ -205,13 +206,14 @@ void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight, bool& isShow)
 {
     SetPosition(pos);
     SetSize(wxSize(CFG_INT("HomeMenuWidth"), contentHeight));
-    wxPopupWindow::Show(); // Using Show as Popup() caused issues
-    
+    Popup(); // Using Show as Popup() caused issues
+
     // Try to set focus to the popup window itself.
     // It's important that the window is visible and able to receive focus.
     if (IsShownOnScreen()) { // Check if it's actually on screen
         SetFocus(); // Equivalent to this->SetFocus()
-    } else {
+    }
+    else {
         // If not shown on screen immediately, SetFocus might fail.
         // This could indicate a deeper issue or a need to defer SetFocus.
         wxLogDebug(wxT("FlatUIHomeMenu::ShowAt - Window not shown on screen when trying to SetFocus."));
@@ -221,7 +223,9 @@ void FlatUIHomeMenu::ShowAt(const wxPoint& pos, int contentHeight, bool& isShow)
 
 bool FlatUIHomeMenu::Close(bool force)
 {
-    if (!IsShown()) return false;
+    if (!IsShown()) {
+        return false;
+    }
 
     Hide();
     wxWindow* parent = GetParent();
@@ -237,8 +241,18 @@ bool FlatUIHomeMenu::Close(bool force)
 void FlatUIHomeMenu::OnDismiss()
 {
     if (IsShown()) {
-        Close(); 
+        Close();
     }
+}
+
+bool FlatUIHomeMenu::ProcessEvent(wxEvent& event)
+{
+    // Intercept hide events and call our Close method
+    if (event.GetEventType() == wxEVT_SHOW && !static_cast<wxShowEvent&>(event).IsShown()) {
+        Close();
+        return true;
+    }
+    return wxPopupTransientWindow::ProcessEvent(event);
 }
 
 void FlatUIHomeMenu::OnKillFocus(wxFocusEvent& event)
@@ -251,7 +265,7 @@ void FlatUIHomeMenu::OnKillFocus(wxFocusEvent& event)
     bool focusStillInside = (newFocus == this);
     if (!focusStillInside && newFocus) {
         wxWindow* parent = newFocus->GetParent();
-        while(parent) {
+        while (parent) {
             if (parent == this) {
                 focusStillInside = true;
                 break;
@@ -263,9 +277,10 @@ void FlatUIHomeMenu::OnKillFocus(wxFocusEvent& event)
     if (!focusStillInside) {
         wxLogDebug(wxT("FlatUIHomeMenu::OnKillFocus - Focus moved outside. Closing menu."));
         Close(); // Use our existing Close method which also notifies HomeSpace
-    } else {
+    }
+    else {
         wxLogDebug(wxT("FlatUIHomeMenu::OnKillFocus - Focus moved to self or child."));
     }
-    
+
     event.Skip(); // Important to allow default processing too
-} 
+}

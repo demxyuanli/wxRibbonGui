@@ -137,6 +137,9 @@ public:
     void SetBarTopMargin(int margin);
     int GetBarTopMargin() const { return m_barTopMargin; }
 
+    void SetBarBottomMargin(int margin);
+    int GetBarBottomMargin() const noexcept { return m_barBottomMargin; }
+
     // Override to provide best size hint
     virtual wxSize DoGetBestSize() const override;
 
@@ -168,6 +171,8 @@ private:
     // Tab style configuration
     TabStyle m_tabStyle;
     TabBorderStyle m_tabBorderStyle;
+
+    int m_tabTopSpacing;
     int m_tabBorderTop;
     int m_tabBorderBottom;
     int m_tabBorderLeft;

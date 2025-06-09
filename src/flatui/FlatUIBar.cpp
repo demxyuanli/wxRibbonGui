@@ -38,7 +38,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionProfileSpacer(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
-    m_tabBorderTop(CFG_INT("BarTabBorderTop")),
+    m_tabBorderTop(0),
     m_tabBorderBottom(0),
     m_tabBorderLeft(0),
     m_tabBorderRight(0),
@@ -59,6 +59,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_inactiveTabTextColour = CFG_COLOUR("BarInactiveTextColour");
     m_barTopMargin = CFG_INT("BarTopMargin");
     m_barBottomMargin = CFG_INT("BarBottomMargin");
+    m_tabTopSpacing = CFG_INT("TabTopSpacing");
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -70,6 +71,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
 
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
+
+    SetBarTopMargin(0);
+    SetBarBottomMargin(1);
 
     // Create child component controls
     m_homeSpace = new FlatUIHomeSpace(this, wxID_ANY);
