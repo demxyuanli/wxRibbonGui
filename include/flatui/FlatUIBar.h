@@ -140,6 +140,9 @@ public:
     void SetBarBottomMargin(int margin);
     int GetBarBottomMargin() const noexcept { return m_barBottomMargin; }
 
+    void SetBarBottomMargin(int margin);
+    int GetBarBottomMargin() const noexcept { return m_barBottomMargin; }
+
     // Override to provide best size hint
     virtual wxSize DoGetBestSize() const override;
 
