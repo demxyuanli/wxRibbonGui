@@ -30,3 +30,5 @@ IDP_PERSON       RCDATA  "res/person.png"
 IDP_USER         RCDATA  "res/user.png" 
 IDP_SETTING      RCDATA  "res/setting.png"
 IDP_EXIT         RCDATA  "res/exit.png"
+HOME_SVG         RCDATA  "res/home.svg"
+
