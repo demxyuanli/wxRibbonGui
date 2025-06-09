@@ -199,10 +199,8 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetHeaderTextColour(wxColour(120, 120, 120));
     panel2->SetHeaderBorderWidths(1, 0, 0, 1);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
-    wxBitmap helpBmp("IDP_HELP", wxBITMAP_TYPE_PNG_RESOURCE);
-    wxBitmap infoBmp("IDP_INFO", wxBITMAP_TYPE_PNG_RESOURCE);
-    buttonBar2->AddButton(wxID_HELP, "Help", helpBmp);
-    buttonBar2->AddButton(wxID_INFO, "Info", infoBmp);
+    buttonBar2->AddButton(wxID_HELP, "Help", SVG_ICON("help", wxSize(16, 16)));
+    buttonBar2->AddButton(wxID_INFO, "Info", SVG_ICON("info", wxSize(16, 16)));
     panel2->AddButtonBar(buttonBar2, 0, wxEXPAND | wxALL, 5);
     FlatUIButtonBar* toggleBar = new FlatUIButtonBar(panel2);
     toggleBar->SetDisplayStyle(ButtonDisplayStyle::TEXT_ONLY);
