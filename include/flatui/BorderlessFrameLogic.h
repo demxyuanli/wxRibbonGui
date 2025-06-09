@@ -2,6 +2,9 @@
 #define BORDERLESSFRAMELOGIC_H
 
 #include <wx/wx.h>
+#ifdef __WXMSW__
+#include <windows.h>
+#endif
 
 // Enum to represent window edges/corners for resizing
 enum class ResizeMode {
@@ -41,6 +44,13 @@ protected:
     void DrawRubberBand(const wxRect& rect);
     void EraseRubberBand();
 
+    // DPI awareness methods
+    void UpdateBorderThreshold();
+    double GetCurrentDPIScale();
+    
+#ifdef __WXMSW__
+    void OnDPIChanged(wxDPIChangedEvent& event);
+#endif
 
     // Member variables for custom dragging state
     bool m_dragging;
@@ -76,4 +86,4 @@ private:
     BorderlessFrameLogic* m_frame;
 };
 
-#endif // BORDERLESSFRAMELOGIC_H 
+#endif // BORDERLESSFRAMELOGIC_H

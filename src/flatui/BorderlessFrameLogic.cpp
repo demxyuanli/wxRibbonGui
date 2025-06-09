@@ -8,27 +8,33 @@
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 
 wxBEGIN_EVENT_TABLE(BorderlessFrameLogic, wxFrame)
-    EVT_LEFT_DOWN(BorderlessFrameLogic::OnLeftDown)
-    EVT_LEFT_UP(BorderlessFrameLogic::OnLeftUp)
-    EVT_MOTION(BorderlessFrameLogic::OnMotion)
-    EVT_PAINT(BorderlessFrameLogic::OnPaint)
+EVT_LEFT_DOWN(BorderlessFrameLogic::OnLeftDown)
+EVT_LEFT_UP(BorderlessFrameLogic::OnLeftUp)
+EVT_MOTION(BorderlessFrameLogic::OnMotion)
+EVT_PAINT(BorderlessFrameLogic::OnPaint)
+#ifdef __WXMSW__
+EVT_DPI_CHANGED(BorderlessFrameLogic::OnDPIChanged)
+#endif
 wxEND_EVENT_TABLE()
 
 BorderlessFrameLogic::BorderlessFrameLogic(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : wxFrame(parent, id, title, pos, size, style),
-      m_dragging(false),
-      m_resizing(false),
-      m_resizeMode(ResizeMode::NONE),
-      m_rubberBandVisible(false),
-      m_borderThreshold(8) // Default border threshold
+    m_dragging(false),
+    m_resizing(false),
+    m_resizeMode(ResizeMode::NONE),
+    m_rubberBandVisible(false)
 {
+    // Calculate DPI-aware border threshold
+    UpdateBorderThreshold();
+
     // Basic setup, often common for borderless windows
     SetDoubleBuffered(true);
-
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
+
     // Register event filter
     this->PushEventHandler(new BorderlessFrameLogicEventFilter(this));
+
     Refresh(); // Ensure background is painted initially
 }
 
@@ -42,6 +48,52 @@ BorderlessFrameLogic::~BorderlessFrameLogic()
     wxEvtHandler* handler = this->PopEventHandler(true);
     delete handler;
 }
+
+void BorderlessFrameLogic::UpdateBorderThreshold()
+{
+    // Get current DPI scaling factor
+    double scaleFactor = GetCurrentDPIScale();
+
+    // Adjust border threshold based on DPI scaling
+    m_borderThreshold = static_cast<int>(8 * scaleFactor);
+
+    // Ensure minimum threshold
+    if (m_borderThreshold < 4) m_borderThreshold = 4;
+}
+
+double BorderlessFrameLogic::GetCurrentDPIScale()
+{
+    double scaleFactor = 1.0;
+
+#ifdef __WXMSW__
+    // On Windows, get DPI scaling factor
+    HDC hdc = ::GetDC(NULL);
+    if (hdc) {
+        int dpiX = ::GetDeviceCaps(hdc, LOGPIXELSX);
+        scaleFactor = dpiX / 96.0; // 96 DPI is 100% scaling
+        ::ReleaseDC(NULL, hdc);
+    }
+#else
+    // On other platforms, use wxWidgets content scale factor
+    scaleFactor = GetContentScaleFactor();
+#endif
+
+    return scaleFactor;
+}
+
+#ifdef __WXMSW__
+void BorderlessFrameLogic::OnDPIChanged(wxDPIChangedEvent& event)
+{
+    // Update border threshold when DPI changes
+    UpdateBorderThreshold();
+
+    // Force layout update
+    Layout();
+    Refresh();
+
+    event.Skip();
+}
+#endif
 
 void BorderlessFrameLogic::OnLeftDown(wxMouseEvent& event)
 {
@@ -72,7 +124,7 @@ void BorderlessFrameLogic::OnLeftDown(wxMouseEvent& event)
     {
         m_dragging = true;
         // m_dragStartPos is mouse position relative to the window's client area top-left
-        m_dragStartPos = event.GetPosition(); 
+        m_dragStartPos = event.GetPosition();
         m_resizeStartWindowRect = GetScreenRect(); // Save initial window rect for rubber band reference
         if (!HasCapture()) {
             CaptureMouse();
@@ -167,7 +219,7 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
     static wxRect lastDrawnRect;
     static wxLongLong lastDrawTime = 0;
     wxLongLong currentTime = wxGetLocalTimeMillis();
-    
+
     // Basic rubber band and cursor update logic (without pseudo-maximization check)
     // Derived classes (like FlatUIFrame) will call this and add their specific checks first.
 
@@ -194,7 +246,7 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
         wxRect newRect = m_resizeStartWindowRect;
         int minWidth = GetMinWidth() > 0 ? GetMinWidth() : 100;
         int minHeight = GetMinHeight() > 0 ? GetMinHeight() : 100;
-        
+
         // Calculate newRect based on resizeMode, dx, dy, and minWidth/minHeight
         // (This logic is identical to OnLeftUp's resizing part for drawing rubber band)
         switch (m_resizeMode)
@@ -267,7 +319,6 @@ ResizeMode BorderlessFrameLogic::GetResizeModeForPosition(const wxPoint& clientP
     bool onTop = (y >= 0 && y < m_borderThreshold);
     bool onBottom = (y >= clientSize.GetHeight() - m_borderThreshold && y < clientSize.GetHeight());
 
-
     if (onTop && onLeft) return ResizeMode::TOP_LEFT;
     if (onBottom && onLeft) return ResizeMode::BOTTOM_LEFT;
     if (onTop && onRight) return ResizeMode::TOP_RIGHT;
@@ -295,13 +346,31 @@ void BorderlessFrameLogic::UpdateCursorForResizeMode(ResizeMode mode)
 
 void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
 {
+    if (m_rubberBandVisible) EraseRubberBand();
+
+    // Convert logical coordinates to physical coordinates for DPI scaling
+    double scaleFactor = GetCurrentDPIScale();
+    wxRect physicalRect(
+        static_cast<int>(rect.x * scaleFactor),
+        static_cast<int>(rect.y * scaleFactor),
+        static_cast<int>(rect.width * scaleFactor),
+        static_cast<int>(rect.height * scaleFactor)
+    );
+
 #ifdef __WXMSW__
+    // Get current DPI scaling factor for pen width
+    int penWidth = static_cast<int>(3 * scaleFactor);
+    if (penWidth < 1) penWidth = 1;
+
     HDC hdc = ::GetDC(NULL);
     int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
-    HPEN hPen = ::CreatePen(PS_GEOMETRIC|PS_SOLID, 5, RGB(100, 100, 100));
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(100, 100, 100));
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
-    ::Rectangle(hdc, rect.GetLeft(), rect.GetTop(), rect.GetRight(), rect.GetBottom());
+
+    ::Rectangle(hdc, physicalRect.GetLeft(), physicalRect.GetTop(),
+        physicalRect.GetRight(), physicalRect.GetBottom());
+
     ::SelectObject(hdc, hOldBrush);
     ::SelectObject(hdc, hOldPen);
     ::DeleteObject(hPen);
@@ -309,27 +378,44 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
     ::ReleaseDC(NULL, hdc);
 #else
     if (m_rubberBandVisible) EraseRubberBand();
+
     wxScreenDC dc;
     dc.SetLogicalFunction(wxINVERT);
-    wxPen pen(wxColour(100, 100, 100), 5, wxPENSTYLE_SOLID);
+
+    // Adjust pen width for high DPI displays
+    int penWidth = static_cast<int>(3 * scaleFactor);
+    if (penWidth < 1) penWidth = 1;
+
+    wxPen pen(wxColour(100, 100, 100), penWidth, wxPENSTYLE_SOLID);
     dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(rect);
+    dc.DrawRectangle(physicalRect);
 #endif
-    m_currentRubberBandRect = rect;
+
+    m_currentRubberBandRect = physicalRect;
     m_rubberBandVisible = true;
 }
 
 void BorderlessFrameLogic::EraseRubberBand()
 {
     if (!m_rubberBandVisible) return;
+
 #ifdef __WXMSW__
+    // Get current DPI scaling factor
+    double scaleFactor = GetCurrentDPIScale();
+
+    int penWidth = static_cast<int>(3 * scaleFactor);
+    if (penWidth < 1) penWidth = 1;
+
     HDC hdc = ::GetDC(NULL);
     int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
-    HPEN hPen = ::CreatePen(PS_GEOMETRIC|PS_SOLID, 5, RGB(100, 100, 100));
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(100, 100, 100));
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
-    ::Rectangle(hdc, m_currentRubberBandRect.GetLeft(), m_currentRubberBandRect.GetTop(), m_currentRubberBandRect.GetRight(), m_currentRubberBandRect.GetBottom());
+
+    ::Rectangle(hdc, m_currentRubberBandRect.GetLeft(), m_currentRubberBandRect.GetTop(),
+        m_currentRubberBandRect.GetRight(), m_currentRubberBandRect.GetBottom());
+
     ::SelectObject(hdc, hOldBrush);
     ::SelectObject(hdc, hOldPen);
     ::DeleteObject(hPen);
@@ -338,13 +424,19 @@ void BorderlessFrameLogic::EraseRubberBand()
 #else
     wxScreenDC dc;
     dc.SetLogicalFunction(wxINVERT);
-    wxPen pen(wxColour(100, 100, 100), 5, wxPENSTYLE_SOLID);
+
+    double scaleFactor = GetCurrentDPIScale();
+    int penWidth = static_cast<int>(3 * scaleFactor);
+    if (penWidth < 1) penWidth = 1;
+
+    wxPen pen(wxColour(100, 100, 100), penWidth, wxPENSTYLE_SOLID);
     dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRectangle(m_currentRubberBandRect);
 #endif
+
     m_rubberBandVisible = false;
-} 
+}
 
 void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
 {
@@ -352,9 +444,15 @@ void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
     dc.Clear(); // Fill background before drawing border
     wxSize sz = GetClientSize();
     dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColour"), 1));
-    dc.DrawLine(0, 0, sz.x, 0);           
-    dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1); 
-    dc.DrawLine(0, 0, 0, sz.y);           
-    dc.DrawLine(sz.x - 1, 0, sz.x - 1, sz.y); 
-    event.Skip(); 
+    dc.DrawLine(0, 0, sz.x, 0);
+    dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1);
+    dc.DrawLine(0, 0, 0, sz.y);
+    dc.DrawLine(sz.x - 1, 0, sz.x - 1, sz.y);
+    event.Skip();
+}
+
+void BorderlessFrameLogic::UpdateMinSizeBasedOnBarContent()
+{
+    // This method can be implemented by derived classes
+    // Base implementation does nothing
 }
