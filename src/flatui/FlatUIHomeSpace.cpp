@@ -5,6 +5,7 @@
 #include "flatui/FlatUIFrame.h"       // To get parent FlatFrame and content height
 #include "flatui/FlatUIBar.h"         // To get FlatUIBar height
 #include "config/ConstantsConfig.h"
+#include "config/SvgIconManager.h"
 
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
@@ -76,20 +77,29 @@ void FlatUIHomeSpace::OnPaint(wxPaintEvent& evt)
     }
     else
     {
-        // Draw default "hamburger" icon if no icon is set
-        int lineCount = 3;
-        int VMargin = m_buttonRect.GetHeight() / 4;
-        int HMargin = m_buttonRect.GetWidth() / 5;
-        int lineThickness = 2;
-        int lineSpacing = (m_buttonRect.GetHeight() - 2 * VMargin - lineCount * lineThickness) / wxMax(1, lineCount - 1);
+        // Try to get default home icon from SVG
+        wxBitmap homeIcon = SVG_ICON("home", wxSize(16, 16));
+        if (homeIcon.IsOk()) {
+            int x = (m_buttonRect.GetWidth() - homeIcon.GetWidth()) / 2;
+            int y = (m_buttonRect.GetHeight() - homeIcon.GetHeight()) / 2;
+            dc.DrawBitmap(homeIcon, x, y, true);
+        }
+        else {
+            // Draw default "hamburger" icon if no icon is set
+            int lineCount = 3;
+            int VMargin = m_buttonRect.GetHeight() / 4;
+            int HMargin = m_buttonRect.GetWidth() / 5;
+            int lineThickness = 2;
+            int lineSpacing = (m_buttonRect.GetHeight() - 2 * VMargin - lineCount * lineThickness) / wxMax(1, lineCount - 1);
 
-        dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT), lineThickness));
-        for (int i = 0; i < lineCount; ++i) {
-            int yPos = VMargin + i * (lineThickness + lineSpacing);
-            dc.DrawLine(m_buttonRect.GetLeft() + HMargin,
-                m_buttonRect.GetTop() + yPos,
-                m_buttonRect.GetRight() - HMargin,
-                m_buttonRect.GetTop() + yPos);
+            dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT), lineThickness));
+            for (int i = 0; i < lineCount; ++i) {
+                int yPos = VMargin + i * (lineThickness + lineSpacing);
+                dc.DrawLine(m_buttonRect.GetLeft() + HMargin,
+                    m_buttonRect.GetTop() + yPos,
+                    m_buttonRect.GetRight() - HMargin,
+                    m_buttonRect.GetTop() + yPos);
+            }
         }
     }
 }
@@ -107,8 +117,8 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
             if (m_show) {
                 m_activeHomeMenu->Close();
                 m_hover = false;
+                m_show = false;
                 Refresh();
-                SetShow(false);
                 return;
             }
             else {
@@ -140,7 +150,7 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
                             wxPoint buttonScreenPos = ClientToScreen(wxPoint(0, 0));
                             if (menuPos.y < buttonScreenPos.y + m_buttonRect.GetHeight()) {
                                 menuPos.y = buttonScreenPos.y + m_buttonRect.GetHeight() + 3;
-                                menuContentHeight = frameBottom - menuPos.y - 10;
+                                menuContentHeight = frameBottom - menuPos.y;
                             }
                         }
                     }
@@ -183,8 +193,8 @@ void FlatUIHomeSpace::OnMouseLeave(wxMouseEvent& evt)
 void FlatUIHomeSpace::OnHomeMenuClosed(FlatUIHomeMenu* closedMenu)
 {
     if (m_activeHomeMenu == closedMenu) {
-        // Menu is already hidden by itself (either via its Close, or OnDismiss)
         m_hover = false;
+        m_show = false;
         Refresh();
     }
 }

@@ -78,14 +78,14 @@ public:
     void SetButtonPadding(int horizontal, int vertical);
     void GetButtonPadding(int& horizontal, int& vertical) const;
 
-    void SetBarBackgroundColour(const wxColour& colour);
-    wxColour GetBarBackgroundColour() const { return m_barBgColour; }
+    void SetBtnBarBackgroundColour(const wxColour& colour);
+    wxColour GetBtnBarBackgroundColour() const { return m_btnBarBgColour; }
 
-    void SetBarBorderColour(const wxColour& colour);
-    wxColour GetBarBorderColour() const { return m_barBorderColour; }
+    void SetBtnBarBorderColour(const wxColour& colour);
+    wxColour GetBtnBarBorderColour() const { return m_btnBarBorderColour; }
 
-    void SetBarBorderWidth(int width);
-    int GetBarBorderWidth() const { return m_barBorderWidth; }
+    void SetBtnBarBorderWidth(int width);
+    int GetBtnBarBorderWidth() const { return m_btnBarBorderWidth; }
 
     void SetHoverEffectsEnabled(bool enabled);
     bool GetHoverEffectsEnabled() const { return m_hoverEffectsEnabled; }
@@ -117,20 +117,20 @@ private:
     wxColour m_buttonPressedBgColour;
     wxColour m_buttonTextColour;
     wxColour m_buttonBorderColour;
-    wxColour m_barBgColour;
-    wxColour m_barBorderColour;
+    wxColour m_btnBarBgColour;
+    wxColour m_btnBarBorderColour;
     int m_buttonBorderWidth;
     int m_buttonCornerRadius;
     int m_buttonSpacing;
     int m_buttonHorizontalPadding;
     int m_buttonVerticalPadding;
-    int m_barBorderWidth;
+    int m_btnBarBorderWidth;
     int m_dropdownArrowWidth;
     int m_dropdownArrowHeight;
     int m_separatorWidth;
     int m_separatorPadding;
     int m_separatorMargin;
-    int m_barHorizontalMargin;
+    int m_btnBarHorizontalMargin;
     bool m_hoverEffectsEnabled;
     int m_hoveredButtonIndex = -1;
 

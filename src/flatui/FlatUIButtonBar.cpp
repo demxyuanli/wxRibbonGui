@@ -24,23 +24,23 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     m_buttonPressedBgColour(CFG_COLOUR("ButtonbarDefaultPressedBgColour")),
     m_buttonTextColour(CFG_COLOUR("ButtonbarDefaultTextColour")),
     m_buttonBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")),
-    m_barBgColour(CFG_COLOUR("BarBackgroundColour")),
-    m_barBorderColour(CFG_COLOUR("BarBorderColour")),
+    m_btnBarBgColour(CFG_COLOUR("ButtonbarDefaultBgColour")),
+    m_btnBarBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")),
     m_buttonBorderWidth(CFG_INT("ButtonbarDefaultBorderWidth")),
     m_buttonCornerRadius(CFG_INT("ButtonbarDefaultCornerRadius")),
     m_buttonSpacing(CFG_INT("ButtonbarSpacing")),
     m_buttonHorizontalPadding(CFG_INT("ButtonbarHorizontalPadding")),
     m_buttonVerticalPadding(CFG_INT("ButtonbarInternalVerticalPadding")),
-    m_barBorderWidth(0),
+    m_btnBarBorderWidth(0),
     m_hoverEffectsEnabled(true)
 {
     m_buttonBgColour = CFG_COLOUR("ActBarBackgroundColour");
     m_buttonHoverBgColour = CFG_COLOUR("ButtonbarDefaultHoverBgColour");
     m_buttonPressedBgColour = CFG_COLOUR("ButtonbarDefaultPressedBgColour");
     m_buttonTextColour = CFG_COLOUR("ButtonbarDefaultTextColour");
-    m_buttonBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour");
-    m_barBgColour = CFG_COLOUR("BarBackgroundColour");
-    m_barBorderColour = CFG_COLOUR("BarBorderColour");
+    m_buttonBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour"); 
+    m_btnBarBgColour = CFG_COLOUR("ButtonbarDefaultBgColour");
+    m_btnBarBorderColour = CFG_COLOUR("ButtonbarDefaultBorderColour");
 
 
     m_buttonBorderWidth = CFG_INT("ButtonbarDefaultBorderWidth");
@@ -59,7 +59,7 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     m_separatorMargin = CFG_INT("ButtonbarSeparatorMargin");
 
 
-    m_barHorizontalMargin = CFG_INT("ButtonbarBarHorizontalMargin");
+    m_btnBarHorizontalMargin = CFG_INT("ButtonbarBarHorizontalMargin");
 
     targetH = CFG_INT("ButtonbarTargetHeight");
 
@@ -157,7 +157,7 @@ void FlatUIButtonBar::RecalculateLayout()
     Freeze();
     wxClientDC dc(this);
     dc.SetFont(GetFont());
-    int currentX = m_barHorizontalMargin;
+    int currentX = m_btnBarHorizontalMargin;
 
     for (auto& button : m_buttons) {
         if (button.textSize != dc.GetTextExtent(button.label)) {
@@ -170,7 +170,7 @@ void FlatUIButtonBar::RecalculateLayout()
             currentX += m_buttonSpacing;
         }
     }
-    currentX += m_barHorizontalMargin;
+    currentX += m_btnBarHorizontalMargin;
 
     wxSize currentMinSize = GetMinSize();
     if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != targetH) {
@@ -200,7 +200,7 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
 {
     wxMemoryDC dc;
     dc.SetFont(CFG_DEFAULTFONT());
-    int totalWidth = m_barHorizontalMargin;
+    int totalWidth = m_btnBarHorizontalMargin;
 
     for (const auto& button : m_buttons) {
         totalWidth += CalculateButtonWidth(button, dc);
@@ -208,10 +208,10 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
             totalWidth += m_buttonSpacing;
         }
     }
-    totalWidth += m_barHorizontalMargin;
+    totalWidth += m_btnBarHorizontalMargin;
 
     if (m_buttons.empty()) {
-        totalWidth = m_barHorizontalMargin * 2;
+        totalWidth = m_btnBarHorizontalMargin * 2;
         if (totalWidth == 0) totalWidth = 10;
     }
 
@@ -221,7 +221,7 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
 void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(m_barBgColour);
+    dc.SetBackground(m_btnBarBgColour);
     dc.Clear();
 
     if (m_buttons.empty() && IsShown()) {
@@ -554,21 +554,21 @@ void FlatUIButtonBar::GetButtonPadding(int& horizontal, int& vertical) const
     vertical = m_buttonVerticalPadding;
 }
 
-void FlatUIButtonBar::SetBarBackgroundColour(const wxColour& colour)
+void FlatUIButtonBar::SetBtnBarBackgroundColour(const wxColour& colour)
 {
-    m_barBgColour = colour;
+    m_btnBarBgColour = colour;
     Refresh();
 }
 
-void FlatUIButtonBar::SetBarBorderColour(const wxColour& colour)
+void FlatUIButtonBar::SetBtnBarBorderColour(const wxColour & colour)
 {
-    m_barBorderColour = colour;
+    m_btnBarBorderColour = colour;
     Refresh();
 }
 
-void FlatUIButtonBar::SetBarBorderWidth(int width)
+void FlatUIButtonBar::SetBtnBarBorderWidth(int width)
 {
-    m_barBorderWidth = width;
+    m_btnBarBorderWidth = width;
     Refresh();
 }
 

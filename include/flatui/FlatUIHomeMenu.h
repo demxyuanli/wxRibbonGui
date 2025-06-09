@@ -35,6 +35,8 @@ public:
     void AddMenuItem(const wxString& text, int id, const wxBitmap& icon = wxNullBitmap);
     void AddSeparator();
     void BuildMenuLayout(); // To add items to the sizer
+
+    bool ProcessEvent(wxEvent& event);
     
     // Controls showing the popup at a specific position and size
     void ShowAt(const wxPoint& pos, int contentHeight, bool& isShow);
