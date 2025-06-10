@@ -31,7 +31,7 @@ public:
     // static const int FLATUI_BAR_HEIGHT = 30; // Removed, use constant from FlatUIConstants.h for rendering logic
     
     FlatUIBar(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
-    virtual ~FlatUIBar() = default;
+    virtual ~FlatUIBar();
 
     // --- Configuration Methods ---
     // Home Button (Dropdown Menu Icon)
@@ -150,9 +150,16 @@ public:
     // OnMouseMove and OnMouseLeave might be less relevant here if sub-controls handle their own hover
 
 
+    FlatUISpacerControl* GetTabFunctionSpacer() { return m_tabFunctionSpacer; }
+    FlatUISpacerControl* GetFunctionProfileSpacer() { return m_functionProfileSpacer; }
+
+
     FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
 
 private:
+
+    void OnShow(wxShowEvent& event);
+
     // --- Child Component Controls ---
     FlatUIHomeSpace* m_homeSpace;
     // TabSpace is currently handled directly by FlatUIBar's m_pages and PaintTabs

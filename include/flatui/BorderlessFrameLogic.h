@@ -19,6 +19,8 @@ enum class ResizeMode {
     BOTTOM_LEFT
 };
 
+class BorderlessFrameLogicEventFilter;
+
 class BorderlessFrameLogic : public wxFrame
 {
 public:
@@ -47,7 +49,14 @@ protected:
     // DPI awareness methods
     void UpdateBorderThreshold();
     double GetCurrentDPIScale();
-    
+
+    virtual int GetMinWidth() const ;
+    virtual int GetMinHeight() const ;
+
+    // Override SetSize methods to handle adaptive UI
+    virtual void SetSize(const wxRect& rect) ;
+    virtual void SetSize(const wxSize& size) ;
+
 #ifdef __WXMSW__
     void OnDPIChanged(wxDPIChangedEvent& event);
 #endif
@@ -66,6 +75,7 @@ protected:
     int m_borderThreshold;               // Pixel threshold to detect border proximity for resizing
 
 private:
+    BorderlessFrameLogicEventFilter* m_eventFilter;
     wxDECLARE_EVENT_TABLE();
 };
 

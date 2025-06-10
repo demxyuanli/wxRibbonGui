@@ -62,7 +62,19 @@ public:
     // Note: IsPseudoMaximized, PseudoMaximize, RestoreFromPseudoMaximize are inherited
     // Note: LogUILayout is inherited
 
+protected:
+    // Override to provide FlatUIBar access
+    virtual FlatUIBar* GetUIBar() const override { return m_ribbon; }
+
+    // Override to provide control access
+    virtual wxWindow* GetFunctionSpaceControl() const override;
+    virtual wxWindow* GetProfileSpaceControl() const override;
+
 private:
+    // Store references to controls for adaptive visibility
+    wxPanel* m_searchPanel;
+    wxPanel* m_profilePanel;
+
     void InitializeUI(const wxSize& size); // Helper to create ribbon, panels, etc.
 
     // UI Elements specific to FlatFrame

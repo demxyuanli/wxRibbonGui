@@ -3,6 +3,8 @@
 
 #include <wx/wx.h>
 #include <functional> 
+#include <map>
+#include <vector>
 
 class FlatUIFrame;
 class FlatUIBar;
@@ -21,16 +23,43 @@ public:
     static FlatUIEventManager& getInstance();
     
     void bindFrameEvents(FlatUIFrame* frame);
+    void unbindFrameEvents(FlatUIFrame* frame);
+    
     void bindBarEvents(FlatUIBar* bar);
+    void unbindBarEvents(FlatUIBar* bar);
+    
     void bindPageEvents(FlatUIPage* page);
+    void unbindPageEvents(FlatUIPage* page);
+    
     void bindPanelEvents(FlatUIPanel* panel);
+    void unbindPanelEvents(FlatUIPanel* panel);
+    
     void bindButtonBarEvents(FlatUIButtonBar* buttonBar);
+    void unbindButtonBarEvents(FlatUIButtonBar* buttonBar);
+    
     void bindHomeSpaceEvents(FlatUIHomeSpace* homeSpace);
+    void unbindHomeSpaceEvents(FlatUIHomeSpace* homeSpace);
+    
     void bindSystemButtonsEvents(FlatUISystemButtons* systemButtons);
+    void unbindSystemButtonsEvents(FlatUISystemButtons* systemButtons);
+    
     void bindFunctionSpaceEvents(FlatUIFunctionSpace* functionSpace);
+    void unbindFunctionSpaceEvents(FlatUIFunctionSpace* functionSpace);
+    
     void bindProfileSpaceEvents(FlatUIProfileSpace* profileSpace);
+    void unbindProfileSpaceEvents(FlatUIProfileSpace* profileSpace);
+    
+    void bindGalleryEvents(FlatUIGallery* gallery);
+    void unbindGalleryEvents(FlatUIGallery* gallery);
+    
     void bindSizeEvents(wxWindow* control, std::function<void(wxSizeEvent&)> handler);
-    void bindGalleryEvents(FlatUIGallery* gallery);   
+    void unbindSizeEvents(wxWindow* control);
+    
+    void bindButtonEvent(wxWindow* window, void (wxEvtHandler::*func)(wxCommandEvent&), wxWindowID id);
+    void unbindButtonEvent(wxWindow* window, void (wxEvtHandler::*func)(wxCommandEvent&), wxWindowID id);
+    
+    void bindMenuEvent(wxWindow* window, void (wxEvtHandler::*func)(wxCommandEvent&), wxWindowID id);
+    void unbindMenuEvent(wxWindow* window, void (wxEvtHandler::*func)(wxCommandEvent&), wxWindowID id);
 
     template<typename T>
     void bindCustomEvents(T* customControl, void (T::* paintHandler)(wxPaintEvent&),
@@ -96,11 +125,12 @@ public:
         }
     }
 
-
 private:
     FlatUIEventManager() {}
     FlatUIEventManager(const FlatUIEventManager&) = delete;
     FlatUIEventManager& operator=(const FlatUIEventManager&) = delete;
+
+    std::map<wxWindow*, std::vector<wxEventType>> m_boundEvents;
 };
 
 #endif // FLATUIEVENTMANAGER_H 

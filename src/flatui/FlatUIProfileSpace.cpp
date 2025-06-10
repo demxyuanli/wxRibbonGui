@@ -18,7 +18,6 @@ void FlatUIProfileSpace::SetChildControl(wxWindow* child)
 {
     if (m_childControl && m_childControl != child) {
         m_childControl->Hide();
-        m_childControl->Reparent(nullptr);
     }
     m_childControl = child;
     if (m_childControl) {

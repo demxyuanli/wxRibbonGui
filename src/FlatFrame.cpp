@@ -99,6 +99,20 @@ FlatFrame::~FlatFrame()
 {
     // m_homeMenu is a child window, wxWidgets handles its deletion.
     // Other child controls (m_ribbon, m_messageOutput, m_searchCtrl) are also managed by wxWidgets.
+    wxLogDebug("FlatFrame destruction started.");
+    
+    // Unbind events to prevent access violations
+    auto& eventManager = FlatUIEventManager::getInstance();
+    eventManager.unbindFrameEvents(this);
+    if (m_ribbon) {
+        eventManager.unbindBarEvents(m_ribbon);
+        FlatUIHomeSpace* homeSpace = m_ribbon->GetHomeSpace();
+        if (homeSpace) {
+            eventManager.unbindHomeSpaceEvents(homeSpace);
+        }
+    }
+    
+    wxLogDebug("FlatFrame destruction completed.");
 }
 
 void FlatFrame::InitializeUI(const wxSize& size)
@@ -159,9 +173,14 @@ void FlatFrame::InitializeUI(const wxSize& size)
     profileSizer->Add(userButton, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
     profileSizer->Add(settingsButton, 0, wxALIGN_CENTER_VERTICAL);
     profilePanel->SetSizer(profileSizer);
-    m_ribbon->SetProfileSpaceControl(profilePanel, 50);
+    m_ribbon->SetProfileSpaceControl(profilePanel, 60);
 
     m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_FUNCTION_PROFILE, 30, false, true, true);
+
+    // Store reference to search panel
+    m_searchPanel = searchPanel;
+    // Store reference to profile panel  
+    m_profilePanel = profilePanel;
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);
@@ -299,9 +318,20 @@ void FlatFrame::InitializeUI(const wxSize& size)
     int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
     m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
     m_ribbon->InvalidateBestSize();
+
     Layout();
 }
 
+
+wxWindow* FlatFrame::GetFunctionSpaceControl() const
+{
+    return m_searchPanel;
+}
+
+wxWindow* FlatFrame::GetProfileSpaceControl() const
+{
+    return m_profilePanel;
+}
 
 void FlatFrame::LoadSVGIcons(wxWindow* parent, wxSizer* sizer)
 {

@@ -23,7 +23,15 @@ void FlatUIEventManager::bindFrameEvents(FlatUIFrame* frame)
     frame->Bind(wxEVT_LEFT_DOWN, &FlatUIFrame::OnLeftDown, frame);
     frame->Bind(wxEVT_LEFT_UP, &FlatUIFrame::OnLeftUp, frame);
     frame->Bind(wxEVT_MOTION, &FlatUIFrame::OnMotion, frame);
-    
+}
+
+void FlatUIEventManager::unbindFrameEvents(FlatUIFrame* frame)
+{
+    if (!frame) return;
+
+    frame->Unbind(wxEVT_LEFT_DOWN, &FlatUIFrame::OnLeftDown, frame);
+    frame->Unbind(wxEVT_LEFT_UP, &FlatUIFrame::OnLeftUp, frame);
+    frame->Unbind(wxEVT_MOTION, &FlatUIFrame::OnMotion, frame);
 }
 
 void FlatUIEventManager::bindBarEvents(FlatUIBar* bar)
@@ -33,6 +41,15 @@ void FlatUIEventManager::bindBarEvents(FlatUIBar* bar)
     bar->Bind(wxEVT_PAINT, &FlatUIBar::OnPaint, bar);
     bar->Bind(wxEVT_SIZE, &FlatUIBar::OnSize, bar);
     bar->Bind(wxEVT_LEFT_DOWN, &FlatUIBar::OnMouseDown, bar);
+}
+
+void FlatUIEventManager::unbindBarEvents(FlatUIBar* bar)
+{
+    if (!bar) return;
+
+    bar->Unbind(wxEVT_PAINT, &FlatUIBar::OnPaint, bar);
+    bar->Unbind(wxEVT_SIZE, &FlatUIBar::OnSize, bar);
+    bar->Unbind(wxEVT_LEFT_DOWN, &FlatUIBar::OnMouseDown, bar);
 }
 
 void FlatUIEventManager::bindPageEvents(FlatUIPage* page)
@@ -45,11 +62,29 @@ void FlatUIEventManager::bindPageEvents(FlatUIPage* page)
     });
 }
 
+void FlatUIEventManager::unbindPageEvents(FlatUIPage* page)
+{
+    if (!page) return;
+
+    // Lambdas cannot be unbound by reference without a handle.
+    // They will be disconnected when the window is destroyed.
+    // The following call is incorrect for lambdas and might not compile
+    // or could have unintended side effects.
+    // page->Unbind(wxEVT_SIZE, page); 
+}
+
 void FlatUIEventManager::bindPanelEvents(FlatUIPanel* panel)
 {
     if (!panel) return;
     
     panel->Bind(wxEVT_PAINT, &FlatUIPanel::OnPaint, panel);
+}
+
+void FlatUIEventManager::unbindPanelEvents(FlatUIPanel* panel)
+{
+    if (!panel) return;
+    
+    panel->Unbind(wxEVT_PAINT, &FlatUIPanel::OnPaint, panel);
 }
 
 void FlatUIEventManager::bindButtonBarEvents(FlatUIButtonBar* buttonBar)
@@ -58,6 +93,14 @@ void FlatUIEventManager::bindButtonBarEvents(FlatUIButtonBar* buttonBar)
     
     buttonBar->Bind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, buttonBar);
     buttonBar->Bind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, buttonBar);
+}
+
+void FlatUIEventManager::unbindButtonBarEvents(FlatUIButtonBar* buttonBar)
+{
+    if (!buttonBar) return;
+    
+    buttonBar->Unbind(wxEVT_PAINT, &FlatUIButtonBar::OnPaint, buttonBar);
+    buttonBar->Unbind(wxEVT_LEFT_DOWN, &FlatUIButtonBar::OnMouseDown, buttonBar);
 }
 
 void FlatUIEventManager::bindHomeSpaceEvents(FlatUIHomeSpace* homeSpace)
@@ -76,6 +119,18 @@ void FlatUIEventManager::bindHomeSpaceEvents(FlatUIHomeSpace* homeSpace)
     });
 }
 
+void FlatUIEventManager::unbindHomeSpaceEvents(FlatUIHomeSpace* homeSpace)
+{
+    if (!homeSpace) return;
+    
+    homeSpace->Unbind(wxEVT_PAINT, &FlatUIHomeSpace::OnPaint, homeSpace);
+    homeSpace->Unbind(wxEVT_LEFT_DOWN, &FlatUIHomeSpace::OnMouseDown, homeSpace);
+    homeSpace->Unbind(wxEVT_MOTION, &FlatUIHomeSpace::OnMouseMove, homeSpace);
+    homeSpace->Unbind(wxEVT_LEAVE_WINDOW, &FlatUIHomeSpace::OnMouseLeave, homeSpace);
+    
+    // Cannot unbind the lambda for wxEVT_SIZE here easily.
+}
+
 void FlatUIEventManager::bindSystemButtonsEvents(FlatUISystemButtons* systemButtons)
 {
     if (!systemButtons) return;
@@ -86,13 +141,35 @@ void FlatUIEventManager::bindSystemButtonsEvents(FlatUISystemButtons* systemButt
     systemButtons->Bind(wxEVT_LEAVE_WINDOW, &FlatUISystemButtons::OnMouseLeave, systemButtons);
 }
 
+void FlatUIEventManager::unbindSystemButtonsEvents(FlatUISystemButtons* systemButtons)
+{
+    if (!systemButtons) return;
+    
+    systemButtons->Unbind(wxEVT_PAINT, &FlatUISystemButtons::OnPaint, systemButtons);
+    systemButtons->Unbind(wxEVT_LEFT_DOWN, &FlatUISystemButtons::OnMouseDown, systemButtons);
+    systemButtons->Unbind(wxEVT_MOTION, &FlatUISystemButtons::OnMouseMove, systemButtons);
+    systemButtons->Unbind(wxEVT_LEAVE_WINDOW, &FlatUISystemButtons::OnMouseLeave, systemButtons);
+}
+
 void FlatUIEventManager::bindFunctionSpaceEvents(FlatUIFunctionSpace* functionSpace)
 {
     if (!functionSpace) return;
     
 }
 
+void FlatUIEventManager::unbindFunctionSpaceEvents(FlatUIFunctionSpace* functionSpace)
+{
+    if (!functionSpace) return;
+    
+}
+
 void FlatUIEventManager::bindProfileSpaceEvents(FlatUIProfileSpace* profileSpace)
+{
+    if (!profileSpace) return;
+    
+}
+
+void FlatUIEventManager::unbindProfileSpaceEvents(FlatUIProfileSpace* profileSpace)
 {
     if (!profileSpace) return;
     
@@ -106,11 +183,30 @@ void FlatUIEventManager::bindGalleryEvents(FlatUIGallery* gallery)
     gallery->Bind(wxEVT_LEFT_DOWN, &FlatUIGallery::OnMouseDown, gallery);
 }
 
+void FlatUIEventManager::unbindGalleryEvents(FlatUIGallery* gallery)
+{
+    if (!gallery) return;
+
+    gallery->Unbind(wxEVT_PAINT, &FlatUIGallery::OnPaint, gallery);
+    gallery->Unbind(wxEVT_LEFT_DOWN, &FlatUIGallery::OnMouseDown, gallery);
+}
+
 void FlatUIEventManager::bindSizeEvents(wxWindow* control, std::function<void(wxSizeEvent&)> handler)
 {
     if (!control || !handler) return;
-    
+
     control->Bind(wxEVT_SIZE, [handler](wxSizeEvent& event) {
         handler(event);
-    });
-} 
+        });
+
+    // Remove the tracking mechanism as it's problematic
+    // m_boundEvents[control].push_back(wxEVT_SIZE);
+}
+
+void FlatUIEventManager::unbindSizeEvents(wxWindow* control)
+{
+    if (!control) return;
+
+    // Simply disconnect all wxEVT_SIZE events
+    control->Disconnect(wxEVT_SIZE);
+}

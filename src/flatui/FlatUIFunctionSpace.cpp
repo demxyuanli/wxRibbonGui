@@ -25,7 +25,6 @@ void FlatUIFunctionSpace::SetChildControl(wxWindow* child)
         // If replacing an existing child that this panel owns, destroy it first.
         // For now, we assume simple replacement or that ownership is handled elsewhere.
         m_childControl->Hide(); 
-        m_childControl->Reparent(nullptr); // Or some other temporary parent if needed
     }
 
     m_childControl = child;

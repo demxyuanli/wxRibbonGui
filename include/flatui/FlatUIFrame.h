@@ -2,6 +2,7 @@
 #define FLATUIFRAME_H
 
 #include "flatui/BorderlessFrameLogic.h"
+#include "flatui/FlatUIBar.h"
 #include <wx/log.h>
 
 class FlatUIFrame : public BorderlessFrameLogic
@@ -23,7 +24,29 @@ public:
     // Generic method to log UI layout structure (remains in this class or a utility class)
     void LogUILayout(wxWindow* window = nullptr, int depth = 0);
 
+
+    virtual int GetMinWidth() const override;
+    virtual int GetMinHeight() const override;
+
+    // Override SetSize methods to handle adaptive UI
+    virtual void SetSize(const wxRect& rect) override;
+    virtual void SetSize(const wxSize& size) override;
+
+    virtual wxWindow* GetFunctionSpaceControl() const { return nullptr; }
+    virtual wxWindow* GetProfileSpaceControl() const { return nullptr; }
+    void ShowTabFunctionSpacer(bool show);
+    void ShowFunctionProfileSpacer(bool show);
+
 protected:
+    // Helper methods for minimum size calculation and adaptive UI
+    int CalculateMinimumWidth() const;
+    int CalculateMinimumHeight() const;
+
+    // Get FlatUIBar from derived class (FlatFrame)
+    virtual FlatUIBar* GetUIBar() const { return nullptr; }
+
+    void HandleAdaptiveUIVisibility(const wxSize& newSize);
+
     // Helper method for FlatUIFrame specific style initialization (e.g., background color)
     void InitFrameStyle();
 
@@ -33,14 +56,6 @@ protected:
 
     // Note: Dragging, resizing, rubber band members and methods are now in BorderlessFrameLogic
     // Note: m_borderThreshold is in BorderlessFrameLogic
-
-private:
-    // FlatUIFrame may have its own event table if it adds events beyond BorderlessFrameLogic
-    // For now, mouse events are routed through BorderlessFrameLogic's table and handled by overrides.
-    // If FlatUIFrame had completely different mouse handlers not related to base logic,
-    // it would need its own EVT_LEFT_DOWN etc. and its own wxDECLARE_EVENT_TABLE.
-    // For now, assume it extends the base logic via overrides.
-    // wxDECLARE_EVENT_TABLE(); // Only if FlatUIFrame binds its own, distinct events.
 };
 
 #endif // FLATUIFRAME_H 

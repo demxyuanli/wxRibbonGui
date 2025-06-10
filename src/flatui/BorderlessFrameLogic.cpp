@@ -32,21 +32,27 @@ BorderlessFrameLogic::BorderlessFrameLogic(wxWindow* parent, wxWindowID id, cons
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
 
-    // Register event filter
-    this->PushEventHandler(new BorderlessFrameLogicEventFilter(this));
+    m_eventFilter = new BorderlessFrameLogicEventFilter(this);
+    this->PushEventHandler(m_eventFilter);
 
     Refresh(); // Ensure background is painted initially
 }
 
-void BorderlessFrameLogic::ResetCursorToDefault() {
-    SetCursor(wxCursor(wxCURSOR_ARROW));
-}
-
 BorderlessFrameLogic::~BorderlessFrameLogic()
 {
-    // Clean up event filter
-    wxEvtHandler* handler = this->PopEventHandler(true);
-    delete handler;
+    wxLogDebug("BorderlessFrameLogic destruction started.");
+
+    // Remove the pushed event handler before destruction
+    if (m_eventFilter && GetEventHandler() == m_eventFilter) {
+        PopEventHandler(true); // true means delete the handler
+        m_eventFilter = nullptr;
+    }
+
+    wxLogDebug("BorderlessFrameLogic destruction completed.");
+}
+
+void BorderlessFrameLogic::ResetCursorToDefault() {
+    SetCursor(wxCursor(wxCURSOR_ARROW));
 }
 
 void BorderlessFrameLogic::UpdateBorderThreshold()
@@ -455,4 +461,29 @@ void BorderlessFrameLogic::UpdateMinSizeBasedOnBarContent()
 {
     // This method can be implemented by derived classes
     // Base implementation does nothing
+}
+
+// Add these missing virtual function implementations
+int BorderlessFrameLogic::GetMinWidth() const
+{
+    // Default minimum width - can be overridden by derived classes
+    return 300;
+}
+
+int BorderlessFrameLogic::GetMinHeight() const
+{
+    // Default minimum height - can be overridden by derived classes
+    return 200;
+}
+
+void BorderlessFrameLogic::SetSize(const wxRect& rect)
+{
+    // Call the base wxFrame::SetSize method
+    wxFrame::SetSize(rect);
+}
+
+void BorderlessFrameLogic::SetSize(const wxSize& size)
+{
+    // Call the base wxFrame::SetSize method
+    wxFrame::SetSize(size);
 }
