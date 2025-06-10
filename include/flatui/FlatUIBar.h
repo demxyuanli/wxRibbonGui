@@ -152,9 +152,16 @@ public:
     // OnMouseMove and OnMouseLeave might be less relevant here if sub-controls handle their own hover
 
 
+    FlatUISpacerControl* GetTabFunctionSpacer() { return m_tabFunctionSpacer; }
+    FlatUISpacerControl* GetFunctionProfileSpacer() { return m_functionProfileSpacer; }
+
+
     FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
 
 private:
+
+    void OnShow(wxShowEvent& event);
+
     // --- Child Component Controls ---
     FlatUIHomeSpace* m_homeSpace;
     // TabSpace is currently handled directly by FlatUIBar's m_pages and PaintTabs

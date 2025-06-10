@@ -20,6 +20,8 @@ FlatUIFrame::FlatUIFrame(wxWindow* parent, wxWindowID id, const wxString& title,
 
 FlatUIFrame::~FlatUIFrame()
 {
+    wxLogDebug("FlatUIFrame destruction started.");
+    wxLogDebug("FlatUIFrame destruction completed.");
 }
 
 void FlatUIFrame::InitFrameStyle()
@@ -123,8 +125,122 @@ void FlatUIFrame::LogUILayout(wxWindow* window, int depth)
     }
 }
 
-// The following methods are now fully implemented in BorderlessFrameLogic.cpp:
-// - GetResizeModeForPosition
-// - UpdateCursorForResizeMode
-// - DrawRubberBand
-// - EraseRubberBand
+int FlatUIFrame::GetMinWidth() const
+{
+    return CalculateMinimumWidth();
+}
+
+int FlatUIFrame::GetMinHeight() const
+{
+    return CalculateMinimumHeight();
+}
+
+int FlatUIFrame::CalculateMinimumWidth() const
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (!ribbon) return 400; // Fallback minimum width
+
+    int minWidth = 0;
+
+    // HomeSpace width (30px)
+    if (ribbon->GetHomeSpace()) {
+        minWidth += 30;
+    }
+
+    // System buttons width (estimate 3 buttons * 30px each)
+    minWidth += 90;
+
+    // One Tab width (estimate 80px)
+    minWidth += 80;
+
+    // Scroll button width (20px)
+    minWidth += 20;
+
+    // Add margins and spacing
+    minWidth += 20; // Left and right margins
+
+    return minWidth; // Approximately 240px minimum
+}
+
+int FlatUIFrame::CalculateMinimumHeight() const
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (!ribbon) return 200; // Fallback minimum height
+
+    // Get the actual FlatUIBar height (which is 3 times the base height)
+    int actualBarHeight = ribbon->GetSize().GetHeight();
+    if (actualBarHeight <= 0) {
+        // If bar hasn't been sized yet, calculate expected height
+        int baseHeight = FlatUIBar::GetBarHeight();
+        actualBarHeight = baseHeight * 3; // 90 pixels
+    }
+
+    // Minimum height should be bar height plus some content area
+    // For example: bar height + 150px for content
+    return actualBarHeight + 150; // Approximately 240px minimum
+}
+
+void FlatUIFrame::SetSize(const wxRect& rect)
+{
+    BorderlessFrameLogic::SetSize(rect);
+    HandleAdaptiveUIVisibility(rect.GetSize());
+}
+
+void FlatUIFrame::SetSize(const wxSize& size)
+{
+    BorderlessFrameLogic::SetSize(size);
+    HandleAdaptiveUIVisibility(size);
+}
+
+void FlatUIFrame::HandleAdaptiveUIVisibility(const wxSize& newSize)
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (!ribbon) return;
+
+    int availableWidth = newSize.GetWidth();
+    int baseWidth = CalculateMinimumWidth();
+
+    // Calculate required width for different configurations
+    int withFunctionSpace = baseWidth + 270; // FunctionSpace width
+    int withProfileSpace = baseWidth + 60;   // ProfileSpace width
+    int withBothSpaces = baseWidth + 270 + 60;
+
+    // Adaptive visibility logic
+    if (availableWidth >= withBothSpaces) {
+        // Show both FunctionSpace and ProfileSpace
+        ribbon->SetFunctionSpaceControl(GetFunctionSpaceControl(), 270);
+        ribbon->SetProfileSpaceControl(GetProfileSpaceControl(), 60);
+        ShowTabFunctionSpacer(true);
+        ShowFunctionProfileSpacer(true);
+    }
+    else if (availableWidth >= withProfileSpace) {
+        // Hide FunctionSpace, show ProfileSpace
+        ribbon->SetFunctionSpaceControl(nullptr, 0);
+        ribbon->SetProfileSpaceControl(GetProfileSpaceControl(), 60);
+        ShowTabFunctionSpacer(false);
+        ShowFunctionProfileSpacer(false);
+    }
+    else {
+        // Hide both FunctionSpace and ProfileSpace
+        ribbon->SetFunctionSpaceControl(nullptr, 0);
+        ribbon->SetProfileSpaceControl(nullptr, 0);
+        ShowTabFunctionSpacer(false);
+        ShowFunctionProfileSpacer(false);
+    }
+}
+
+void FlatUIFrame::ShowTabFunctionSpacer(bool show)
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (ribbon && ribbon->GetTabFunctionSpacer()) {
+        ribbon->GetTabFunctionSpacer()->Show(show);
+    }
+}
+
+void FlatUIFrame::ShowFunctionProfileSpacer(bool show)
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (ribbon && ribbon->GetFunctionProfileSpacer()) {
+        ribbon->GetFunctionProfileSpacer()->Show(show);
+    }
+}

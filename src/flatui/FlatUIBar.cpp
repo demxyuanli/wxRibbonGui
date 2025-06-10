@@ -128,41 +128,51 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
         Refresh();
     }
 
-    // Ensure the initial page can be activated and displayed after all pages are added
-    Bind(wxEVT_SHOW, [this](wxShowEvent& event) {
-        if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
-            // Use timer instead of wxCallAfter - now with std::shared_ptr for copyable capture
-            auto oneShotTimer = std::make_shared<wxTimer>(this);
-            int timerId = oneShotTimer->GetId(); 
-            oneShotTimer->StartOnce(50); // Start before moving
+    Bind(wxEVT_SHOW, &FlatUIBar::OnShow, this);
+}
 
-            Bind(wxEVT_TIMER, [this, keptTimer = oneShotTimer](wxTimerEvent&) {
-                if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-                    FlatUIPage* currentPage = m_pages[m_activePage].get();
-                    currentPage->SetActive(true);
-                    currentPage->Show();
+FlatUIBar::~FlatUIBar() {
+    // Unbind the show event
+    Unbind(wxEVT_SHOW, &FlatUIBar::OnShow, this);
 
-                    wxSize barClientSize = GetClientSize();
-                    int barStripHeight = GetBarHeight();
-                    currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
+    FlatUIEventManager::getInstance().unbindBarEvents(this);
+    FlatUIEventManager::getInstance().unbindHomeSpaceEvents(m_homeSpace);
+    FlatUIEventManager::getInstance().unbindSystemButtonsEvents(m_systemButtons);
+    FlatUIEventManager::getInstance().unbindFunctionSpaceEvents(m_functionSpace);
+    FlatUIEventManager::getInstance().unbindProfileSpaceEvents(m_profileSpace);
 
-                    int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-                    if (pageHeight < 0) {
-                        pageHeight = 0;
-                    }
+    // Clear all pages
+    m_pages.clear();
+}
 
-                    currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-                    currentPage->Layout();
-                    currentPage->Refresh();
+void FlatUIBar::OnShow(wxShowEvent& event)
+{
+    if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
+        CallAfter([this]() {
+            if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+                FlatUIPage* currentPage = m_pages[m_activePage].get();
+                currentPage->SetActive(true);
+                currentPage->Show();
 
-                    UpdateElementPositionsAndSizes(GetClientSize());
-                    Refresh();
+                wxSize barClientSize = GetClientSize();
+                int barStripHeight = GetBarHeight();
+                currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
+
+                int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
+                if (pageHeight < 0) {
+                    pageHeight = 0;
                 }
-                // shared_ptr keptTimer ensures timer lives at least until event handler is removed.
-            }, timerId);
-        }
-        event.Skip();
-    });
+
+                currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
+                currentPage->Layout();
+                currentPage->Refresh();
+
+                UpdateElementPositionsAndSizes(GetClientSize());
+                Refresh();
+            }
+            });
+    }
+    event.Skip();
 }
 
 wxSize FlatUIBar::DoGetBestSize() const
