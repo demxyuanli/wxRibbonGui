@@ -156,7 +156,7 @@ void FlatUIBar::OnShow(wxShowEvent& event)
     if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
         CallAfter([this]() {
             if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-                FlatUIPage* currentPage = m_pages[m_activePage].get();
+                FlatUIPage* currentPage = m_pages[m_activePage];
                 currentPage->SetActive(true);
 
                 // Show logic considering pinned and temporarily shown states
@@ -198,7 +198,7 @@ wxSize FlatUIBar::DoGetBestSize() const
 
     // Add the height of the active page ONLY if it's shown and not hidden
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage].get();
+        FlatUIPage* currentPage = m_pages[m_activePage];
 
         // Only include page height if the page is actually shown
         if (currentPage->IsShown()) {
@@ -235,21 +235,20 @@ wxSize FlatUIBar::DoGetBestSize() const
     return bestSize;
 }
 
-void FlatUIBar::AddPage(std::unique_ptr<FlatUIPage> page)
+void FlatUIBar::AddPage(FlatUIPage* page)
 {
     if (!page) return;
 
-    FlatUIPage* pagePtr = page.get(); // Get raw pointer for operations before move
-    m_pages.push_back(std::move(page));
+    m_pages.push_back(page);
 
-    pagePtr->Hide();
+    page->Hide();
 
     if (m_pages.size() == 1) {
         m_activePage = 0;
-        pagePtr->SetActive(true);
+        page->SetActive(true);
     }
     else {
-        pagePtr->SetActive(false);
+        page->SetActive(false);
     }
 
     if (IsShown()) {
@@ -265,7 +264,7 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
     }
 
     // Hide any previously temporarily shown page if it's not the new active page or if the new page is pinned
-    if (m_temporarilyShownPage && m_temporarilyShownPage != m_pages[pageIndex].get()) {
+    if (m_temporarilyShownPage && m_temporarilyShownPage != m_pages[pageIndex]) {
         if (!m_temporarilyShownPage->IsPinned()) { // Ensure it wasn't pinned in the meantime
             HideTemporarilyShownPage();
         }
@@ -273,7 +272,7 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
 
     // Hide current active page if it's different, not pinned, and not the new page
     if (m_activePage < m_pages.size() && m_pages[m_activePage] && m_activePage != pageIndex) {
-        FlatUIPage* oldPage = m_pages[m_activePage].get();
+        FlatUIPage* oldPage = m_pages[m_activePage];
         if (oldPage != m_temporarilyShownPage) { // Don't hide if it was the temp page, already handled
             oldPage->SetActive(false);
             if (!oldPage->IsPinned()) {
@@ -283,7 +282,7 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
     }
 
     m_activePage = pageIndex;
-    FlatUIPage* newPage = m_pages[m_activePage].get();
+    FlatUIPage* newPage = m_pages[m_activePage];
 
     // Configure and show the new page
     wxSize barClientSize = GetClientSize();
@@ -343,7 +342,7 @@ void FlatUIBar::HideTemporarilyShownPage() {
 }
 
 size_t FlatUIBar::GetPageCount() const noexcept { return m_pages.size(); }
-FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index].get() : nullptr; }
+FlatUIPage* FlatUIBar::GetPage(size_t index) const { return (index < m_pages.size()) ? m_pages[index] : nullptr; }
 
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {
@@ -394,7 +393,7 @@ void FlatUIBar::OnPagePinStateChanged(wxCommandEvent& event)
         }
         else {
             // If page was unpinned
-            if (changedPage == m_pages[m_activePage].get()) {
+            if (changedPage == m_pages[m_activePage]) {
                 // If the active page is unpinned, it becomes temporarily shown
                 m_temporarilyShownPage = changedPage;
             }

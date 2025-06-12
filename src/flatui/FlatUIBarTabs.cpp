@@ -219,13 +219,6 @@ void FlatUIBar::SetTabBorderWidths(int top, int bottom, int left, int right)
     Refresh();
 }
 
-void FlatUIBar::GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const
-{
-    top = m_tabBorderTop;
-    bottom = m_tabBorderBottom;
-    left = m_tabBorderLeft;
-    right = m_tabBorderRight;
-}
 
 void FlatUIBar::SetTabBorderColour(const wxColour& colour)
 {

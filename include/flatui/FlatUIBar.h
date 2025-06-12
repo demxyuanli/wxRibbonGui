@@ -41,7 +41,7 @@ public:
     void SetHomeButtonWidth(int width);
 
     // Page Tabs Management (remains directly managed by FlatUIBar for now)
-    void AddPage(std::unique_ptr<FlatUIPage> page);
+    void AddPage(FlatUIPage* page);
     void SetActivePage(size_t index);
     size_t GetPageCount() const noexcept;
     size_t GetActivePage() const noexcept { return m_activePage; }
@@ -164,7 +164,7 @@ public:
 private:
 
     size_t m_activePage;
-    std::vector<std::unique_ptr<FlatUIPage>> m_pages;
+    wxVector<FlatUIPage*> m_pages;
     FlatUIPage* m_temporarilyShownPage; // Pointer to the page that is currently shown temporarily
     void HideTemporarilyShownPage();
 

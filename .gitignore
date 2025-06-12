@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /build
 /config/.cursor/rules
 /.gitignore
+/build/wxapp.vcxproj
+/build/wxapp.vcxproj.filters
+/build/wxapp.vcxproj

@@ -407,7 +407,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
 
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage].get();
+        FlatUIPage* currentPage = m_pages[m_activePage];
         if (currentPage->IsShown()) {
             currentPage->UpdateLayout();
         }
