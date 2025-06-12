@@ -41,6 +41,7 @@ private:
     wxFrame* GetTopLevelFrame() const;
     void HandleSystemButtonAction(const wxPoint& pos, wxMouseEvent& evt);
     void PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose = false, bool isMaximized = false);
+    void PaintSvgButton(wxDC& dc, const wxRect& rect, const wxString& iconName, bool hover, bool isClose = false);
 
 };
 

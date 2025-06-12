@@ -93,9 +93,10 @@ std::string ConfigManager::findConfigFile() {
     wxFileName exeDir(exePath);
     wxString currentDir = exeDir.GetPath();
 
-    wxString configPath = currentDir + wxFileName::GetPathSeparator() + "config.ini";
+    // Check config/config.ini in current directory
+    wxString configPath = currentDir + wxFileName::GetPathSeparator() + "config" + wxFileName::GetPathSeparator() + "config.ini";
     if (wxFileExists(configPath)) {
-        LOG_INF("Found config file in current directory: " + configPath.ToStdString(), "ConfigManager");
+        LOG_INF("Found config file in config directory: " + configPath.ToStdString(), "ConfigManager");
         return configPath.ToStdString();
     }
 
@@ -108,13 +109,13 @@ std::string ConfigManager::findConfigFile() {
         return configPath.ToStdString();
     }
 
-    LOG_WRN("No config file found in current or user config directory", "ConfigManager");
+    LOG_WRN("No config file found in config or user config directory", "ConfigManager");
     return "";
 }
 
 std::string ConfigManager::getString(const std::string& section, const std::string& key, const std::string& defaultValue) {
     if (!initialized) {
-        LOG_ERR("Configuration manager not initialized", "ConfigManager");
+        LOG_ERR("Configuration manager not initialized", "ConfigManager"); 
         return defaultValue;
     }
 

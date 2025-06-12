@@ -37,6 +37,7 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     m_itemSpacing         = CFG_INT("GalleryItemSpacing");
     int targetH           = CFG_INT("GalleryTargetHeight");
     int horizMargin       = CFG_INT("GalleryHorizontalMargin");
+    int galleryVerticalPadding = CFG_INT("GalleryInternalVerticalPadding");
     SetMinSize(wxSize(targetH * 2, targetH));
 
     Bind(wxEVT_PAINT, &FlatUIGallery::OnPaint, this);

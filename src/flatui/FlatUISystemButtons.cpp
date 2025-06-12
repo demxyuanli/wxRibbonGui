@@ -1,6 +1,7 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIFrame.h"
 #include "config/ConstantsConfig.h"
+#include "config/SvgIconManager.h"
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 
 #include "config/ConstantsConfig.h"
@@ -159,9 +160,38 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
     FlatUIFrame* topFrame = wxDynamicCast(GetTopLevelFrame(), FlatUIFrame);
     bool isEffectivelyMaximized = topFrame ? topFrame->IsPseudoMaximized() : false;
 
-    PaintButton(dc, m_minimizeButtonRect, "_", m_minimizeButtonHover);
-    PaintButton(dc, m_maximizeButtonRect, isEffectivelyMaximized ? wxString(wchar_t(0x2750)) : wxString(wchar_t(0x2610)), m_maximizeButtonHover, false, isEffectivelyMaximized);
-    PaintButton(dc, m_closeButtonRect, "X", m_closeButtonHover, true);
+    //PaintButton(dc, m_minimizeButtonRect, "_", m_minimizeButtonHover);
+    //PaintButton(dc, m_maximizeButtonRect, isEffectivelyMaximized ? wxString(wchar_t(0x2750)) : wxString(wchar_t(0x2610)), m_maximizeButtonHover, false, isEffectivelyMaximized);
+    //PaintButton(dc, m_closeButtonRect, "X", m_closeButtonHover, true);
+
+    PaintSvgButton(dc, m_minimizeButtonRect, "minimize", m_minimizeButtonHover);
+    PaintSvgButton(dc, m_maximizeButtonRect, isEffectivelyMaximized ? "restore" : "maximize", m_maximizeButtonHover);
+    PaintSvgButton(dc, m_closeButtonRect, "close", m_closeButtonHover, true);
+}
+
+void FlatUISystemButtons::PaintSvgButton(wxDC& dc, const wxRect& rect, const wxString& iconName, bool hover, bool isClose)
+{
+    wxColour hoverBgColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
+    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
+
+    if (isClose) {
+        dc.SetBrush(hover ? wxColour(232, 17, 35) : normalBgColour);
+    }
+    else {
+        dc.SetBrush(hover ? hoverBgColour : normalBgColour);
+    }
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.DrawRectangle(rect);
+
+    wxSize iconSize(16, 16);
+    wxBitmap iconBitmap = SvgIconManager::GetInstance().GetIconBitmap(iconName, iconSize);
+
+    if (iconBitmap.IsOk()) {
+        int iconX = rect.GetX() + (rect.GetWidth() - iconSize.GetWidth()) / 2;
+        int iconY = rect.GetY() + (rect.GetHeight() - iconSize.GetHeight()) / 2;
+
+        dc.DrawBitmap(iconBitmap, iconX, iconY, true);
+    }
 }
 
 void FlatUISystemButtons::OnMouseDown(wxMouseEvent& evt)

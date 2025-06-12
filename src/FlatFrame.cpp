@@ -48,7 +48,7 @@ FlatFrame::FlatFrame(const wxString& title, const wxPoint& pos, const wxSize& si
     : FlatUIFrame(NULL, wxID_ANY, title, pos, size, wxBORDER_NONE), // Call base class constructor
       m_ribbon(nullptr),
       m_messageOutput(nullptr),
-      m_searchCtrl(nullptr),
+      m_searchCtrl(nullptr), 
       m_homeMenu(nullptr)
 {
     wxInitAllImageHandlers();
@@ -183,15 +183,15 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     FlatUIPage* page1 = new FlatUIPage(m_ribbon, "Home");
     FlatUIPanel* panel1 = new FlatUIPanel(page1, "FirstPanel", wxHORIZONTAL);
-    panel1->SetFont(CFG_FONTNAME());
+    panel1->SetFont(CFG_DEFAULTFONT()); 
     panel1->SetPanelBorderWidths(0, 0, 0, 1);
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel1->SetHeaderColour(*wxWHITE);
-    panel1->SetHeaderTextColour(wxColour(60, 60, 60));
+    panel1->SetHeaderTextColour(wxColour(120, 120, 120));
     panel1->SetHeaderBorderWidths(1, 0, 0, 1);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
 	buttonBar1->SetDisplayStyle(ButtonDisplayStyle::ICON_ONLY);
-    wxBitmap fileMenuBmp("IDP_FILEMENU", wxBITMAP_TYPE_PNG_RESOURCE);
+    wxBitmap fileMenuBmp("IDP_FILEMENU", wxBITMAP_TYPE_PNG_RESOURCE); 
     buttonBar1->AddButton(wxID_OPEN, "Open", SVG_ICON("open", wxSize(16, 16)));
     buttonBar1->AddButton(wxID_SAVE, "Save", SVG_ICON("save", wxSize(16, 16)));
     wxMenu* fileMenu = new wxMenu;
@@ -211,7 +211,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     page1->AddPanel(panel1);
 
     FlatUIPanel* panel2 = new FlatUIPanel(page1, "SecondPanel", wxHORIZONTAL);
-    panel2->SetFont(CFG_FONTNAME());
+    panel2->SetFont(CFG_DEFAULTFONT());
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel2->SetHeaderColour(*wxWHITE);

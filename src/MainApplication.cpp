@@ -1,5 +1,5 @@
 #include <wx/wx.h>
-#include <cstdio>  // 用于 sscanf
+#include <cstdio>  
 #include <string>
 #include "MainApplication.h"
 #include "config/ConfigManager.h"
@@ -15,12 +15,13 @@ bool MainApplication::OnInit()
     ConstantsConfig::getInstance().initialize(cm);
     
     LOG_INF("Starting application", "MainApplication");
+
     
     std::string titleStr = cm.getString("MainApplication", "MainFrameTitle", "FlatUI Demo");
     wxString title(titleStr);
     std::string sizeStr = cm.getString("MainApplication", "MainFrameSize", "1200,700");
     int fw = 1200, fh = 700;
-    sscanf(sizeStr.c_str(), "%d,%d", &fw, &fh);
+    sscanf(sizeStr.c_str(), "%d,%d", &fw, &fh); 
     wxSize fsize(fw, fh);
     FlatFrame* frame = new FlatFrame(title, wxDefaultPosition, fsize);
     std::string posStr = cm.getString("MainApplication", "MainFramePosition", "Center");

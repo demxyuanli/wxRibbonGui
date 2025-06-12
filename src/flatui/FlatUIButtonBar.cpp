@@ -25,7 +25,7 @@ FlatUIButtonBar::FlatUIButtonBar(FlatUIPanel* parent)
     m_buttonTextColour(CFG_COLOUR("ButtonbarDefaultTextColour")),
     m_buttonBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")),
     m_btnBarBgColour(CFG_COLOUR("ButtonbarDefaultBgColour")),
-    m_btnBarBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")),
+    m_btnBarBorderColour(CFG_COLOUR("ButtonbarDefaultBorderColour")), 
     m_buttonBorderWidth(CFG_INT("ButtonbarDefaultBorderWidth")),
     m_buttonCornerRadius(CFG_INT("ButtonbarDefaultCornerRadius")),
     m_buttonSpacing(CFG_INT("ButtonbarSpacing")),
@@ -88,7 +88,7 @@ void FlatUIButtonBar::AddButton(int id, const wxString& label, const wxBitmap& b
     button.isDropDown = (menu != nullptr);
 
     wxClientDC dc(this);
-    dc.SetFont(GetFont());
+    dc.SetFont(CFG_DEFAULTFONT());
     button.textSize = dc.GetTextExtent(label);
 
     m_buttons.push_back(button);
@@ -151,7 +151,7 @@ void FlatUIButtonBar::RecalculateLayout()
 {
     Freeze();
     wxClientDC dc(this);
-    dc.SetFont(GetFont());
+    dc.SetFont(CFG_DEFAULTFONT());
     int currentX = m_btnBarHorizontalMargin;
     const int STANDARD_BUTTON_HEIGHT = 24; // Standard button height
 
@@ -245,7 +245,7 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
         return;
     }
 
-    dc.SetFont(GetFont());
+    dc.SetFont(CFG_DEFAULTFONT());
     for (size_t i = 0; i < m_buttons.size(); ++i) {
         DrawButton(dc, m_buttons[i], i);
     }

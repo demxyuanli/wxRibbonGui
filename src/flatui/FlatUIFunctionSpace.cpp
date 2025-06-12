@@ -7,7 +7,6 @@ FlatUIFunctionSpace::FlatUIFunctionSpace(wxWindow* parent, wxWindowID id)
       m_childControl(nullptr),
       m_spaceWidth(CFG_INT("SpaceDefaulWidth"))
 {
-
     Bind(wxEVT_SIZE, &FlatUIFunctionSpace::OnSize, this);
 }
 

@@ -406,6 +406,13 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
 
+    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+        FlatUIPage* currentPage = m_pages[m_activePage].get();
+        if (currentPage->IsShown()) {
+            currentPage->UpdateLayout();
+        }
+    }
+
     Refresh(); // Re-draw the bar itself
 }
 

@@ -1,6 +1,7 @@
 #ifndef FLATUIPAGE_H
 #define FLATUIPAGE_H
 
+#include "flatui/FlatUIPinControl.h"
 #include <wx/wx.h>
 #include <wx/vector.h>
 #include <string>
@@ -32,11 +33,26 @@ public:
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
 
+    // Pin control methods
+    void SetPinned(bool pinned);
+    bool IsPinned() const { return m_isPinned; }
+    void TogglePinState();
+    void UpdateLayout();
+
 private:
+
     wxString m_label;
     wxVector<FlatUIPanel*> m_panels;
     wxBoxSizer* m_sizer;
     bool m_isActive; 
+
+    // Pin control members
+    bool m_isPinned;
+    FlatUIPinControl* m_pinControl;
+
+    // Event handlers
+    void OnPinStateChanged(wxCommandEvent& event);
+
 };
 
 #endif // FLATUIPAGE_H 

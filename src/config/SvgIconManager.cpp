@@ -189,6 +189,8 @@ void SvgIconManager::PreloadCommonIcons(const wxSize& size)
     commonIcons.Add("info");
     commonIcons.Add("about");
     commonIcons.Add("exit");
+    commonIcons.Add("thumbtack");
+    commonIcons.Add("thumbtack");
     
     for (const wxString& iconName : commonIcons) {
         GetIconBitmap(iconName, size, true); // This will cache the bitmap

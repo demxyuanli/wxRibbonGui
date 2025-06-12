@@ -5,6 +5,8 @@
 #include "config/ConstantsConfig.h"
 #define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
+#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
 
 void FlatUIBar::PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset)
 {
@@ -49,7 +51,7 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
     int barEffectiveHeight = GetBarHeight() - m_tabTopSpacing; 
     int initialXOffset = currentXOffsetInOut;
 
-    dc.SetFont(GetFont());
+    dc.SetFont(CFG_DEFAULTFONT());
 
     for (size_t i = 0; i < m_pages.size(); ++i)
     {
@@ -325,9 +327,9 @@ void FlatUIBar::SetBarTopMargin(int margin)
 
 void FlatUIBar::SetBarBottomMargin(int margin)
 {
-    m_barBottomMargin = margin;
-    if (IsShown()) {
-        UpdateElementPositionsAndSizes(GetClientSize());
-        Refresh();
-    }
+	m_barBottomMargin = margin;
+	if (IsShown()) {
+		UpdateElementPositionsAndSizes(GetClientSize());
+		Refresh();
+	}
 }

@@ -89,5 +89,53 @@ wxColour ConstantsConfig::getColourValue(const std::string& key) const {
 }
 
 wxFont ConstantsConfig::getDefaultFont() const {
-    return wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    // Get font family from config
+    wxFontFamily family = wxFONTFAMILY_DEFAULT;
+    std::string familyStr = getStringValue("DefaultFontFamily");
+    if (familyStr == "wxFONTFAMILY_TELETYPE") {
+        family = wxFONTFAMILY_TELETYPE;
+    }
+    else if (familyStr == "wxFONTFAMILY_SWISS") {
+        family = wxFONTFAMILY_SWISS;
+    }
+    else if (familyStr == "wxFONTFAMILY_ROMAN") {
+        family = wxFONTFAMILY_ROMAN;
+    }
+    else if (familyStr == "wxFONTFAMILY_MODERN") {
+        family = wxFONTFAMILY_MODERN;
+    }
+
+    // Get font style from config
+    wxFontStyle style = wxFONTSTYLE_NORMAL;
+    std::string styleStr = getStringValue("DefaultFontStyle");
+    if (styleStr == "wxFONTSTYLE_ITALIC") {
+        style = wxFONTSTYLE_ITALIC;
+    }
+    else if (styleStr == "wxFONTSTYLE_SLANT") {
+        style = wxFONTSTYLE_SLANT;
+    }
+
+    // Get font weight from config
+    wxFontWeight weight = wxFONTWEIGHT_NORMAL;
+    std::string weightStr = getStringValue("DefaultFontWeight");
+    if (weightStr == "wxFONTWEIGHT_BOLD") {
+        weight = wxFONTWEIGHT_BOLD;
+    }
+    else if (weightStr == "wxFONTWEIGHT_LIGHT") {
+        weight = wxFONTWEIGHT_LIGHT;
+    }
+
+    // Create font with all configured parameters
+    wxFont font(defaultFontSize, family, style, weight, false, defaultFontFaceName);
+
+    // Fallback to system font if the configured font is not valid
+    if (!font.IsOk()) {
+        font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+        font.SetPointSize(defaultFontSize); // At least use the configured size
+        if (!defaultFontFaceName.IsEmpty()) {
+            font.SetFaceName(defaultFontFaceName); // Try to set the face name
+        }
+    }
+
+    return font;
 }

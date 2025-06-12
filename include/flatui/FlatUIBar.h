@@ -9,10 +9,12 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
+#include "flatui/FlatUIPinControl.h"
 #include <wx/wx.h>
-#include <wx/vector.h>
 #include <string> // Keep if std::string is used, though not visible here
 #include <wx/artprov.h>
+#include <vector>      // Added for std::vector
+#include <memory>      // Added for std::unique_ptr
 
 // Forward declarations of the new component classes
 class FlatUIPage; 
@@ -39,10 +41,10 @@ public:
     void SetHomeButtonWidth(int width);
 
     // Page Tabs Management (remains directly managed by FlatUIBar for now)
-    void AddPage(FlatUIPage* page);
+    void AddPage(std::unique_ptr<FlatUIPage> page);
     void SetActivePage(size_t index);
-    size_t GetPageCount() const;
-    size_t GetActivePage() const { return m_activePage; }
+    size_t GetPageCount() const noexcept;
+    size_t GetActivePage() const noexcept { return m_activePage; }
     FlatUIPage* GetPage(size_t index) const;
     
     // Tab Style Configuration
@@ -65,46 +67,46 @@ public:
     };
     
     void SetTabStyle(TabStyle style);
-    TabStyle GetTabStyle() const { return m_tabStyle; }
+    TabStyle GetTabStyle() const noexcept { return m_tabStyle; }
     
     // Tab border configuration
     void SetTabBorderStyle(TabBorderStyle style);
-    TabBorderStyle GetTabBorderStyle() const { return m_tabBorderStyle; }
+    TabBorderStyle GetTabBorderStyle() const noexcept { return m_tabBorderStyle; }
     void SetTabBorderWidths(int top, int bottom, int left, int right);
-    void GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const;
+    void GetTabBorderWidths(int& top, int& bottom, int& left, int& right) const noexcept;
     void SetTabBorderColour(const wxColour& colour);
-    wxColour GetTabBorderColour() const { return m_tabBorderColour; }
+    wxColour GetTabBorderColour() const noexcept { return m_tabBorderColour; }
     
     // Individual border color configuration
     void SetTabBorderTopColour(const wxColour& colour);
-    wxColour GetTabBorderTopColour() const { return m_tabBorderTopColour; }
+    wxColour GetTabBorderTopColour() const noexcept { return m_tabBorderTopColour; }
     void SetTabBorderBottomColour(const wxColour& colour);
-    wxColour GetTabBorderBottomColour() const { return m_tabBorderBottomColour; }
+    wxColour GetTabBorderBottomColour() const noexcept { return m_tabBorderBottomColour; }
     void SetTabBorderLeftColour(const wxColour& colour);
-    wxColour GetTabBorderLeftColour() const { return m_tabBorderLeftColour; }
+    wxColour GetTabBorderLeftColour() const noexcept { return m_tabBorderLeftColour; }
     void SetTabBorderRightColour(const wxColour& colour);
-    wxColour GetTabBorderRightColour() const { return m_tabBorderRightColour; }
+    wxColour GetTabBorderRightColour() const noexcept { return m_tabBorderRightColour; }
     
     // Individual border width configuration
     void SetTabBorderTopWidth(int width);
-    int GetTabBorderTopWidth() const { return m_tabBorderTop; }
+    int GetTabBorderTopWidth() const noexcept { return m_tabBorderTop; }
     void SetTabBorderBottomWidth(int width);
-    int GetTabBorderBottomWidth() const { return m_tabBorderBottom; }
+    int GetTabBorderBottomWidth() const noexcept { return m_tabBorderBottom; }
     void SetTabBorderLeftWidth(int width);
-    int GetTabBorderLeftWidth() const { return m_tabBorderLeft; }
+    int GetTabBorderLeftWidth() const noexcept { return m_tabBorderLeft; }
     void SetTabBorderRightWidth(int width);
-    int GetTabBorderRightWidth() const { return m_tabBorderRight; }
+    int GetTabBorderRightWidth() const noexcept { return m_tabBorderRight; }
     
     void SetTabCornerRadius(int radius);  // For rounded style
-    int GetTabCornerRadius() const { return m_tabCornerRadius; }
+    int GetTabCornerRadius() const noexcept { return m_tabCornerRadius; }
     
     // Tab colors
     void SetActiveTabBackgroundColour(const wxColour& colour);
-    wxColour GetActiveTabBackgroundColour() const { return m_activeTabBgColour; }
+    wxColour GetActiveTabBackgroundColour() const noexcept { return m_activeTabBgColour; }
     void SetActiveTabTextColour(const wxColour& colour);
-    wxColour GetActiveTabTextColour() const { return m_activeTabTextColour; }
+    wxColour GetActiveTabTextColour() const noexcept { return m_activeTabTextColour; }
     void SetInactiveTabTextColour(const wxColour& colour);
-    wxColour GetInactiveTabTextColour() const { return m_inactiveTabTextColour; }
+    wxColour GetInactiveTabTextColour() const noexcept { return m_inactiveTabTextColour; }
 
     // Custom Spaces
     void SetFunctionSpaceControl(wxWindow* funcControl, int width = -1);
@@ -135,10 +137,7 @@ public:
 
     // Bar margin configuration
     void SetBarTopMargin(int margin);
-    int GetBarTopMargin() const { return m_barTopMargin; }
-
-    void SetBarBottomMargin(int margin);
-    int GetBarBottomMargin() const noexcept { return m_barBottomMargin; }
+    int GetBarTopMargin() const noexcept { return m_barTopMargin; }
 
     void SetBarBottomMargin(int margin);
     int GetBarBottomMargin() const noexcept { return m_barBottomMargin; }
@@ -158,7 +157,28 @@ public:
 
     FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
 
+    // Pin management methods
+    bool IsBarPinned() const;
+    void HideAllPages();
+
 private:
+
+    size_t m_activePage;
+    std::vector<std::unique_ptr<FlatUIPage>> m_pages;
+    FlatUIPage* m_temporarilyShownPage; // Pointer to the page that is currently shown temporarily
+    void HideTemporarilyShownPage();
+
+    // Event handlers
+    void OnPagePinStateChanged(wxCommandEvent& event);
+    void OnGlobalMouseDown(wxMouseEvent& event);
+
+    // Helper methods
+    bool IsPointInBarArea(const wxPoint& point) const;
+    bool AnyPagePinned() const;
+
+
+    void SetupGlobalMouseCapture();
+    void ReleaseGlobalMouseCapture();
 
     void OnShow(wxShowEvent& event);
 
@@ -173,9 +193,6 @@ private:
     FlatUISpacerControl* m_tabFunctionSpacer;    
     FlatUISpacerControl* m_functionProfileSpacer; 
 
-    // --- Page Tabs elements (directly managed) ---
-    wxVector<FlatUIPage*> m_pages;
-    size_t m_activePage;
     wxRect m_tabAreaRect; // Stores the calculated rectangle for drawing tabs
     
     // Tab style configuration

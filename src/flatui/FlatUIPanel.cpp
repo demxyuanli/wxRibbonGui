@@ -243,8 +243,21 @@ void FlatUIPanel::RecalculateBestSize()
 
     // Panel's best height should be based on actual content + header + padding
     // Use the larger of: calculated height or minimum target height
-    int calculatedHeight = childrenTotalHeight + headerOffsetHeight + CFG_INT("PanelInternalVerticalPadding") * 2;
-    bestPanelSize.SetHeight(wxMax(calculatedHeight, CFG_INT("PanelTargetHeight")));
+    int calculatedHeight = childrenTotalHeight + headerOffsetHeight + CFG_INT("PanelInternalVerticalPadding");
+    int minHeight = (childrenTotalHeight > 0) ? calculatedHeight + 4 : CFG_INT("PanelTargetHeight");
+    bestPanelSize.SetHeight(wxMax(calculatedHeight, minHeight));
+
+    int targetHeight = CFG_INT("PanelTargetHeight");
+    int finalHeight = wxMax(calculatedHeight, targetHeight);
+
+    // Add debug logging 
+    LOG_INF("Panel " + GetLabel().ToStdString() +
+        " - Children: " + std::to_string(childrenTotalHeight) +
+        ", Header: " + std::to_string(headerOffsetHeight) +
+        ", Padding: " + std::to_string(CFG_INT("PanelInternalVerticalPadding")) +
+        ", Calculated: " + std::to_string(calculatedHeight) +
+        ", Target: " + std::to_string(targetHeight) +
+        ", Final: " + std::to_string(finalHeight), "FlatUIPanel");
 
     SetMinSize(bestPanelSize);
     SetSize(bestPanelSize); // Keep this to enforce size, as in original
@@ -425,8 +438,8 @@ void FlatUIPanel::AddButtonBar(FlatUIButtonBar* buttonBar, int proportion, int f
     LOG_INF("Added ButtonBar to panel: " + GetLabel().ToStdString(), "FlatUIPanel");
     FlatUIEventManager::getInstance().bindButtonBarEvents(buttonBar);
 
-    flag = wxALL;
-    border = 4; // 4-pixel margin
+    flag = wxLEFT | wxRIGHT | wxTOP;
+    border = 2; // 4-pixel margin
     proportion = 0;
 
     if (m_sizer) {
@@ -445,14 +458,14 @@ void FlatUIPanel::AddGallery(FlatUIGallery* gallery, int proportion, int flag, i
     LOG_INF("Added Gallery to panel: " + GetLabel().ToStdString() +
         ", Size: " + std::to_string(gallery->GetSize().GetWidth()) +
         "x" + std::to_string(gallery->GetSize().GetHeight()), "FlatUIPanel");
-    FlatUIEventManager::getInstance().bindGalleryEvents(gallery);
+    FlatUIEventManager::getInstance().bindGalleryEvents(gallery); 
 
     gallery->SetMinSize(gallery->GetBestSize());
-    flag = wxALL;
-    border = 4; // 4-pixel margin
+    flag = wxLEFT | wxRIGHT | wxTOP;
+    border = 2; // 4-pixel margin
     proportion = 0;
 
-    if (m_sizer) {
+    if (m_sizer) { 
         m_sizer->Add(gallery, proportion, flag, border);
         UpdatePanelSize();
     }
