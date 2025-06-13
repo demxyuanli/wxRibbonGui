@@ -47,7 +47,7 @@ private:
     bool m_isActive; 
 
     // Pin control members
-    bool m_isPinned;
+    bool m_isPinned = false;
     FlatUIPinControl* m_pinControl;
 
     // Event handlers

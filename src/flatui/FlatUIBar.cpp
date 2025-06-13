@@ -45,7 +45,8 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_tabBorderRight(0),
     m_tabCornerRadius(0),
     m_functionSpaceCenterAlign(false),
-    m_profileSpaceRightAlign(false)
+    m_profileSpaceRightAlign(false),
+    m_temporarilyShownPage(nullptr)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(CFG_DEFAULTFONT());
@@ -443,6 +444,10 @@ bool FlatUIBar::IsBarPinned() const
 
 void FlatUIBar::OnGlobalMouseDown(wxMouseEvent& event)
 {
+    if (!this || !IsShown()) {
+        event.Skip();
+        return;
+    }
     if (!m_temporarilyShownPage) {
         event.Skip(); // Nothing to do if no page is temporarily shown
         return;
