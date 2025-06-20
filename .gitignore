@@ -369,3 +369,4 @@ FodyWeavers.xsd
 /build/wxapp.vcxproj
 /build/wxapp.vcxproj
 /build/wxapp.vcxproj.filters
+/config/final_review_gate.py

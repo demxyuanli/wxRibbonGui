@@ -33,10 +33,6 @@ public:
     void OnPaint(wxPaintEvent& evt);
     void OnSize(wxSizeEvent& evt);
 
-    // Pin control methods
-    void SetPinned(bool pinned);
-    bool IsPinned() const { return m_isPinned; }
-    void TogglePinState();
     void UpdateLayout();
 
 private:
@@ -45,13 +41,6 @@ private:
     wxVector<FlatUIPanel*> m_panels;
     wxBoxSizer* m_sizer;
     bool m_isActive; 
-
-    // Pin control members
-    bool m_isPinned = false;
-    FlatUIPinControl* m_pinControl;
-
-    // Event handlers
-    void OnPinStateChanged(wxCommandEvent& event);
 
 };
 

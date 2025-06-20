@@ -37,6 +37,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_systemButtons(nullptr),
     m_tabFunctionSpacer(nullptr),
     m_functionProfileSpacer(nullptr),
+    m_pinControl(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
     m_tabBorderTop(0),
@@ -46,7 +47,8 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_tabCornerRadius(0),
     m_functionSpaceCenterAlign(false),
     m_profileSpaceRightAlign(false),
-    m_temporarilyShownPage(nullptr)
+    m_temporarilyShownPage(nullptr),
+    m_isGlobalPinned(true)  // Default to pinned state (all content visible)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(CFG_DEFAULTFONT());
@@ -94,6 +96,13 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpace->SetDoubleBuffered(true);
     m_systemButtons->SetDoubleBuffered(true);
 
+    // Create and set up the global pin control
+    m_pinControl = new FlatUIPinControl(this, wxID_ANY);
+    m_pinControl->SetName("GlobalPinControl");
+    m_pinControl->SetDoubleBuffered(true);
+    m_pinControl->SetPinned(m_isGlobalPinned); // Set initial state
+    m_pinControl->Show(true);
+
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 10);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 10);
     m_tabFunctionSpacer->SetName("TabFunctionSpacer");
@@ -125,7 +134,8 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpace->Show(false);
     m_profileSpace->Show(false);
 
-    Bind(wxEVT_COMMAND_MENU_SELECTED, &FlatUIBar::OnPagePinStateChanged, this);
+    // Bind the new global pin control event
+    Bind(wxEVT_PIN_STATE_CHANGED, &FlatUIBar::OnPinControlStateChanged, this, m_pinControl->GetId());
 
     // Setup global mouse capture for outside clicks
     SetupGlobalMouseCapture();
@@ -161,7 +171,7 @@ void FlatUIBar::OnShow(wxShowEvent& event)
                 currentPage->SetActive(true);
 
                 // Show logic considering pinned and temporarily shown states
-                if (currentPage->IsPinned() || m_temporarilyShownPage == currentPage) {
+                if (m_isGlobalPinned || m_temporarilyShownPage == currentPage) {
                     if (!currentPage->IsShown()) { // Only show if not already shown
                         currentPage->Show();
                     }
@@ -205,17 +215,6 @@ wxSize FlatUIBar::DoGetBestSize() const
         if (currentPage->IsShown()) {
             wxSize pageSize = currentPage->GetBestSize();
             bestSize.SetHeight(bestSize.GetHeight() + pageSize.GetHeight());
-            bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth()));
-        }
-    }
-
-    // Check if any pinned pages are visible and should contribute to size
-    for (const auto& page : m_pages) {
-        if (page && page->IsShown() && page->IsPinned()) {
-            wxSize pageSize = page->GetBestSize();
-            // For pinned pages, we might want to consider their height
-            // This depends on your UI design - whether pinned pages stack or overlay
-            bestSize.SetHeight(wxMax(bestSize.GetHeight(), GetBarHeight() + m_barTopMargin + pageSize.GetHeight()));
             bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth()));
         }
     }
@@ -264,28 +263,17 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
         return;
     }
 
-    // Hide any previously temporarily shown page if it's not the new active page or if the new page is pinned
-    if (m_temporarilyShownPage && m_temporarilyShownPage != m_pages[pageIndex]) {
-        if (!m_temporarilyShownPage->IsPinned()) { // Ensure it wasn't pinned in the meantime
-            HideTemporarilyShownPage();
-        }
-    }
-
-    // Hide current active page if it's different, not pinned, and not the new page
+    // Hide current active page if different
     if (m_activePage < m_pages.size() && m_pages[m_activePage] && m_activePage != pageIndex) {
         FlatUIPage* oldPage = m_pages[m_activePage];
-        if (oldPage != m_temporarilyShownPage) { // Don't hide if it was the temp page, already handled
-            oldPage->SetActive(false);
-            if (!oldPage->IsPinned()) {
-                oldPage->Hide();
-            }
-        }
+        oldPage->SetActive(false);
+        oldPage->Hide();
     }
 
     m_activePage = pageIndex;
     FlatUIPage* newPage = m_pages[m_activePage];
 
-    // Configure and show the new page
+    // Configure the new page
     wxSize barClientSize = GetClientSize();
     int barStripHeight = GetBarHeight();
     newPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
@@ -294,21 +282,30 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
     newPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
 
     newPage->SetActive(true);
-    newPage->Show(); // Always show the content of the active tab initially
 
-    if (!newPage->IsPinned()) {
-        m_temporarilyShownPage = newPage; // Mark as temporarily shown if not pinned
+    // Show page based on global pin state
+    if (m_isGlobalPinned) {
+        // In pinned state, always show the active page
+        newPage->Show();
+        m_temporarilyShownPage = nullptr;
+        LOG_INF("Pinned state: Showing active page - " + newPage->GetLabel().ToStdString(), "FlatUIBar");
     }
     else {
-        m_temporarilyShownPage = nullptr; // If it's pinned, it's not temporary
+        // In unpinned state, a click on a tab should temporarily show the page
+        if (m_temporarilyShownPage && m_temporarilyShownPage != newPage) {
+            m_temporarilyShownPage->Hide(); // Hide the old temporarily shown page
+            LOG_INF("Unpinned state: Hiding previous temporarily shown page", "FlatUIBar");
+        }
+        newPage->Show();
+        m_temporarilyShownPage = newPage;
+        LOG_INF("Unpinned state: Temporarily showing page - " + newPage->GetLabel().ToStdString(), "FlatUIBar");
     }
 
     newPage->Layout();
-    newPage->UpdateLayout(); // For pin control positioning
+    newPage->UpdateLayout();
 
-    LOG_INF("Activated page at index: " + std::to_string(pageIndex) + ", pinned: " +
-        std::string(newPage->IsPinned() ? "true" : "false") +
-        ", temp_shown: " + std::string(m_temporarilyShownPage == newPage ? "true" : "false"), "FlatUIBar");
+    LOG_INF("Activated page at index: " + std::to_string(pageIndex) +
+        ", global_pinned: " + std::string(m_isGlobalPinned ? "true" : "false"), "FlatUIBar");
 
     InvalidateBestSize();
     wxWindow* parent = GetParent();
@@ -319,27 +316,6 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
     }
     Layout();
     Refresh();
-}
-
-void FlatUIBar::HideTemporarilyShownPage() {
-    if (m_temporarilyShownPage && !m_temporarilyShownPage->IsPinned()) {
-        LOG_INF("Hiding temporarily shown page: " + m_temporarilyShownPage->GetLabel().ToStdString(), "FlatUIBar");
-        m_temporarilyShownPage->Hide();
-        // Important: If hiding the temp page makes it inactive visually (e.g. tab appearance changes),
-        // you might need to call m_temporarilyShownPage->SetActive(false) here too, depending on desired UI.
-        // However, the tab itself (m_activePage) remains the active one until another is clicked.
-    }
-    m_temporarilyShownPage = nullptr;
-    // After hiding a page, the bar's best size might change.
-    InvalidateBestSize();
-    wxWindow* parent = GetParent();
-    if (parent) {
-        parent->InvalidateBestSize();
-        parent->Layout();
-        // parent->Refresh(); // Refresh might be redundant if Layout() handles it
-    }
-    Layout(); // Our own layout might need update
-    Refresh(); // Refresh the bar to reflect changes
 }
 
 size_t FlatUIBar::GetPageCount() const noexcept { return m_pages.size(); }
@@ -365,81 +341,17 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
     Update();
 
     evt.Skip();
-} 
-
-void FlatUIBar::OnPagePinStateChanged(wxCommandEvent& event)
-{
-    if (event.GetString() == "PAGE_PIN_STATE_CHANGED") {
-        FlatUIPage* changedPage = dynamic_cast<FlatUIPage*>(event.GetEventObject());
-        if (!changedPage) {
-            LOG_ERR("Invalid page object in pin state change event", "FlatUIBar");
-            return;
-        }
-
-        bool isPinned = event.GetInt() == 1;
-        LOG_INF("Page " + changedPage->GetLabel().ToStdString() + " pin state changed to: " + std::string(isPinned ? "pinned" : "unpinned"), "FlatUIBar");
-
-        if (isPinned) {
-            // If page was pinned, ensure it's visible and no longer temporary
-            if (m_temporarilyShownPage == changedPage) {
-                m_temporarilyShownPage = nullptr; // No longer temporarily shown
-            }
-            if (!changedPage->IsShown()) {
-                changedPage->Show(); // Ensure it's shown
-            }
-            // Reposition/resize if necessary (already handled by SetActivePage if it's active)
-            // If it's not the active page but gets pinned, it should just become visible if it wasn't.
-            // The current SetActivePage logic might need review if a non-active page can be pinned
-            // and should immediately affect layout beyond just showing its tab.
-        }
-        else {
-            // If page was unpinned
-            if (changedPage == m_pages[m_activePage]) {
-                // If the active page is unpinned, it becomes temporarily shown
-                m_temporarilyShownPage = changedPage;
-            }
-            else {
-                // If a non-active page is unpinned, it should be hidden
-                changedPage->Hide();
-            }
-        }
-
-        // Adjust layout for the changed page
-        wxSize barClientSize = GetClientSize();
-        int barStripHeight = GetBarHeight();
-        changedPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-        int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-        if (pageHeight < 0) pageHeight = 0;
-        changedPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-        changedPage->Layout();
-        changedPage->UpdateLayout();
-
-        InvalidateBestSize();
-        wxWindow* parent = GetParent();
-        if (parent) {
-            parent->InvalidateBestSize();
-            parent->Layout();
-            parent->Refresh();
-        }
-        UpdateElementPositionsAndSizes(GetClientSize());
-        Layout();
-        Refresh();
-    }
 }
 
-bool FlatUIBar::AnyPagePinned() const
+void FlatUIBar::OnPinControlStateChanged(wxCommandEvent& event)
 {
-    for (const auto& page : m_pages) {
-        if (page && page->IsPinned()) {
-            return true;
-        }
-    }
-    return false;
+    ToggleGlobalPinState();
+    event.Skip();
 }
 
 bool FlatUIBar::IsBarPinned() const
 {
-    return AnyPagePinned();
+    return m_isGlobalPinned;
 }
 
 void FlatUIBar::OnGlobalMouseDown(wxMouseEvent& event)
@@ -448,45 +360,46 @@ void FlatUIBar::OnGlobalMouseDown(wxMouseEvent& event)
         event.Skip();
         return;
     }
-    if (!m_temporarilyShownPage) {
-        event.Skip(); // Nothing to do if no page is temporarily shown
+
+    // Only handle global clicks when in unpinned state
+    if (m_isGlobalPinned) {
+        event.Skip();
         return;
     }
 
     wxPoint clickPos = event.GetPosition(); // Screen coordinates
     wxWindow* clickedWindow = wxFindWindowAtPoint(clickPos);
 
-    // Check if the click was inside the FlatUIBar itself or its temporarily shown page
-    bool clickInsideBarOrTempPage = false;
+    // Check if the click was inside the FlatUIBar or its pages
+    bool clickInsideBarArea = false;
     if (clickedWindow) {
         wxWindow* current = clickedWindow;
         while (current) {
-            if (current == this || current == m_temporarilyShownPage) {
-                clickInsideBarOrTempPage = true;
+            if (current == this) {
+                clickInsideBarArea = true;
                 break;
             }
+            // Check if click was on pin control - should not hide pages
+            if (m_pinControl && current == m_pinControl) {
+                clickInsideBarArea = true;
+                break;
+            }
+            // Check if click was on any of the pages
+            for (auto& page : m_pages) {
+                if (page && current == page) {
+                    clickInsideBarArea = true;
+                    break;
+                }
+            }
+            if (clickInsideBarArea) break;
             current = current->GetParent();
         }
     }
 
-    if (!clickInsideBarOrTempPage) {
-        HideTemporarilyShownPage();
-    }
-    // We don't skip the event here, as other windows might need to process it.
-    // The original event.Skip() was there when the logic was simpler.
-    // Depending on exact needs, you might re-evaluate if Skip() is needed.
-    event.Skip();
-}
-
-// ... existing code ...
-void FlatUIBar::HideAllPages() // This function might be redundant or need re-evaluation with temp pages
-{
-    bool anyPageHidden = false;
-    if (m_temporarilyShownPage) {
-        HideTemporarilyShownPage(); // Prioritize hiding the temp page
-        anyPageHidden = true; // Assume it was hidden
-    }
-    if (anyPageHidden) {
+    if (!clickInsideBarArea) {
+        // Click outside bar area in unpinned state - hide all content
+        LOG_INF("Global click outside bar area in unpinned state - hiding content", "FlatUIBar");
+        HideAllContentExceptBarSpace();
         InvalidateBestSize();
         wxWindow* parent = GetParent();
         if (parent) {
@@ -497,8 +410,10 @@ void FlatUIBar::HideAllPages() // This function might be redundant or need re-ev
         Layout();
         Refresh();
     }
+
+    event.Skip();
 }
-// ... existing code ...
+
 
 bool FlatUIBar::IsPointInBarArea(const wxPoint& globalPoint) const
 {
@@ -521,4 +436,112 @@ void FlatUIBar::ReleaseGlobalMouseCapture()
     if (topLevel) {
         topLevel->Unbind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
     }
+}
+
+void FlatUIBar::SetGlobalPinned(bool pinned)
+{
+    if (m_isGlobalPinned != pinned) {
+        m_isGlobalPinned = pinned;
+        
+        // Update pin control visual state
+        if (m_pinControl) {
+            m_pinControl->SetPinned(pinned);
+        }
+        
+        // Apply pin state logic
+        OnGlobalPinStateChanged(pinned);
+
+        LOG_INF("Global pin state changed to: " + std::string(pinned ? "pinned" : "unpinned"), "FlatUIBar");
+    }
+}
+
+void FlatUIBar::ToggleGlobalPinState()
+{
+    SetGlobalPinned(!m_isGlobalPinned);
+}
+
+bool FlatUIBar::ShouldShowPages() const
+{
+    // Pages should be visible if:
+    // 1. Globally pinned (always show)
+    // 2. Not pinned but there's a temporarily shown page
+    return m_isGlobalPinned || (m_temporarilyShownPage != nullptr);
+}
+
+void FlatUIBar::OnGlobalPinStateChanged(bool isPinned)
+{
+    LOG_INF("OnGlobalPinStateChanged called with isPinned: " + std::string(isPinned ? "true" : "false"), "FlatUIBar");
+
+    if (isPinned) {
+        // Pinned state: Show all content including active page
+        ShowAllContent();
+        LOG_INF("Switched to pinned state - showing all content", "FlatUIBar");
+    }
+    else {
+        // Unpinned state: Hide all content except bar space (tabs area)
+        HideAllContentExceptBarSpace();
+        LOG_INF("Switched to unpinned state - hiding all content except bar space", "FlatUIBar");
+    }
+
+    // Update layout and refresh
+    InvalidateBestSize();
+    wxWindow* parent = GetParent();
+    if (parent) {
+        parent->InvalidateBestSize();
+        parent->Layout();
+        parent->Refresh();
+    }
+    Layout();
+    Refresh();
+}
+
+void FlatUIBar::ShowAllContent()
+{
+    LOG_INF("ShowAllContent: Showing all page content", "FlatUIBar");
+    
+    // Show the active page if there is one
+    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+        FlatUIPage* activePage = m_pages[m_activePage];
+        
+        LOG_INF("ShowAllContent: Active page found - " + activePage->GetLabel().ToStdString(), "FlatUIBar");
+        
+        // Always show the active page in pinned mode
+        if (!activePage->IsShown()) {
+            activePage->Show();
+            LOG_INF("ShowAllContent: Showed active page", "FlatUIBar");
+        }
+
+        // Position and size the active page
+        wxSize barClientSize = GetClientSize();
+        int barStripHeight = GetBarHeight();
+        activePage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
+        int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
+        if (pageHeight < 0) pageHeight = 0;
+        activePage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
+        activePage->Layout();
+        activePage->UpdateLayout();
+        
+        LOG_INF("ShowAllContent: Positioned and sized active page", "FlatUIBar");
+    }
+
+    // Clear temporarily shown page state since we're in pinned mode
+    m_temporarilyShownPage = nullptr;
+    LOG_INF("ShowAllContent: Cleared temporarily shown page state", "FlatUIBar");
+}
+
+void FlatUIBar::HideAllContentExceptBarSpace()
+{
+    LOG_INF("HideAllContentExceptBarSpace: Hiding all page content", "FlatUIBar");
+    
+    // Hide all pages
+    for (auto& page : m_pages) {
+        if (page && page->IsShown()) {
+            LOG_INF("HideAllContentExceptBarSpace: Hiding page - " + page->GetLabel().ToStdString(), "FlatUIBar");
+            page->Hide();
+        }
+    }
+
+    // Clear temporarily shown page state
+    m_temporarilyShownPage = nullptr;
+    LOG_INF("HideAllContentExceptBarSpace: Cleared temporarily shown page state", "FlatUIBar");
 }

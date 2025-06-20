@@ -142,6 +142,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     if (m_systemButtons) m_systemButtons->SetName("SystemButtons");
     if (m_functionSpace) m_functionSpace->SetName("FunctionSpace");
     if (m_profileSpace) m_profileSpace->SetName("ProfileSpace");
+    if (m_pinControl) m_pinControl->SetName("GlobalPinControl");
     if (m_tabFunctionSpacer) m_tabFunctionSpacer->SetName("TabFunctionSpacer");
     if (m_functionProfileSpacer) m_functionProfileSpacer->SetName("FunctionProfileSpacer");
 
@@ -192,6 +193,16 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     }
     else {
         m_tabAreaRect = wxRect();
+    }
+
+    // Position Pin Control
+    if (m_pinControl && m_pinControl->IsShown()) {
+        wxSize pinSize = m_pinControl->GetBestSize();
+        // Center it vertically in the inner area
+        int pinY = elementY + (innerHeight - pinSize.GetHeight()) / 2;
+        m_pinControl->SetPosition(wxPoint(currentX, pinY));
+        m_pinControl->SetSize(pinSize);
+        currentX += pinSize.GetWidth() + elemSpacing;
     }
 
     // Get visibility and requested widths for function and profile spaces
@@ -388,15 +399,29 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
         currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
 
-        // Ensure the active page is correctly activated and displayed
+        // Set active state
         currentPage->SetActive(true);
-        if (!currentPage->IsShown()) {
-            currentPage->Show();
+        
+        // Show/hide based on pin state and temporary visibility
+        bool shouldShow = false;
+        if (m_isGlobalPinned) {
+            // In pinned state, always show active page
+            shouldShow = true;
+        } else {
+            // In unpinned state, only show if it's the temporarily shown page
+            shouldShow = (m_temporarilyShownPage == currentPage);
         }
-
-        currentPage->Layout();
-        currentPage->Refresh();
+        
+        if (shouldShow && !currentPage->IsShown()) {
+            currentPage->Show();
+            currentPage->Layout();
+            currentPage->Refresh();
+        } else if (!shouldShow && currentPage->IsShown()) {
+            currentPage->Hide();
+        }
     }
+    
+    // Hide all non-active pages
     for (size_t i = 0; i < m_pages.size(); ++i) {
         if (i != m_activePage && m_pages[i]) {
             m_pages[i]->SetActive(false);

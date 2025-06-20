@@ -183,17 +183,26 @@ void FlatUIPinControl::DrawFallbackIcon(wxDC& dc)
     wxRect clientRect = GetClientRect();
     wxPoint center = clientRect.GetPosition() + wxSize(clientRect.GetWidth()/2, clientRect.GetHeight()/2);
     
-    dc.SetPen(wxPen(CFG_COLOUR("BarInactiveTextColour"), 1));
-    dc.SetBrush(wxBrush(CFG_COLOUR("BarInactiveTextColour")));
+    // Use different colors for pinned/unpinned states
+    wxColour iconColor = m_isPinned ? CFG_COLOUR("BarActiveTextColour") : CFG_COLOUR("BarInactiveTextColour");
+    dc.SetPen(wxPen(iconColor, 2));
+    dc.SetBrush(wxBrush(iconColor));
     
     if (m_isPinned) {
-        // Draw undo arrow (curved arrow)
-        dc.DrawCircle(center, 2);
-        dc.DrawLine(center.x - 2, center.y - 2, center.x + 1, center.y - 2);
-        dc.DrawLine(center.x + 1, center.y - 2, center.x, center.y - 3);
+        // Draw unpin icon (arrow pointing up-right with line)
+        // Draw a small square to represent "pinned" state
+        wxRect pinRect(center.x - 3, center.y - 3, 6, 6);
+        dc.DrawRectangle(pinRect);
+        // Draw a small line to show it's "attached"
+        dc.DrawLine(center.x, center.y - 3, center.x, center.y - 6);
     } else {
-        // Draw thumbtack
-        dc.DrawCircle(center, 1);
-        dc.DrawLine(center.x, center.y + 1, center.x, center.y + 3);
+        // Draw pin icon (thumbtack shape)
+        // Draw the head of the thumbtack
+        dc.DrawCircle(center.x, center.y - 2, 3);
+        // Draw the pin part
+        dc.DrawLine(center.x, center.y + 1, center.x, center.y + 5);
+        // Draw the point
+        dc.SetPen(wxPen(iconColor, 1));
+        dc.DrawLine(center.x - 1, center.y + 5, center.x + 1, center.y + 5);
     }
 }

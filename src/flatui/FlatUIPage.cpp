@@ -14,8 +14,7 @@
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 
     m_label(label),
-    m_isActive(false),
-    m_isPinned(false)
+    m_isActive(false)
 {
     SetFont(CFG_DEFAULTFONT());
     SetDoubleBuffered(true);
@@ -40,15 +39,6 @@ FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     Bind(wxEVT_PAINT, &FlatUIPage::OnPaint, this);
     Bind(wxEVT_SIZE, &FlatUIPage::OnSize, this);
 
-
-    // Create pin control
-    m_pinControl = new FlatUIPinControl(this, wxID_ANY);
-    m_pinControl->SetName("PagePinControl");
-    m_pinControl->Show(true);
-
-    // Bind pin state change event
-    Bind(wxEVT_PIN_STATE_CHANGED, &FlatUIPage::OnPinStateChanged, this);
-
     LOG_INF("Created page: " + label.ToStdString(), "FlatUIPage");
 }
 
@@ -58,51 +48,10 @@ FlatUIPage::~FlatUIPage()
         delete panel;
 }
 
-void FlatUIPage::SetPinned(bool pinned)
-{
-    if (m_pinControl) {
-        m_pinControl->SetPinned(pinned);
-    }
-    m_isPinned = pinned;
-}
-
-void FlatUIPage::TogglePinState()
-{
-    if (m_pinControl) {
-        m_pinControl->TogglePinState();
-    }
-}
-
 // Update layout method to position pin control
 void FlatUIPage::UpdateLayout()
 {
-    if (m_pinControl && m_pinControl->IsShown()) {
-        wxSize pageSize = GetSize();
-        wxSize pinSize = m_pinControl->GetBestSize();
-
-        int pinX = pageSize.GetWidth() - pinSize.GetWidth() - 8;  // 8px margin from right
-        int pinY = pageSize.GetHeight() - pinSize.GetHeight() - 8; // 8px margin from bottom
-
-        m_pinControl->SetPosition(wxPoint(pinX, pinY));
-        m_pinControl->SetSize(pinSize);
-        m_pinControl->Raise(); // Ensure it's on top
-    }
-}
-
-void FlatUIPage::OnPinStateChanged(wxCommandEvent& event)
-{
-    m_isPinned = event.GetInt() == 1;
-
-    // Notify parent FlatUIBar about pin state change
-    wxCommandEvent barEvent(wxEVT_COMMAND_MENU_SELECTED, GetId());
-    barEvent.SetEventObject(this);
-    barEvent.SetInt(m_isPinned ? 1 : 0);
-    barEvent.SetString("PAGE_PIN_STATE_CHANGED");
-
-    wxWindow* parent = GetParent();
-    if (parent) {
-        parent->GetEventHandler()->ProcessEvent(barEvent);
-    }
+    // This method is now empty but might be used for other layout updates later.
 }
 
 void FlatUIPage::OnPaint(wxPaintEvent& evt)

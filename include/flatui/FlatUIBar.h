@@ -159,7 +159,14 @@ public:
 
     // Pin management methods
     bool IsBarPinned() const;
-    void HideAllPages();
+
+    // Global pin management methods
+    void SetGlobalPinned(bool pinned);
+    bool IsGlobalPinned() const { return m_isGlobalPinned; }
+    void ToggleGlobalPinState();
+    
+    // Helper method to determine if pages should be visible
+    bool ShouldShowPages() const;
 
 private:
 
@@ -168,13 +175,20 @@ private:
     FlatUIPage* m_temporarilyShownPage; // Pointer to the page that is currently shown temporarily
     void HideTemporarilyShownPage();
 
+    // Global pin state
+    bool m_isGlobalPinned;
+
+    // Helper methods for global pin control
+    void ShowAllContent();
+    void HideAllContentExceptBarSpace();
+    void OnGlobalPinStateChanged(bool isPinned);
+
     // Event handlers
-    void OnPagePinStateChanged(wxCommandEvent& event);
     void OnGlobalMouseDown(wxMouseEvent& event);
+    void OnPinControlStateChanged(wxCommandEvent& event);
 
     // Helper methods
     bool IsPointInBarArea(const wxPoint& point) const;
-    bool AnyPagePinned() const;
 
 
     void SetupGlobalMouseCapture();
@@ -188,6 +202,7 @@ private:
     FlatUIFunctionSpace* m_functionSpace;
     FlatUIProfileSpace* m_profileSpace;
     FlatUISystemButtons* m_systemButtons;
+    FlatUIPinControl* m_pinControl;
     
 
     FlatUISpacerControl* m_tabFunctionSpacer;    
