@@ -1,5 +1,6 @@
 #include "flatui/BorderlessFrameLogic.h"
 #include <wx/dcbuffer.h> // For wxScreenDC if used, and double buffering
+#include "logger/Logger.h"
 
 #ifdef __WXMSW__
 #include <windows.h> // For Windows specific GDI calls for rubber band
@@ -446,14 +447,24 @@ void BorderlessFrameLogic::EraseRubberBand()
 
 void BorderlessFrameLogic::OnPaint(wxPaintEvent& event)
 {
+    // Add debug logging
+    static int paintCount = 0;
+    paintCount++;
+    wxLogDebug("BorderlessFrameLogic::OnPaint called #%d", paintCount);
+
     wxAutoBufferedPaintDC dc(this);
-    dc.Clear(); // Fill background before drawing border
+    dc.Clear();
     wxSize sz = GetClientSize();
-    dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColour"), 1));
+
+    // Log drawing context info
+    wxLogDebug("Drawing border at size: %dx%d", sz.x, sz.y);
+
+    dc.SetPen(wxPen(CFG_COLOUR("FrameBorderColor"), 1));
     dc.DrawLine(0, 0, sz.x, 0);
     dc.DrawLine(0, sz.y - 1, sz.x, sz.y - 1);
     dc.DrawLine(0, 0, 0, sz.y);
     dc.DrawLine(sz.x - 1, 0, sz.x - 1, sz.y);
+
     event.Skip();
 }
 

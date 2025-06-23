@@ -29,7 +29,7 @@ int FlatUIBar::GetBarHeight()
 }
 
 FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
-    : wxControl(parent, id, pos, size, style | wxBORDER_DEFAULT),
+    : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
     m_activePage(0),
     m_homeSpace(nullptr),
     m_functionSpace(nullptr),
