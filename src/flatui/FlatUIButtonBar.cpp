@@ -170,23 +170,22 @@ void FlatUIButtonBar::RecalculateLayout()
             }
         }
 
-        button.rect = wxRect(currentX, 0, buttonWidth, buttonHeight);
+        int buttonY = CFG_INT("ButtonbarVerticalMargin");
+        button.rect = wxRect(currentX, buttonY, buttonWidth, buttonHeight);
         currentX += buttonWidth;
         if (&button != &m_buttons.back()) {
             currentX += m_buttonSpacing;
         }
     }
-    currentX += m_btnBarHorizontalMargin;
+    currentX += 2 * m_btnBarHorizontalMargin;
 
-    // Calculate overall button bar height (max of all button heights)
-    int maxButtonHeight = STANDARD_BUTTON_HEIGHT;
-    for (const auto& button : m_buttons) {
-        maxButtonHeight = wxMax(maxButtonHeight, button.rect.GetHeight());
-    }
+    // Calculate overall button bar height using Gallery's target height for consistency
+    int galleryTargetHeight = CFG_INT("GalleryTargetHeight");
+    int totalBarHeight = galleryTargetHeight + 2 * CFG_INT("ButtonbarVerticalMargin"); 
 
     wxSize currentMinSize = GetMinSize();
-    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != maxButtonHeight) {
-        SetMinSize(wxSize(currentX, maxButtonHeight));
+    if (currentMinSize.GetWidth() != currentX || currentMinSize.GetHeight() != totalBarHeight) {
+        SetMinSize(wxSize(currentX, totalBarHeight));
         InvalidateBestSize();
         if (auto* parentPanel = dynamic_cast<FlatUIPanel*>(GetParent())) {
             parentPanel->UpdatePanelSize();
@@ -227,7 +226,10 @@ wxSize FlatUIButtonBar::DoGetBestSize() const
         if (totalWidth == 0) totalWidth = 10;
     }
 
-    return wxSize(totalWidth, targetH);
+    // Use same height calculation as Gallery for consistency
+    int galleryTargetHeight = CFG_INT("GalleryTargetHeight");
+    int totalHeight = galleryTargetHeight + 2 * CFG_INT("ButtonbarVerticalMargin");
+    return wxSize(totalWidth, totalHeight);
 }
 
 void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)

@@ -69,6 +69,7 @@ protected:
     // Override to provide control access
     virtual wxWindow* GetFunctionSpaceControl() const override;
     virtual wxWindow* GetProfileSpaceControl() const override;
+    void OnGlobalPinStateChanged(wxCommandEvent& event);
 
 private:
     // Store references to controls for adaptive visibility

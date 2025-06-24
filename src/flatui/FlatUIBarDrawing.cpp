@@ -16,7 +16,14 @@ void FlatUIBar::DrawBackground(wxDC& dc)
     int barH = GetBarHeight();
     dc.SetBrush(CFG_COLOUR("BarBackgroundColour"));
     dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawRectangle(padding, 0, clientSize.GetWidth() - 2 * padding, barH);
+    dc.DrawRectangle(0, 0, clientSize.GetWidth(), barH);
+
+    if (!m_isGlobalPinned && m_temporarilyShownPage == nullptr) {
+        int unpinnedIndicatorHeight = 5;
+        dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        dc.SetPen(*wxTRANSPARENT_PEN);
+        dc.DrawRectangle(0, barH, clientSize.GetWidth(), unpinnedIndicatorHeight);
+    }
 }
 
 void FlatUIBar::DrawBarSeparator(wxDC& dc)

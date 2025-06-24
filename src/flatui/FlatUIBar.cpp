@@ -48,7 +48,8 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpaceCenterAlign(false),
     m_profileSpaceRightAlign(false),
     m_temporarilyShownPage(nullptr),
-    m_isGlobalPinned(true)  // Default to pinned state (all content visible)
+    m_isGlobalPinned(true),  // Default to pinned state (all content visible)
+    m_barUnpinnedHeight(CFG_INT("BarUnpinnedHeight"))
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(CFG_DEFAULTFONT());
@@ -205,7 +206,18 @@ void FlatUIBar::OnShow(wxShowEvent& event)
 wxSize FlatUIBar::DoGetBestSize() const
 {
     wxSize bestSize(0, 0);
-    bestSize.SetHeight(GetBarHeight() + m_barTopMargin); // Include top margin
+
+    // If the bar is unpinned and no page is temporarily visible, its height is collapsed.
+    if (!m_isGlobalPinned && m_temporarilyShownPage == nullptr) {
+        bestSize.SetHeight(m_barUnpinnedHeight);
+        if (GetParent()) {
+            bestSize.SetWidth(GetParent()->GetClientSize().GetWidth());
+        }
+        return bestSize;
+    }
+
+    // Otherwise, calculate size based on bar height + page height
+    bestSize.SetHeight(GetBarHeight() + m_barTopMargin); // Start with bar height
 
     // Add the height of the active page ONLY if it's shown and not hidden
     if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
@@ -219,17 +231,13 @@ wxSize FlatUIBar::DoGetBestSize() const
         }
     }
 
-    // Width calculation fallback
-    if (bestSize.GetWidth() <= 0) {
-        bestSize.SetWidth(wxWindow::DoGetBestSize().GetWidth());
-        if (bestSize.GetWidth() <= 0) {
-            bestSize.SetWidth(200); // Minimum reasonable width
-        }
-    }
-
-    // Ensure minimum height is at least the bar height plus margin
+    // If no pages are visible, the minimum height is still the bar height
     if (bestSize.GetHeight() < (GetBarHeight() + m_barTopMargin)) {
         bestSize.SetHeight(GetBarHeight() + m_barTopMargin);
+    }
+    
+    if (GetParent()) {
+        bestSize.SetWidth(wxMax(bestSize.GetWidth(), GetParent()->GetClientSize().GetWidth()));
     }
 
     return bestSize;

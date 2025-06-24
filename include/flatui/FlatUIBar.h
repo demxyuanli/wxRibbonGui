@@ -177,6 +177,7 @@ private:
 
     // Global pin state
     bool m_isGlobalPinned;
+    int m_barUnpinnedHeight;
 
     // Helper methods for global pin control
     void ShowAllContent();

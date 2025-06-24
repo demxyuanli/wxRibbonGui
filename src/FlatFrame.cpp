@@ -37,6 +37,7 @@
 
 // Event table for FlatFrame specific events
 wxBEGIN_EVENT_TABLE(FlatFrame, FlatUIFrame) // Changed base class in macro
+    EVT_COMMAND(wxID_ANY, wxEVT_PIN_STATE_CHANGED, FlatFrame::OnGlobalPinStateChanged)
     // Keep FlatFrame specific event bindings here
     // Mouse events (OnLeftDown, OnLeftUp, OnMotion) are handled by PlatUIFrame's table 
     // unless explicitly overridden and bound here with a different handler.
@@ -188,7 +189,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel1->SetHeaderColour(*wxWHITE);
     panel1->SetHeaderTextColour(wxColour(120, 120, 120));
-    panel1->SetHeaderBorderWidths(1, 0, 0, 1);
+    panel1->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
 	buttonBar1->SetDisplayStyle(ButtonDisplayStyle::ICON_ONLY);
     wxBitmap fileMenuBmp("IDP_FILEMENU", wxBITMAP_TYPE_PNG_RESOURCE); 
@@ -216,7 +217,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel2->SetHeaderColour(*wxWHITE);
     panel2->SetHeaderTextColour(wxColour(120, 120, 120));
-    panel2->SetHeaderBorderWidths(1, 0, 0, 1);
+    panel2->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
     buttonBar2->AddButton(wxID_HELP, "Help", SVG_ICON("help", wxSize(16, 16)));
     buttonBar2->AddButton(wxID_INFO, "Info", SVG_ICON("info", wxSize(16, 16)));
@@ -316,7 +317,6 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
     m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
-    m_ribbon->InvalidateBestSize();
 
     Layout();
 }
@@ -555,6 +555,32 @@ void FlatFrame::PrintUILayout(wxCommandEvent& event)
     wxLog::SetActiveTarget(oldLog);
     if (oldLog != wxLog::GetActiveTarget()) { 
     }
+}
+
+void FlatFrame::OnGlobalPinStateChanged(wxCommandEvent& event)
+{
+    if (!m_ribbon) {
+        event.Skip();
+        return;
+    }
+
+    bool isPinned = event.IsChecked();
+
+    if (isPinned) {
+        // Restore original min height for ribbon
+        int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
+        m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
+    } else {
+        // Set collapsed min height for ribbon
+        int unpinnedHeight = ConstantsConfig::getInstance().getIntValue("BarUnpinnedHeight");
+        m_ribbon->SetMinSize(wxSize(-1, unpinnedHeight));
+    }
+
+    if (GetSizer()) {
+        GetSizer()->Layout();
+    }
+    Refresh();
+    event.Skip();
 }
 
 

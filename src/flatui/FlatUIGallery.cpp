@@ -19,7 +19,6 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     m_itemBorderColour(wxColour(200, 200, 200)),
     m_itemBorderWidth(0),
     m_itemCornerRadius(0),
-    m_itemPadding(2),
     m_galleryBorderWidth(0),
     m_selectedItem(-1),
     m_hoveredItem(-1),
@@ -35,6 +34,7 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     m_galleryBgColour     = CFG_COLOUR("ActBarBackgroundColour");
     m_galleryBorderColour = CFG_COLOUR("ActBarBackgroundColour");
     m_itemSpacing         = CFG_INT("GalleryItemSpacing");
+    m_itemPadding         = CFG_INT("GalleryItemPadding");
     int targetH           = CFG_INT("GalleryTargetHeight");
     int horizMargin       = CFG_INT("GalleryHorizontalMargin");
     int galleryVerticalPadding = CFG_INT("GalleryInternalVerticalPadding");
@@ -98,18 +98,21 @@ wxSize FlatUIGallery::DoGetBestSize() const
         if (item.bitmap.IsOk()) {
             hasItems = true;
             int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding;
+            if (itemCount > 0) {
+                totalWidth += m_itemSpacing;
+            }
             totalWidth += itemWidth;
-            if (itemCount > 0) totalWidth += m_itemSpacing;
             itemCount++;
         }
     }
-    if (hasItems) totalWidth += horizMargin;
+    if (hasItems) totalWidth += 3 * horizMargin;
     else totalWidth = GetMinSize().GetWidth() > 0 ? GetMinSize().GetWidth() : 100;
 
     if (m_hasDropdown) totalWidth += m_dropdownWidth;
 
     int targetH = CFG_INT("GalleryTargetHeight");
-    return wxSize(totalWidth, targetH);
+    int totalHeight = targetH + 2 * CFG_INT("GalleryVerticalMargin");
+    return wxSize(totalWidth, totalHeight);
 }
 
 void FlatUIGallery::RecalculateLayout()
@@ -152,7 +155,7 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
     }
 
     int x = CFG_INT("GalleryHorizontalMargin");
-    int y = (size.GetHeight() - CFG_INT("ButtonbarIconSize") - 2 * m_itemPadding) / 2;
+    int y = CFG_INT("GalleryVerticalMargin");
 
     for (size_t i = 0; i < m_items.size(); ++i) {
         auto& item = m_items[i];
@@ -160,8 +163,8 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
             int itemWidth = item.bitmap.GetWidth() + 2 * m_itemPadding;
             int itemHeight = item.bitmap.GetHeight() + 2 * m_itemPadding;
 
-            // Calculate actual y position for this specific item
-            int item_y = (size.GetHeight() - itemHeight) / 2;
+            // Calculate actual y position for this specific item (top-aligned)
+            int item_y = CFG_INT("GalleryVerticalMargin");
 
             // Update item rect for hit testing
             item.rect = wxRect(x, item_y, itemWidth, itemHeight);

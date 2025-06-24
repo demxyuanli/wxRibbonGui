@@ -17,7 +17,7 @@ enum {
     TIMER_ADD_CONTROL = wxID_HIGHEST + 1001
 };
 
-FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation)
+FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientation) 
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_label(label),
     m_orientation(orientation),
@@ -238,8 +238,13 @@ void FlatUIPanel::RecalculateBestSize()
         childrenTotalHeight = 0;
     }
 
-    // Panel's best width is based on children content + padding + header
-    bestPanelSize.SetWidth(childrenTotalWidth + CFG_INT("PanelInternalPaddingTotal") + headerOffsetWidth);
+    // Panel's best width is based on children content + padding + header + sizer borders
+    // Each control has left and right borders (2*2=4 pixels per control)
+    int sizerBorderWidth = 0;
+    if (childControlCount > 0) {
+        sizerBorderWidth = childControlCount * 4; // 2 pixels left + 2 pixels right per control
+    }
+    bestPanelSize.SetWidth(childrenTotalWidth + CFG_INT("PanelInternalPaddingTotal") + headerOffsetWidth + sizerBorderWidth);
 
     // Panel's best height should be based on actual content + header + padding
     // Use the larger of: calculated height or minimum target height
@@ -438,7 +443,7 @@ void FlatUIPanel::AddButtonBar(FlatUIButtonBar* buttonBar, int proportion, int f
     LOG_INF("Added ButtonBar to panel: " + GetLabel().ToStdString(), "FlatUIPanel");
     FlatUIEventManager::getInstance().bindButtonBarEvents(buttonBar);
 
-    flag = wxLEFT | wxRIGHT | wxTOP;
+    flag = wxLEFT | wxRIGHT | wxTOP | wxALIGN_TOP;
     border = 2; // 4-pixel margin
     proportion = 0;
 
@@ -461,7 +466,7 @@ void FlatUIPanel::AddGallery(FlatUIGallery* gallery, int proportion, int flag, i
     FlatUIEventManager::getInstance().bindGalleryEvents(gallery); 
 
     gallery->SetMinSize(gallery->GetBestSize());
-    flag = wxLEFT | wxRIGHT | wxTOP;
+    flag = wxLEFT | wxRIGHT | wxTOP | wxALIGN_TOP;
     border = 2; // 4-pixel margin
     proportion = 0;
 
@@ -656,9 +661,9 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
             LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
             if (m_headerBorderTop > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
-                gc->StrokeLine(CFG_INT("PanelInnerBarBorderSpacing"),
+                gc->StrokeLine(0,
                     size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize"),
-                    size.GetWidth() - CFG_INT("PanelInnerBarBorderSpacing"),
+                    size.GetWidth(), 
                     size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize"));
             }
             if (m_headerBorderBottom > 0) {

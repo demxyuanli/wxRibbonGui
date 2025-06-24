@@ -39,7 +39,7 @@ FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     Bind(wxEVT_PAINT, &FlatUIPage::OnPaint, this);
     Bind(wxEVT_SIZE, &FlatUIPage::OnSize, this);
 
-    LOG_INF("Created page: " + label.ToStdString(), "FlatUIPage");
+    LOG_INF("Created page: " + label.ToStdString(), "FlatUIPage"); 
 }
 
 FlatUIPage::~FlatUIPage()
