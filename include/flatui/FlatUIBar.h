@@ -10,6 +10,7 @@
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
 #include "flatui/FlatUIPinControl.h"
+#include "flatui/FlatUIFloatingWindow.h"
 #include <wx/wx.h>
 #include <string> // Keep if std::string is used, though not visible here
 #include <wx/artprov.h>
@@ -23,6 +24,7 @@ class FlatUIFunctionSpace;
 class FlatUIProfileSpace;
 class FlatUISystemButtons;
 class FlatUISpacerControl;  
+class FlatUIFloatingWindow;
 
 class FlatUIBar : public wxControl
 {
@@ -178,6 +180,8 @@ private:
     // Global pin state
     bool m_isGlobalPinned;
     int m_barUnpinnedHeight;
+    size_t m_lastActivePageBeforeUnpin; // To store the active page before unpinning
+    size_t m_activeFloatingPage; // Track which page is currently shown in floating window
 
     // Helper methods for global pin control
     void ShowAllContent();
@@ -187,6 +191,7 @@ private:
     // Event handlers
     void OnGlobalMouseDown(wxMouseEvent& event);
     void OnPinControlStateChanged(wxCommandEvent& event);
+    void OnFloatingWindowDismissed(wxCommandEvent& event);
 
     // Helper methods
     bool IsPointInBarArea(const wxPoint& point) const;
@@ -258,6 +263,13 @@ private:
 
     bool m_functionSpaceCenterAlign;
     bool m_profileSpaceRightAlign;
+
+    // Floating window for unpinned state
+    FlatUIFloatingWindow* m_floatingWindow;
+
+    // Helper methods for floating window
+    void ShowPageInFloatingWindow(FlatUIPage* page);
+    void HideFloatingWindow();
 };
 
 #endif // FLATUIBAR_H 

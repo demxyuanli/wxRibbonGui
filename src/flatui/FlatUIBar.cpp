@@ -7,6 +7,7 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
+#include "flatui/FlatUIFloatingWindow.h"
 #include <string>
 #include <numeric>
 #include <wx/dcbuffer.h>
@@ -49,7 +50,10 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpaceRightAlign(false),
     m_temporarilyShownPage(nullptr),
     m_isGlobalPinned(true),  // Default to pinned state (all content visible)
-    m_barUnpinnedHeight(CFG_INT("BarUnpinnedHeight"))
+    m_barUnpinnedHeight(CFG_INT("BarUnpinnedHeight")),
+    m_lastActivePageBeforeUnpin(0), // Initialize with a safe default
+    m_activeFloatingPage(wxNOT_FOUND), // No floating page initially
+    m_floatingWindow(nullptr)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(CFG_DEFAULTFONT());
@@ -135,10 +139,16 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpace->Show(false);
     m_profileSpace->Show(false);
 
+    // Create floating window
+    m_floatingWindow = new FlatUIFloatingWindow(this);
+
     // Bind the new global pin control event
     Bind(wxEVT_PIN_STATE_CHANGED, &FlatUIBar::OnPinControlStateChanged, this, m_pinControl->GetId());
 
-    // Setup global mouse capture for outside clicks
+    // Bind floating window dismiss event
+    Bind(wxEVT_FLOATING_WINDOW_DISMISSED, &FlatUIBar::OnFloatingWindowDismissed, this);
+
+    // Setup global mouse capture
     SetupGlobalMouseCapture();
 
     if (IsShown()) {
@@ -153,11 +163,22 @@ FlatUIBar::~FlatUIBar() {
     // Unbind the show event
     Unbind(wxEVT_SHOW, &FlatUIBar::OnShow, this);
 
+    // Unbind floating window dismiss event
+    Unbind(wxEVT_FLOATING_WINDOW_DISMISSED, &FlatUIBar::OnFloatingWindowDismissed, this);
+
+    // Release global mouse capture
+    ReleaseGlobalMouseCapture();
+
     FlatUIEventManager::getInstance().unbindBarEvents(this);
     FlatUIEventManager::getInstance().unbindHomeSpaceEvents(m_homeSpace);
     FlatUIEventManager::getInstance().unbindSystemButtonsEvents(m_systemButtons);
     FlatUIEventManager::getInstance().unbindFunctionSpaceEvents(m_functionSpace);
     FlatUIEventManager::getInstance().unbindProfileSpaceEvents(m_profileSpace);
+
+    if (m_floatingWindow) {
+        m_floatingWindow->Destroy();
+        m_floatingWindow = nullptr;
+    }
 
     // Clear all pages
     m_pages.clear();
@@ -207,35 +228,23 @@ wxSize FlatUIBar::DoGetBestSize() const
 {
     wxSize bestSize(0, 0);
 
-    // If the bar is unpinned and no page is temporarily visible, its height is collapsed.
-    if (!m_isGlobalPinned && m_temporarilyShownPage == nullptr) {
-        bestSize.SetHeight(m_barUnpinnedHeight);
-        if (GetParent()) {
-            bestSize.SetWidth(GetParent()->GetClientSize().GetWidth());
-        }
-        return bestSize;
-    }
+    // Determine if we need to show a page, which dictates the total height.
+    if (ShouldShowPages()) {
+        // Pinned, or unpinned with a temporary page: calculate full size.
+        bestSize.SetHeight(GetBarHeight() + m_barTopMargin); 
 
-    // Otherwise, calculate size based on bar height + page height
-    bestSize.SetHeight(GetBarHeight() + m_barTopMargin); // Start with bar height
-
-    // Add the height of the active page ONLY if it's shown and not hidden
-    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage];
-
-        // Only include page height if the page is actually shown
-        if (currentPage->IsShown()) {
-            wxSize pageSize = currentPage->GetBestSize();
+        if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+            // Add the height of the active page.
+            wxSize pageSize = m_pages[m_activePage]->GetBestSize();
             bestSize.SetHeight(bestSize.GetHeight() + pageSize.GetHeight());
             bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth()));
         }
-    }
-
-    // If no pages are visible, the minimum height is still the bar height
-    if (bestSize.GetHeight() < (GetBarHeight() + m_barTopMargin)) {
-        bestSize.SetHeight(GetBarHeight() + m_barTopMargin);
+    } else {
+        // Unpinned and no temporary page: use the collapsed height.
+        bestSize.SetHeight(m_barUnpinnedHeight);
     }
     
+    // Ensure the width is at least the parent's width.
     if (GetParent()) {
         bestSize.SetWidth(wxMax(bestSize.GetWidth(), GetParent()->GetClientSize().GetWidth()));
     }
@@ -271,58 +280,36 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
         return;
     }
 
-    // Hide current active page if different
+    if (m_activePage == pageIndex && m_pages[m_activePage]->IsShown()) {
+        return; // Already active and shown, do nothing.
+    }
+
+    // Hide the old page if it's different
     if (m_activePage < m_pages.size() && m_pages[m_activePage] && m_activePage != pageIndex) {
-        FlatUIPage* oldPage = m_pages[m_activePage];
-        oldPage->SetActive(false);
-        oldPage->Hide();
+        m_pages[m_activePage]->SetActive(false);
+        m_pages[m_activePage]->Hide();
     }
 
     m_activePage = pageIndex;
     FlatUIPage* newPage = m_pages[m_activePage];
-
-    // Configure the new page
-    wxSize barClientSize = GetClientSize();
-    int barStripHeight = GetBarHeight();
-    newPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-    int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-    if (pageHeight < 0) pageHeight = 0;
-    newPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-
     newPage->SetActive(true);
 
-    // Show page based on global pin state
+    // This method should only be used for permanent page changes,
+    // which implies a pinned state or a structural change.
+    // The temporary display in unpinned state is handled by HandleTabAreaClick.
     if (m_isGlobalPinned) {
-        // In pinned state, always show the active page
+        if (!newPage->IsShown()) {
         newPage->Show();
-        m_temporarilyShownPage = nullptr;
-        LOG_INF("Pinned state: Showing active page - " + newPage->GetLabel().ToStdString(), "FlatUIBar");
-    }
-    else {
-        // In unpinned state, a click on a tab should temporarily show the page
-        if (m_temporarilyShownPage && m_temporarilyShownPage != newPage) {
-            m_temporarilyShownPage->Hide(); // Hide the old temporarily shown page
-            LOG_INF("Unpinned state: Hiding previous temporarily shown page", "FlatUIBar");
         }
-        newPage->Show();
-        m_temporarilyShownPage = newPage;
-        LOG_INF("Unpinned state: Temporarily showing page - " + newPage->GetLabel().ToStdString(), "FlatUIBar");
+        m_temporarilyShownPage = nullptr; // Ensure no temporary page is set
     }
-
-    newPage->Layout();
-    newPage->UpdateLayout();
-
-    LOG_INF("Activated page at index: " + std::to_string(pageIndex) +
-        ", global_pinned: " + std::string(m_isGlobalPinned ? "true" : "false"), "FlatUIBar");
-
+    
+    // Trigger a full layout update.
     InvalidateBestSize();
     wxWindow* parent = GetParent();
     if (parent) {
-        parent->InvalidateBestSize();
         parent->Layout();
-        parent->Refresh();
     }
-    Layout();
     Refresh();
 }
 
@@ -364,64 +351,79 @@ bool FlatUIBar::IsBarPinned() const
 
 void FlatUIBar::OnGlobalMouseDown(wxMouseEvent& event)
 {
+    // With wxPopupTransientWindow, we only need to handle clicks within the bar area
+    // The floating window will automatically dismiss itself on outside clicks
+    
     if (!this || !IsShown()) {
         event.Skip();
         return;
     }
 
-    // Only handle global clicks when in unpinned state
+    // Only handle clicks when in unpinned state
     if (m_isGlobalPinned) {
         event.Skip();
         return;
     }
 
-    wxPoint clickPos = event.GetPosition(); // Screen coordinates
+    // Check if this is a click on the bar itself (for tab area empty space handling)
+    wxPoint clickPos = event.GetPosition();
     wxWindow* clickedWindow = wxFindWindowAtPoint(clickPos);
-
-    // Check if the click was inside the FlatUIBar or its pages
-    bool clickInsideBarArea = false;
-    if (clickedWindow) {
-        wxWindow* current = clickedWindow;
-        while (current) {
-            if (current == this) {
-                clickInsideBarArea = true;
-                break;
-            }
-            // Check if click was on pin control - should not hide pages
-            if (m_pinControl && current == m_pinControl) {
-                clickInsideBarArea = true;
-                break;
-            }
-            // Check if click was on any of the pages
-            for (auto& page : m_pages) {
-                if (page && current == page) {
-                    clickInsideBarArea = true;
-                    break;
-                }
-            }
-            if (clickInsideBarArea) break;
-            current = current->GetParent();
-        }
-    }
-
-    if (!clickInsideBarArea) {
-        // Click outside bar area in unpinned state - hide all content
-        LOG_INF("Global click outside bar area in unpinned state - hiding content", "FlatUIBar");
-        HideAllContentExceptBarSpace();
-        InvalidateBestSize();
-        wxWindow* parent = GetParent();
-        if (parent) {
-            parent->InvalidateBestSize();
-            parent->Layout();
-            parent->Refresh();
-        }
-        Layout();
-        Refresh();
+    
+    if (clickedWindow == this) {
+        // This is handled by HandleTabAreaClick, so we don't need to do anything special here
+        LOG_INF("Click on FlatUIBar detected", "FlatUIBar");
     }
 
     event.Skip();
 }
 
+void FlatUIBar::ShowPageInFloatingWindow(FlatUIPage* page)
+{
+    if (!m_floatingWindow || !page) {
+        return;
+    }
+
+    // Hide any currently shown floating window to avoid overlap issues
+    if (m_floatingWindow->IsShown()) {
+        m_floatingWindow->HideWindow();
+    }
+    
+    wxWindow* frame = wxGetTopLevelParent(this);
+    if (!frame) return;
+
+    // Calculate position and size as per requirements
+    // Position (0, 30) relative to the frame, converted to screen coordinates
+    wxPoint position = frame->ClientToScreen(wxPoint(0, 30)); 
+    
+    // Size: frame's width and fixed height of 60
+    wxSize size(frame->GetClientSize().GetWidth(), 60);
+
+    // Set the page content and show
+    m_floatingWindow->SetPageContent(page);
+    m_floatingWindow->ShowAt(position, size);
+
+    // Ensure the activeFloatingPage is set correctly if it wasn't set by the caller
+    if (m_activeFloatingPage == wxNOT_FOUND) {
+        for (size_t i = 0; i < m_pages.size(); ++i) {
+            if (m_pages[i] == page) {
+                m_activeFloatingPage = i;
+                break;
+            }
+        }
+    }
+
+    LOG_INF("Showed page in floating window: " + page->GetLabel().ToStdString(), "FlatUIBar");
+}
+
+void FlatUIBar::HideFloatingWindow()
+{
+    if (m_floatingWindow && m_floatingWindow->IsShown()) {
+        m_floatingWindow->HideWindow();
+        m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+        Refresh(); // Update tab visual state
+        LOG_INF("Hidden floating window", "FlatUIBar");
+    }
+}
 
 bool FlatUIBar::IsPointInBarArea(const wxPoint& globalPoint) const
 {
@@ -432,10 +434,23 @@ bool FlatUIBar::IsPointInBarArea(const wxPoint& globalPoint) const
 
 void FlatUIBar::SetupGlobalMouseCapture()
 {
+    // Bind to multiple possible parent windows to ensure we catch global clicks
     wxWindow* topLevel = wxGetTopLevelParent(this);
     if (topLevel) {
         topLevel->Bind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
+        LOG_INF("Bound global mouse capture to top-level window: " + topLevel->GetName().ToStdString(), "FlatUIBar");
     }
+    
+    // Also bind to immediate parent if different from top-level
+    wxWindow* parent = GetParent();
+    if (parent && parent != topLevel) {
+        parent->Bind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
+        LOG_INF("Bound global mouse capture to parent window: " + parent->GetName().ToStdString(), "FlatUIBar");
+    }
+    
+    // Bind to self as well for additional coverage
+    this->Bind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
+    LOG_INF("Bound global mouse capture to self", "FlatUIBar");
 }
 
 void FlatUIBar::ReleaseGlobalMouseCapture()
@@ -444,11 +459,37 @@ void FlatUIBar::ReleaseGlobalMouseCapture()
     if (topLevel) {
         topLevel->Unbind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
     }
+    
+    // Also release immediate parent if different from top-level
+    wxWindow* parent = GetParent();
+    if (parent && parent != topLevel) {
+        parent->Unbind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
+    }
+    
+    // Unbind self
+    this->Unbind(wxEVT_LEFT_DOWN, &FlatUIBar::OnGlobalMouseDown, this);
 }
 
 void FlatUIBar::SetGlobalPinned(bool pinned)
 {
     if (m_isGlobalPinned != pinned) {
+        
+        if (!pinned) { // Transitioning to UNPINNED
+            m_lastActivePageBeforeUnpin = m_activePage;
+            m_activePage = wxNOT_FOUND; 
+            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+        } else { // Transitioning to PINNED
+            HideFloatingWindow(); // Ensure floating window is hidden when pinning
+            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+            if (m_lastActivePageBeforeUnpin < m_pages.size()) { // Ensure index is valid
+                m_activePage = m_lastActivePageBeforeUnpin;
+            } else if (!m_pages.empty()) {
+                m_activePage = 0; // Fallback to first page
+            } else {
+                m_activePage = wxNOT_FOUND; // No pages available
+            }
+        }
+        
         m_isGlobalPinned = pinned;
         
         // Update pin control visual state
@@ -552,4 +593,13 @@ void FlatUIBar::HideAllContentExceptBarSpace()
     // Clear temporarily shown page state
     m_temporarilyShownPage = nullptr;
     LOG_INF("HideAllContentExceptBarSpace: Cleared temporarily shown page state", "FlatUIBar");
+}
+
+void FlatUIBar::OnFloatingWindowDismissed(wxCommandEvent& event)
+{
+    // Handle the event when the floating window is dismissed
+    LOG_INF("Floating window dismissed, resetting active floating page", "FlatUIBar");
+    m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+    Refresh(); // Update tab visual state
+    event.Skip();
 }

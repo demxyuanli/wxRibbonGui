@@ -27,6 +27,8 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
     wxClientDC dc(this);
     if (pos.y >= 0 && pos.y < barH && pos.x >= tabStartX && pos.x < tabEndX) {
         int currentX = tabStartX;
+        bool clickedOnTab = false;
+        
         for (size_t i = 0; i < m_pages.size(); ++i) {
             if (!m_pages[i]) continue;
             FlatUIPage* page = m_pages[i];
@@ -34,11 +36,39 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
             int tabWidth = labelSize.GetWidth() + CFG_INT("BarTabPadding") * 2;
             wxRect rect(currentX, 0, tabWidth, barH);
             if (rect.Contains(pos)) {
-                SetActivePage(i);
+                clickedOnTab = true;
+                // If pinned, just set the active page directly
+                if (m_isGlobalPinned) {
+                    SetActivePage(i);
+                }
+                else {
+                    // Unpinned: Handle floating window and visual tab selection
+                    FlatUIPage* clickedPage = m_pages[i];
+
+                    // If clicking the same tab that's already shown in floating window, hide it
+                    if (m_floatingWindow && m_floatingWindow->IsShown() &&
+                        m_floatingWindow->GetCurrentPage() == clickedPage) {
+                        HideFloatingWindow();
+                        m_activeFloatingPage = wxNOT_FOUND;
+                    }
+                    else {
+                        // Show the new page in floating window and mark it as active
+                        m_activeFloatingPage = i;
+                        ShowPageInFloatingWindow(clickedPage);
+                    }
+                    
+                    // Refresh to update tab visual state
+                    Refresh();
+                }
                 break;
             }
             currentX += tabWidth + CFG_INT("BarTabSpacing");
             if (currentX >= tabEndX) break;
+        }
+        
+        // If clicked in tab area but not on any specific tab, hide floating window (if unpinned)
+        if (!clickedOnTab && !m_isGlobalPinned) {
+            HideFloatingWindow();
         }
     }
 }
@@ -68,7 +98,15 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
 
         wxRect tabRect(currentXOffsetInOut, tabYPos, tabWidth, barEffectiveHeight);
 
-        if (i == m_activePage)
+        // Determine if this tab should be drawn as active
+        bool isActiveTab = false;
+        if (m_isGlobalPinned) {
+            isActiveTab = (i == m_activePage);
+        } else {
+            isActiveTab = (i == m_activeFloatingPage);
+        }
+
+        if (isActiveTab)
         {
             dc.SetBrush(wxBrush(m_activeTabBgColour));
             dc.SetTextForeground(m_activeTabTextColour);

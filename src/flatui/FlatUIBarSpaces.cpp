@@ -386,48 +386,44 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
 
-    // Page handling (below the bar)
-    if (m_activePage < m_pages.size() && m_pages[m_activePage])
-    {
-        FlatUIPage* currentPage = m_pages[m_activePage];
-
-        currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-
-        int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
-        if (pageHeight < 0) {
-            pageHeight = 0;
-        }
-        currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
-
-        // Set active state
-        currentPage->SetActive(true);
-        
-        // Show/hide based on pin state and temporary visibility
-        bool shouldShow = false;
-        if (m_isGlobalPinned) {
-            // In pinned state, always show active page
-            shouldShow = true;
-        } else {
-            // In unpinned state, only show if it's the temporarily shown page
-            shouldShow = (m_temporarilyShownPage == currentPage);
-        }
-        
-        if (shouldShow && !currentPage->IsShown()) {
-            currentPage->Show();
-            currentPage->Layout();
-            currentPage->Refresh();
-        } else if (!shouldShow && currentPage->IsShown()) {
-            currentPage->Hide();
-        }
-    }
-    
-    // Hide all non-active pages
+    // --- New, Corrected Page Handling Logic ---
     for (size_t i = 0; i < m_pages.size(); ++i) {
-        if (i != m_activePage && m_pages[i]) {
-            m_pages[i]->SetActive(false);
-            if (m_pages[i]->IsShown()) {
-                m_pages[i]->Hide();
+        if (!m_pages[i]) {
+            continue;
+        }
+
+        FlatUIPage* currentPage = m_pages[i];
+        bool shouldShow = false;
+
+        // Determine if this specific page should be visible
+        if (m_isGlobalPinned) {
+            // Pinned state: only the active page is shown
+            shouldShow = (i == m_activePage);
+        } else {
+            // Unpinned state: only the temporarily designated page is shown
+            shouldShow = (currentPage == m_temporarilyShownPage);
+        }
+
+        if (shouldShow) {
+            // Position and size the page that needs to be shown
+            currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
+            int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
+            if (pageHeight < 0) {
+                pageHeight = 0;
             }
+            currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
+            currentPage->SetActive(true);
+
+            if (!currentPage->IsShown()) {
+                currentPage->Show();
+                currentPage->UpdateLayout();
+            }
+        } else {
+            // Hide all other pages
+            if (currentPage->IsShown()) {
+                currentPage->Hide();
+            }
+            currentPage->SetActive(false);
         }
     }
 
