@@ -7,7 +7,7 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
-#include "flatui/FlatUIFloatingWindow.h"
+#include "flatui/FlatUIFloatPanel.h"
 #include <string>
 #include <numeric>
 #include <wx/dcbuffer.h>
@@ -53,7 +53,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_barUnpinnedHeight(CFG_INT("BarUnpinnedHeight")),
     m_lastActivePageBeforeUnpin(0), // Initialize with a safe default
     m_activeFloatingPage(wxNOT_FOUND), // No floating page initially
-    m_floatingWindow(nullptr)
+    m_floatPanel(nullptr)
 {
     SetName("FlatUIBar");  // Set a meaningful name for the bar itself
     SetFont(CFG_DEFAULTFONT());
@@ -139,14 +139,14 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpace->Show(false);
     m_profileSpace->Show(false);
 
-    // Create floating window
-    m_floatingWindow = new FlatUIFloatingWindow(this);
+    // Create float panel
+    m_floatPanel = new FlatUIFloatPanel(this);
 
     // Bind the new global pin control event
     Bind(wxEVT_PIN_STATE_CHANGED, &FlatUIBar::OnPinControlStateChanged, this, m_pinControl->GetId());
-
-    // Bind floating window dismiss event
-    Bind(wxEVT_FLOATING_WINDOW_DISMISSED, &FlatUIBar::OnFloatingWindowDismissed, this);
+    
+    // Bind float panel dismiss event
+    Bind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
 
     // Setup global mouse capture
     SetupGlobalMouseCapture();
@@ -163,8 +163,8 @@ FlatUIBar::~FlatUIBar() {
     // Unbind the show event
     Unbind(wxEVT_SHOW, &FlatUIBar::OnShow, this);
 
-    // Unbind floating window dismiss event
-    Unbind(wxEVT_FLOATING_WINDOW_DISMISSED, &FlatUIBar::OnFloatingWindowDismissed, this);
+    // Unbind float panel dismiss event
+    Unbind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
 
     // Release global mouse capture
     ReleaseGlobalMouseCapture();
@@ -174,10 +174,10 @@ FlatUIBar::~FlatUIBar() {
     FlatUIEventManager::getInstance().unbindSystemButtonsEvents(m_systemButtons);
     FlatUIEventManager::getInstance().unbindFunctionSpaceEvents(m_functionSpace);
     FlatUIEventManager::getInstance().unbindProfileSpaceEvents(m_profileSpace);
-
-    if (m_floatingWindow) {
-        m_floatingWindow->Destroy();
-        m_floatingWindow = nullptr;
+    
+    if (m_floatPanel) {
+        m_floatPanel->Destroy();
+        m_floatPanel = nullptr;
     }
 
     // Clear all pages
@@ -377,54 +377,6 @@ void FlatUIBar::OnGlobalMouseDown(wxMouseEvent& event)
     event.Skip();
 }
 
-void FlatUIBar::ShowPageInFloatingWindow(FlatUIPage* page)
-{
-    if (!m_floatingWindow || !page) {
-        return;
-    }
-
-    // Hide any currently shown floating window to avoid overlap issues
-    if (m_floatingWindow->IsShown()) {
-        m_floatingWindow->HideWindow();
-    }
-    
-    wxWindow* frame = wxGetTopLevelParent(this);
-    if (!frame) return;
-
-    // Calculate position and size as per requirements
-    // Position (0, 30) relative to the frame, converted to screen coordinates
-    wxPoint position = frame->ClientToScreen(wxPoint(0, 30)); 
-    
-    // Size: frame's width and fixed height of 60
-    wxSize size(frame->GetClientSize().GetWidth(), 60);
-
-    // Set the page content and show
-    m_floatingWindow->SetPageContent(page);
-    m_floatingWindow->ShowAt(position, size);
-
-    // Ensure the activeFloatingPage is set correctly if it wasn't set by the caller
-    if (m_activeFloatingPage == wxNOT_FOUND) {
-        for (size_t i = 0; i < m_pages.size(); ++i) {
-            if (m_pages[i] == page) {
-                m_activeFloatingPage = i;
-                break;
-            }
-        }
-    }
-
-    LOG_INF("Showed page in floating window: " + page->GetLabel().ToStdString(), "FlatUIBar");
-}
-
-void FlatUIBar::HideFloatingWindow()
-{
-    if (m_floatingWindow && m_floatingWindow->IsShown()) {
-        m_floatingWindow->HideWindow();
-        m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
-        Refresh(); // Update tab visual state
-        LOG_INF("Hidden floating window", "FlatUIBar");
-    }
-}
-
 bool FlatUIBar::IsPointInBarArea(const wxPoint& globalPoint) const
 {
     wxPoint localPoint = ScreenToClient(globalPoint);
@@ -479,7 +431,8 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
             m_activePage = wxNOT_FOUND; 
             m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
         } else { // Transitioning to PINNED
-            HideFloatingWindow(); // Ensure floating window is hidden when pinning
+            // Ensure float panel is hidden when pinning
+            HideFloatPanel();
             m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
             if (m_lastActivePageBeforeUnpin < m_pages.size()) { // Ensure index is valid
                 m_activePage = m_lastActivePageBeforeUnpin;
@@ -595,11 +548,63 @@ void FlatUIBar::HideAllContentExceptBarSpace()
     LOG_INF("HideAllContentExceptBarSpace: Cleared temporarily shown page state", "FlatUIBar");
 }
 
-void FlatUIBar::OnFloatingWindowDismissed(wxCommandEvent& event)
+
+
+// FloatPanel methods implementation
+void FlatUIBar::ShowPageInFloatPanel(FlatUIPage* page)
 {
-    // Handle the event when the floating window is dismissed
-    LOG_INF("Floating window dismissed, resetting active floating page", "FlatUIBar");
+    if (!m_floatPanel || !page) {
+        return;
+    }
+
+    wxWindow* frame = wxGetTopLevelParent(this);
+    if (!frame) return;
+
+    // Calculate position and size as per requirements
+    // Position (0, 30) relative to the frame, converted to screen coordinates
+    wxPoint position = frame->ClientToScreen(wxPoint(2, 32)); 
+    
+    // Size: frame's width and fixed height of 60
+    wxSize size(frame->GetClientSize().GetWidth()-4, 60);
+
+    if (m_floatPanel->IsShown()) {
+        // Float panel is already shown, just update the content
+        LOG_INF("Updating float panel content to: " + page->GetLabel().ToStdString(), "FlatUIBar");
+        m_floatPanel->SetPageContent(page);
+    } else {
+        // Float panel is not shown, show it with the new content
+        LOG_INF("Showing float panel with: " + page->GetLabel().ToStdString(), "FlatUIBar");
+        m_floatPanel->SetPageContent(page);
+        m_floatPanel->ShowAt(position, size);
+    }
+
+    // Ensure the activeFloatingPage is set correctly if it wasn't set by the caller
+    if (m_activeFloatingPage == wxNOT_FOUND) {
+        for (size_t i = 0; i < m_pages.size(); ++i) {
+            if (m_pages[i] == page) {
+                m_activeFloatingPage = i;
+                break;
+            }
+        }
+    }
+}
+
+void FlatUIBar::HideFloatPanel()
+{
+    if (m_floatPanel && m_floatPanel->IsShown()) {
+        m_floatPanel->HidePanel();
+        m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+        Refresh(); // Update tab visual state
+        LOG_INF("Hidden float panel", "FlatUIBar");
+    }
+}
+
+void FlatUIBar::OnFloatPanelDismissed(wxCommandEvent& event)
+{
+    // Handle the event when the float panel is dismissed
+    LOG_INF("Float panel dismissed, resetting active floating page", "FlatUIBar");
     m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
     Refresh(); // Update tab visual state
     event.Skip();
 }
+

@@ -3,6 +3,8 @@
 #include <wx/dcbuffer.h>
 #include <string>
 #include "config/ConstantsConfig.h"
+#include "logger/Logger.h"
+
 #define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
@@ -37,24 +39,32 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
             wxRect rect(currentX, 0, tabWidth, barH);
             if (rect.Contains(pos)) {
                 clickedOnTab = true;
-                // If pinned, just set the active page directly
+                
+                // If pinned, check if tab is already selected and handle accordingly
                 if (m_isGlobalPinned) {
+                    // Check if this tab is already selected to avoid unnecessary actions
+                    if (i == m_activePage) {
+                        LOG_INF("Tab " + std::to_string(i) + " is already active in pinned mode, ignoring click", "FlatUIBar");
+                        break;
+                    }
+                    // Set the active page directly
                     SetActivePage(i);
                 }
                 else {
-                    // Unpinned: Handle floating window and visual tab selection
+                    // Unpinned: Always handle tab clicks to show/update float panel
                     FlatUIPage* clickedPage = m_pages[i];
-
-                    // If clicking the same tab that's already shown in floating window, hide it
-                    if (m_floatingWindow && m_floatingWindow->IsShown() &&
-                        m_floatingWindow->GetCurrentPage() == clickedPage) {
-                        HideFloatingWindow();
-                        m_activeFloatingPage = wxNOT_FOUND;
-                    }
-                    else {
-                        // Show the new page in floating window and mark it as active
-                        m_activeFloatingPage = i;
-                        ShowPageInFloatingWindow(clickedPage);
+                    
+                    // Update the active floating page
+                    m_activeFloatingPage = i;
+                    
+                    if (m_floatPanel && m_floatPanel->IsShown()) {
+                        // Float panel is already shown, just update the content
+                        LOG_INF("Updating float panel content to tab " + std::to_string(i), "FlatUIBar");
+                        m_floatPanel->SetPageContent(clickedPage);
+                    } else {
+                        // Float panel is not shown, show it with the clicked page
+                        LOG_INF("Showing float panel with tab " + std::to_string(i), "FlatUIBar");
+                        ShowPageInFloatPanel(clickedPage);
                     }
                     
                     // Refresh to update tab visual state
@@ -66,9 +76,9 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
             if (currentX >= tabEndX) break;
         }
         
-        // If clicked in tab area but not on any specific tab, hide floating window (if unpinned)
+        // If clicked in tab area but not on any specific tab, hide float panel (if unpinned)
         if (!clickedOnTab && !m_isGlobalPinned) {
-            HideFloatingWindow();
+            HideFloatPanel();
         }
     }
 }

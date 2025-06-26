@@ -10,7 +10,7 @@
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
 #include "flatui/FlatUIPinControl.h"
-#include "flatui/FlatUIFloatingWindow.h"
+#include "flatui/FlatUIFloatPanel.h"
 #include <wx/wx.h>
 #include <string> // Keep if std::string is used, though not visible here
 #include <wx/artprov.h>
@@ -24,7 +24,7 @@ class FlatUIFunctionSpace;
 class FlatUIProfileSpace;
 class FlatUISystemButtons;
 class FlatUISpacerControl;  
-class FlatUIFloatingWindow;
+class FlatUIFloatPanel;
 
 class FlatUIBar : public wxControl
 {
@@ -170,6 +170,14 @@ public:
     // Helper method to determine if pages should be visible
     bool ShouldShowPages() const;
 
+    // Float panel for unpinned state
+    FlatUIFloatPanel* m_floatPanel;
+    
+    // Methods for float panel
+    void ShowPageInFloatPanel(FlatUIPage* page);
+    void HideFloatPanel();
+    void OnFloatPanelDismissed(wxCommandEvent& event);
+
 private:
 
     size_t m_activePage;
@@ -191,7 +199,7 @@ private:
     // Event handlers
     void OnGlobalMouseDown(wxMouseEvent& event);
     void OnPinControlStateChanged(wxCommandEvent& event);
-    void OnFloatingWindowDismissed(wxCommandEvent& event);
+
 
     // Helper methods
     bool IsPointInBarArea(const wxPoint& point) const;
@@ -264,12 +272,8 @@ private:
     bool m_functionSpaceCenterAlign;
     bool m_profileSpaceRightAlign;
 
-    // Floating window for unpinned state
-    FlatUIFloatingWindow* m_floatingWindow;
-
     // Helper methods for floating window
-    void ShowPageInFloatingWindow(FlatUIPage* page);
-    void HideFloatingWindow();
+
 };
 
 #endif // FLATUIBAR_H 
