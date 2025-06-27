@@ -1,5 +1,6 @@
 #include "flatui/FlatUIFloatPanel.h"
 #include "flatui/FlatUIPage.h"
+#include "flatui/FlatUIPinButton.h"
 #include "logger/Logger.h"
 #include "config/ConstantsConfig.h"
 
@@ -14,6 +15,7 @@ wxBEGIN_EVENT_TABLE(FlatUIFloatPanel, wxFrame)
     EVT_ACTIVATE(FlatUIFloatPanel::OnActivate)
     EVT_KILL_FOCUS(FlatUIFloatPanel::OnKillFocus)
     EVT_TIMER(wxID_ANY, FlatUIFloatPanel::OnAutoHideTimer)
+    EVT_COMMAND(wxID_ANY, wxEVT_PIN_BUTTON_CLICKED, FlatUIFloatPanel::OnPinButtonClicked)
 wxEND_EVENT_TABLE()
 
 FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
@@ -22,9 +24,10 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
       m_currentPage(nullptr),
       m_contentPanel(nullptr),
       m_parentWindow(parent),
+      m_pinButton(nullptr),
       m_autoHideTimer(this),
       m_borderWidth(1),
-      m_shadowOffset(3)
+      m_shadowOffset(1)
 {
     SetName("FlatUIFloatPanel");
     
@@ -35,6 +38,11 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
     // Create sizer for layout
     m_sizer = new wxBoxSizer(wxVERTICAL);
     m_contentPanel->SetSizer(m_sizer);
+    
+    // Create pin button for the float panel
+    m_pinButton = new FlatUIPinButton(this, wxID_ANY);
+    m_pinButton->SetName("FloatPanelPinButton");
+    m_pinButton->Show(true); // Ensure pin button is always visible when float panel is shown
     
     // Setup appearance and event handlers
     SetupAppearance();
@@ -57,15 +65,20 @@ FlatUIFloatPanel::~FlatUIFloatPanel()
         m_currentPage = nullptr;
     }
     
+    if (m_pinButton) {
+        m_pinButton->Destroy();
+        m_pinButton = nullptr;
+    }
+    
     LOG_INF("Destroyed FlatUIFloatPanel", "FlatUIFloatPanel");
 }
 
 void FlatUIFloatPanel::SetupAppearance()
 {
     // Set colors based on configuration or defaults
-    m_borderColour = wxColour(180, 180, 180);
-    m_backgroundColour = wxColour(248, 248, 248);
-    m_shadowColour = wxColour(0, 0, 0, 50);
+    m_borderColour = wxColour(*wxRED);
+    m_backgroundColour = wxColour(*wxWHITE);
+    m_shadowColour = wxColour(255, 255, 255, 100);
     
     // Try to get colors from parent or config
     if (m_parentWindow) {
@@ -158,6 +171,29 @@ void FlatUIFloatPanel::ShowAt(const wxPoint& position, const wxSize& size)
         m_currentPage->UpdateLayout();
     }
     
+    // Position pin button at the right-bottom corner of the float panel
+    if (m_pinButton) {
+        wxSize pinSize = m_pinButton->GetBestSize();
+        int margin = 4; // Small margin from edges
+        
+        // Ensure pin button is within the panel bounds
+        int maxPinX = panelSize.GetWidth() - pinSize.GetWidth() - margin;
+        int maxPinY = panelSize.GetHeight() - pinSize.GetHeight() - margin;
+        
+        // Make sure position is not negative
+        int pinX = wxMax(0, maxPinX);
+        int pinY = wxMax(0, maxPinY);
+        
+        m_pinButton->SetPosition(wxPoint(pinX, pinY));
+        m_pinButton->SetSize(pinSize);
+        m_pinButton->Show(true);
+        m_pinButton->Raise(); // Ensure it's on top
+        
+        LOG_INF("Pin button positioned at (" + std::to_string(pinX) + ", " + std::to_string(pinY) + 
+                ") with size (" + std::to_string(pinSize.GetWidth()) + ", " + std::to_string(pinSize.GetHeight()) + ")", 
+                "FlatUIFloatPanel");
+    }
+    
     // Start auto-hide monitoring
     StartAutoHideTimer();
     
@@ -170,6 +206,12 @@ void FlatUIFloatPanel::HidePanel()
 {
     if (IsShown()) {
         StopAutoHideTimer();
+        
+        // Hide pin button
+        if (m_pinButton) {
+            m_pinButton->Hide();
+        }
+        
         Hide();
         
         // Return page to original parent
@@ -288,6 +330,24 @@ void FlatUIFloatPanel::DrawCustomBorder(wxDC& dc)
 void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
 {
     Layout();
+    
+    // Reposition pin button when panel size changes
+    if (m_pinButton && m_pinButton->IsShown()) {
+        wxSize panelSize = GetSize();
+        wxSize pinSize = m_pinButton->GetBestSize();
+        int margin = 4;
+        
+        // Ensure pin button is within the panel bounds
+        int maxPinX = panelSize.GetWidth() - pinSize.GetWidth() - margin;
+        int maxPinY = panelSize.GetHeight() - pinSize.GetHeight() - margin;
+        
+        // Make sure position is not negative
+        int pinX = wxMax(0, maxPinX);
+        int pinY = wxMax(0, maxPinY);
+        
+        m_pinButton->SetPosition(wxPoint(pinX, pinY));
+    }
+    
     Refresh(); // Redraw custom border and shadow
     event.Skip();
 }
@@ -338,4 +398,18 @@ void FlatUIFloatPanel::OnGlobalMouseMove(wxMouseEvent& event)
         }
     }
     event.Skip();
-} 
+}
+
+void FlatUIFloatPanel::OnPinButtonClicked(wxCommandEvent& event)
+{
+    // Forward the pin button click to the parent window (FlatUIBar)
+    if (m_parentWindow) {
+        wxCommandEvent pinEvent(wxEVT_PIN_BUTTON_CLICKED, GetId());
+        pinEvent.SetEventObject(this);
+        wxPostEvent(m_parentWindow, pinEvent);
+        
+        LOG_INF("Pin button clicked in float panel, forwarding to parent", "FlatUIFloatPanel");
+    }
+    
+    event.Skip();
+}

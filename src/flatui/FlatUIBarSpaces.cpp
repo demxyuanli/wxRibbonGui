@@ -142,7 +142,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
     if (m_systemButtons) m_systemButtons->SetName("SystemButtons");
     if (m_functionSpace) m_functionSpace->SetName("FunctionSpace");
     if (m_profileSpace) m_profileSpace->SetName("ProfileSpace");
-    if (m_pinControl) m_pinControl->SetName("GlobalPinControl");
+    if (m_unpinButton) m_unpinButton->SetName("UnpinButton");
     if (m_tabFunctionSpacer) m_tabFunctionSpacer->SetName("TabFunctionSpacer");
     if (m_functionProfileSpacer) m_functionProfileSpacer->SetName("FunctionProfileSpacer");
 
@@ -195,15 +195,7 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         m_tabAreaRect = wxRect();
     }
 
-    // Position Pin Control
-    if (m_pinControl && m_pinControl->IsShown()) {
-        wxSize pinSize = m_pinControl->GetBestSize();
-        // Center it vertically in the inner area
-        int pinY = elementY + (innerHeight - pinSize.GetHeight()) / 2;
-        m_pinControl->SetPosition(wxPoint(currentX, pinY));
-        m_pinControl->SetSize(pinSize);
-        currentX += pinSize.GetWidth() + elemSpacing;
-    }
+    // Pin button is now handled by FlatUIFloatPanel, no longer positioned here
 
     // Get visibility and requested widths for function and profile spaces
     int funcRequestedWidth = 0;
@@ -432,6 +424,16 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         if (currentPage->IsShown()) {
             currentPage->UpdateLayout();
         }
+    }
+
+    // Position Unpin Button at the right-bottom corner of the entire ribbon
+    if (m_unpinButton && m_unpinButton->IsShown()) {
+        wxSize unpinSize = m_unpinButton->GetBestSize();
+        // Position at the bottom-right corner of the entire ribbon area
+        int unpinX = barClientSz.GetWidth() - unpinSize.GetWidth() - barPadding;
+        int unpinY = barClientSz.GetHeight() - unpinSize.GetHeight() - barPadding;
+        m_unpinButton->SetPosition(wxPoint(unpinX, unpinY));
+        m_unpinButton->SetSize(unpinSize);
     }
 
     Refresh(); // Re-draw the bar itself

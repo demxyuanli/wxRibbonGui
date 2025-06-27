@@ -17,8 +17,12 @@
 #include <wx/dcclient.h>
 #include <logger/Logger.h>
 #include "config/ConstantsConfig.h"
-#include "flatui/FlatUIPinControl.h"
+#include "flatui/FlatUIUnpinButton.h"
+// FlatUIPinButton is now handled by FlatUIFloatPanel
 #include <memory> // Required for std::unique_ptr and std::move
+// Define the backward compatibility event
+wxDEFINE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
+
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 #define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
@@ -38,7 +42,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_systemButtons(nullptr),
     m_tabFunctionSpacer(nullptr),
     m_functionProfileSpacer(nullptr),
-    m_pinControl(nullptr),
+    m_unpinButton(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
     m_tabBorderTop(0),
@@ -101,12 +105,11 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpace->SetDoubleBuffered(true);
     m_systemButtons->SetDoubleBuffered(true);
 
-    // Create and set up the global pin control
-    m_pinControl = new FlatUIPinControl(this, wxID_ANY);
-    m_pinControl->SetName("GlobalPinControl");
-    m_pinControl->SetDoubleBuffered(true);
-    m_pinControl->SetPinned(m_isGlobalPinned); // Set initial state
-    m_pinControl->Show(true);
+    // Create and set up the unpin button (pin button is now handled by float panel)
+    m_unpinButton = new FlatUIUnpinButton(this, wxID_ANY);
+    m_unpinButton->SetName("UnpinButton");
+    m_unpinButton->SetDoubleBuffered(true);
+    m_unpinButton->Show(m_isGlobalPinned); // Show when pinned
 
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 10);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 10);
@@ -142,8 +145,11 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     // Create float panel
     m_floatPanel = new FlatUIFloatPanel(this);
 
-    // Bind the new global pin control event
-    Bind(wxEVT_PIN_STATE_CHANGED, &FlatUIBar::OnPinControlStateChanged, this, m_pinControl->GetId());
+    // Bind the unpin button event (pin button events come from float panel)
+    Bind(wxEVT_UNPIN_BUTTON_CLICKED, &FlatUIBar::OnUnpinButtonClicked, this, m_unpinButton->GetId());
+    
+    // Bind pin button events from float panel
+    Bind(wxEVT_PIN_BUTTON_CLICKED, &FlatUIBar::OnPinButtonClicked, this);
     
     // Bind float panel dismiss event
     Bind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
@@ -338,9 +344,29 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
     evt.Skip();
 }
 
-void FlatUIBar::OnPinControlStateChanged(wxCommandEvent& event)
+void FlatUIBar::OnPinButtonClicked(wxCommandEvent& event)
 {
-    ToggleGlobalPinState();
+    SetGlobalPinned(true);
+    
+    // Send the old compatible event for FlatFrame
+    wxCommandEvent pinEvent(wxEVT_PIN_STATE_CHANGED, GetId());
+    pinEvent.SetEventObject(this);
+    pinEvent.SetInt(1); // pinned = true
+    GetParent()->GetEventHandler()->ProcessEvent(pinEvent);
+    
+    event.Skip();
+}
+
+void FlatUIBar::OnUnpinButtonClicked(wxCommandEvent& event)
+{
+    SetGlobalPinned(false);
+    
+    // Send the old compatible event for FlatFrame
+    wxCommandEvent pinEvent(wxEVT_PIN_STATE_CHANGED, GetId());
+    pinEvent.SetEventObject(this);
+    pinEvent.SetInt(0); // pinned = false
+    GetParent()->GetEventHandler()->ProcessEvent(pinEvent);
+    
     event.Skip();
 }
 
@@ -445,9 +471,9 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
         
         m_isGlobalPinned = pinned;
         
-        // Update pin control visual state
-        if (m_pinControl) {
-            m_pinControl->SetPinned(pinned);
+        // Update unpin button visibility (pin button is handled by float panel)
+        if (m_unpinButton) {
+            m_unpinButton->Show(pinned); // Show unpin button when pinned
         }
         
         // Apply pin state logic

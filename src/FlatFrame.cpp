@@ -564,7 +564,7 @@ void FlatFrame::OnGlobalPinStateChanged(wxCommandEvent& event)
         return;
     }
 
-    bool isPinned = event.IsChecked();
+    bool isPinned = event.GetInt() != 0;
 
     if (isPinned) {
         // Restore original min height for ribbon

@@ -5,6 +5,7 @@
 #include <wx/timer.h>
 
 class FlatUIPage;
+class FlatUIPinButton;
 
 // Custom event for float panel dismiss
 wxDECLARE_EVENT(wxEVT_FLOAT_PANEL_DISMISSED, wxCommandEvent);
@@ -38,6 +39,7 @@ private:
     wxPanel* m_contentPanel;
     wxBoxSizer* m_sizer;
     wxWindow* m_parentWindow;
+    FlatUIPinButton* m_pinButton;
     
     // Auto-hide functionality
     wxTimer m_autoHideTimer;
@@ -59,6 +61,7 @@ private:
     void OnKillFocus(wxFocusEvent& event);
     void OnAutoHideTimer(wxTimerEvent& event);
     void OnGlobalMouseMove(wxMouseEvent& event);
+    void OnPinButtonClicked(wxCommandEvent& event);
     
     // Helper methods
     void SetupAppearance();

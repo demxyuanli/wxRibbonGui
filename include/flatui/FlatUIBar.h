@@ -9,7 +9,8 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
-#include "flatui/FlatUIPinControl.h"
+#include "flatui/FlatUIUnpinButton.h"
+// FlatUIPinButton is now handled by FlatUIFloatPanel
 #include "flatui/FlatUIFloatPanel.h"
 #include <wx/wx.h>
 #include <string> // Keep if std::string is used, though not visible here
@@ -25,6 +26,10 @@ class FlatUIProfileSpace;
 class FlatUISystemButtons;
 class FlatUISpacerControl;  
 class FlatUIFloatPanel;
+
+// Custom events
+wxDECLARE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent); // Backward compatibility with FlatFrame
+wxDECLARE_EVENT(wxEVT_PIN_BUTTON_CLICKED, wxCommandEvent); // Pin button event from float panel
 
 class FlatUIBar : public wxControl
 {
@@ -198,7 +203,8 @@ private:
 
     // Event handlers
     void OnGlobalMouseDown(wxMouseEvent& event);
-    void OnPinControlStateChanged(wxCommandEvent& event);
+    void OnPinButtonClicked(wxCommandEvent& event);
+    void OnUnpinButtonClicked(wxCommandEvent& event);
 
 
     // Helper methods
@@ -216,7 +222,8 @@ private:
     FlatUIFunctionSpace* m_functionSpace;
     FlatUIProfileSpace* m_profileSpace;
     FlatUISystemButtons* m_systemButtons;
-    FlatUIPinControl* m_pinControl;
+    // Pin button is now handled by FlatUIFloatPanel
+    FlatUIUnpinButton* m_unpinButton;
     
 
     FlatUISpacerControl* m_tabFunctionSpacer;    
