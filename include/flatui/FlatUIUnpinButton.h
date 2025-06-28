@@ -4,6 +4,9 @@
 #include <wx/wx.h>
 #include <wx/control.h>
 
+// Custom event for unpin button click
+wxDECLARE_EVENT(wxEVT_UNPIN_BUTTON_CLICKED, wxCommandEvent);
+
 class FlatUIUnpinButton : public wxControl
 {
 public:
@@ -42,8 +45,5 @@ private:
     
     wxDECLARE_EVENT_TABLE();
 };
-
-// Custom event for unpin button click
-wxDECLARE_EVENT(wxEVT_UNPIN_BUTTON_CLICKED, wxCommandEvent);
 
 #endif // FLATUIUNPINBUTTON_H 

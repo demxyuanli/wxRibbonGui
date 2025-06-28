@@ -8,6 +8,7 @@
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
 #include "flatui/FlatUIFloatPanel.h"
+#include "flatui/FlatUIFixPanel.h"
 #include <string>
 #include <numeric>
 #include <wx/dcbuffer.h>
@@ -43,6 +44,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_tabFunctionSpacer(nullptr),
     m_functionProfileSpacer(nullptr),
     m_unpinButton(nullptr),
+    m_fixPanel(nullptr),
     m_tabStyle(TabStyle::DEFAULT),
     m_tabBorderStyle(TabBorderStyle::SOLID),
     m_tabBorderTop(0),
@@ -105,11 +107,15 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpace->SetDoubleBuffered(true);
     m_systemButtons->SetDoubleBuffered(true);
 
-    // Create and set up the unpin button (pin button is now handled by float panel)
-    m_unpinButton = new FlatUIUnpinButton(this, wxID_ANY);
-    m_unpinButton->SetName("UnpinButton");
-    m_unpinButton->SetDoubleBuffered(true);
-    m_unpinButton->Show(m_isGlobalPinned); // Show when pinned
+    // Create the fixed panel for containing pages (pin button is now handled by float panel)
+    m_fixPanel = new FlatUIFixPanel(this, wxID_ANY);
+    m_fixPanel->SetName("FixPanel");
+    m_fixPanel->SetDoubleBuffered(true);
+    m_fixPanel->Show(m_isGlobalPinned); // Show only when pinned initially
+    
+    // Get reference to unpin button from fix panel
+    m_unpinButton = m_fixPanel->GetUnpinButton();
+    LOG_INF("Created fix panel with unpin button, initially " + std::string(m_isGlobalPinned ? "shown" : "hidden"), "FlatUIBar");
 
     m_tabFunctionSpacer = new FlatUISpacerControl(this, 10);
     m_functionProfileSpacer = new FlatUISpacerControl(this, 10);
@@ -142,25 +148,46 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_functionSpace->Show(false);
     m_profileSpace->Show(false);
 
-    // Create float panel
-    m_floatPanel = new FlatUIFloatPanel(this);
-
-    // Bind the unpin button event (pin button events come from float panel)
-    Bind(wxEVT_UNPIN_BUTTON_CLICKED, &FlatUIBar::OnUnpinButtonClicked, this, m_unpinButton->GetId());
-    
-    // Bind pin button events from float panel
-    Bind(wxEVT_PIN_BUTTON_CLICKED, &FlatUIBar::OnPinButtonClicked, this);
-    
-    // Bind float panel dismiss event
-    Bind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
+    // Initialize panels based on initial pin state
+    // Initial state is pinned (m_isGlobalPinned = true), so create fix panel
+    if (m_isGlobalPinned) {
+        // Create fix panel for initial pinned state
+        m_fixPanel = new FlatUIFixPanel(this, wxID_ANY);
+        m_fixPanel->SetName("FixPanel");
+        m_fixPanel->SetDoubleBuffered(true);
+        m_fixPanel->Show(true);
+        
+        // Get reference to unpin button from fix panel
+        m_unpinButton = m_fixPanel->GetUnpinButton();
+        
+        // Bind the unpin button event
+        Bind(wxEVT_UNPIN_BUTTON_CLICKED, &FlatUIBar::OnUnpinButtonClicked, this, m_unpinButton->GetId());
+        
+        LOG_INF("Constructor: Created FixPanel for initial pinned state", "FlatUIBar");
+    } else {
+        // Create float panel for unpinned state
+        m_floatPanel = new FlatUIFloatPanel(this);
+        
+        // Bind pin button events from float panel
+        Bind(wxEVT_PIN_BUTTON_CLICKED, &FlatUIBar::OnPinButtonClicked, this);
+        
+        // Bind float panel dismiss event
+        Bind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
+        
+        LOG_INF("Constructor: Created FloatPanel for initial unpinned state", "FlatUIBar");
+    }
 
     // Setup global mouse capture
     SetupGlobalMouseCapture();
 
-    if (IsShown()) {
+    // Always initialize layout, regardless of visibility state
+    CallAfter([this]() {
         UpdateElementPositionsAndSizes(GetClientSize());
-        Refresh();
-    }
+        if (IsShown()) {
+            Refresh();
+        }
+        LOG_INF("Constructor: Completed initial layout setup", "FlatUIBar");
+    });
 
     Bind(wxEVT_SHOW, &FlatUIBar::OnShow, this);
 }
@@ -186,45 +213,50 @@ FlatUIBar::~FlatUIBar() {
         m_floatPanel = nullptr;
     }
 
-    // Clear all pages
+    if (m_fixPanel) {
+        m_fixPanel->Destroy();
+        m_fixPanel = nullptr;
+    }
+
+    // Clear all pages (they are now managed by FixPanel)
     m_pages.clear();
 }
 
 void FlatUIBar::OnShow(wxShowEvent& event)
 {
-    if (event.IsShown() && m_activePage < m_pages.size() && m_pages[m_activePage]) {
+    if (event.IsShown()) {
         CallAfter([this]() {
-            if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-                FlatUIPage* currentPage = m_pages[m_activePage];
-                currentPage->SetActive(true);
-
-                // Show logic considering pinned and temporarily shown states
-                if (m_isGlobalPinned || m_temporarilyShownPage == currentPage) {
-                    if (!currentPage->IsShown()) { // Only show if not already shown
-                        currentPage->Show();
-                    }
+            LOG_INF("OnShow: Processing show event for FlatUIBar", "FlatUIBar");
+            
+            // Always call UpdateElementPositionsAndSizes to ensure proper layout
+            UpdateElementPositionsAndSizes(GetClientSize());
+            
+            // Show logic considering pinned and temporarily shown states
+            if (m_isGlobalPinned && m_fixPanel) {
+                // Show fix panel and set active page
+                if (!m_fixPanel->IsShown()) {
+                    m_fixPanel->Show();
+                    LOG_INF("OnShow: Showed FixPanel in pinned state", "FlatUIBar");
                 }
-                else {
-                    // If not pinned and not the designated temporarily shown page,
-                    // ensure it's hidden (it might have been shown by a previous SetActivePage call
-                    // before a global click hid it, and then FlatUIBar::Show is called)
-                    if (currentPage->IsShown()) {
-                        currentPage->Hide();
-                    }
+                
+                // Set active page in fix panel if there are pages
+                if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+                    m_fixPanel->SetActivePage(m_activePage);
+                    LOG_INF("OnShow: Set active page in FixPanel", "FlatUIBar");
                 }
-
-                wxSize barClientSize = GetClientSize();
-                int barStripHeight = GetBarHeight();
-                currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-                int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-                if (pageHeight < 0) pageHeight = 0;
-                currentPage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-                currentPage->Layout();
-                currentPage->Refresh();
-
-                UpdateElementPositionsAndSizes(GetClientSize());
-                Refresh();
             }
+            else if (!m_isGlobalPinned && m_fixPanel) {
+                // If not pinned but fix panel exists, ensure it's hidden
+                if (m_fixPanel->IsShown()) {
+                    m_fixPanel->Hide();
+                    LOG_INF("OnShow: Hidden FixPanel in unpinned state", "FlatUIBar");
+                }
+            }
+
+            // Update button visibility after showing/hiding panels
+            UpdateButtonVisibility();
+
+            Refresh();
             });
     }
     event.Skip();
@@ -234,16 +266,16 @@ wxSize FlatUIBar::DoGetBestSize() const
 {
     wxSize bestSize(0, 0);
 
-    // Determine if we need to show a page, which dictates the total height.
+    // Determine if we need to show pages, which dictates the total height.
     if (ShouldShowPages()) {
         // Pinned, or unpinned with a temporary page: calculate full size.
         bestSize.SetHeight(GetBarHeight() + m_barTopMargin); 
 
-        if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-            // Add the height of the active page.
-            wxSize pageSize = m_pages[m_activePage]->GetBestSize();
-            bestSize.SetHeight(bestSize.GetHeight() + pageSize.GetHeight());
-            bestSize.SetWidth(wxMax(bestSize.GetWidth(), pageSize.GetWidth()));
+        if (m_fixPanel && m_fixPanel->IsShown()) {
+            // Add the height of the fix panel.
+            wxSize fixPanelSize = m_fixPanel->GetBestSize();
+            bestSize.SetHeight(bestSize.GetHeight() + fixPanelSize.GetHeight());
+            bestSize.SetWidth(wxMax(bestSize.GetWidth(), fixPanelSize.GetWidth()));
         }
     } else {
         // Unpinned and no temporary page: use the collapsed height.
@@ -262,16 +294,37 @@ void FlatUIBar::AddPage(FlatUIPage* page)
 {
     if (!page) return;
 
+    // Add page to vector
     m_pages.push_back(page);
 
-    page->Hide();
-
-    if (m_pages.size() == 1) {
-        m_activePage = 0;
-        page->SetActive(true);
-    }
-    else {
-        page->SetActive(false);
+    // Add page to fix panel if it exists (pinned state)
+    if (m_fixPanel) {
+        m_fixPanel->AddPage(page);
+        
+        // Set active page in fix panel
+        if (m_pages.size() == 1) {
+            m_activePage = 0;
+            m_fixPanel->SetActivePage(static_cast<size_t>(0));
+            page->SetActive(true);
+        }
+        else {
+            page->SetActive(false);
+        }
+        
+        LOG_INF("Added page '" + page->GetLabel().ToStdString() + "' to FlatUIBar via FixPanel", "FlatUIBar");
+    } else {
+        // Unpinned state - pages are managed directly by FlatUIBar for float panel usage
+        page->Hide(); // Initially hidden
+        
+        if (m_pages.size() == 1) {
+            m_activePage = 0;
+            page->SetActive(true);
+        }
+        else {
+            page->SetActive(false);
+        }
+        
+        LOG_INF("Added page '" + page->GetLabel().ToStdString() + "' to FlatUIBar for FloatPanel usage", "FlatUIBar");
     }
 
     if (IsShown()) {
@@ -286,37 +339,25 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
         return;
     }
 
-    if (m_activePage == pageIndex && m_pages[m_activePage]->IsShown()) {
-        return; // Already active and shown, do nothing.
-    }
-
-    // Hide the old page if it's different
-    if (m_activePage < m_pages.size() && m_pages[m_activePage] && m_activePage != pageIndex) {
-        m_pages[m_activePage]->SetActive(false);
-        m_pages[m_activePage]->Hide();
+    if (m_activePage == pageIndex && m_isGlobalPinned && m_fixPanel && m_fixPanel->GetActivePage() == m_pages[pageIndex]) {
+        return; // Already active and shown in pinned state, do nothing.
     }
 
     m_activePage = pageIndex;
     FlatUIPage* newPage = m_pages[m_activePage];
-    newPage->SetActive(true);
 
-    // This method should only be used for permanent page changes,
-    // which implies a pinned state or a structural change.
-    // The temporary display in unpinned state is handled by HandleTabAreaClick.
-    if (m_isGlobalPinned) {
-        if (!newPage->IsShown()) {
-        newPage->Show();
-        }
+    // Update the fix panel's active page if in pinned state and fix panel exists
+    if (m_isGlobalPinned && m_fixPanel) {
+        m_fixPanel->SetActivePage(static_cast<size_t>(pageIndex));
         m_temporarilyShownPage = nullptr; // Ensure no temporary page is set
+        
+        // Only trigger layout update if needed, not full parent layout
+        UpdateElementPositionsAndSizes(GetClientSize());
     }
     
-    // Trigger a full layout update.
-    InvalidateBestSize();
-    wxWindow* parent = GetParent();
-    if (parent) {
-        parent->Layout();
-    }
     Refresh();
+
+    LOG_INF("Set active page to '" + newPage->GetLabel().ToStdString() + "' (index " + std::to_string(pageIndex) + ")", "FlatUIBar");
 }
 
 size_t FlatUIBar::GetPageCount() const noexcept { return m_pages.size(); }
@@ -346,6 +387,37 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
 
 void FlatUIBar::OnPinButtonClicked(wxCommandEvent& event)
 {
+    LOG_INF("OnPinButtonClicked: Pin button clicked, switching to pinned state", "FlatUIBar");
+    
+    // Step 1: Destroy float panel
+    if (m_floatPanel) {
+        LOG_INF("OnPinButtonClicked: Destroying float panel", "FlatUIBar");
+        m_floatPanel->HidePanel();
+        m_floatPanel->Destroy();
+        m_floatPanel = nullptr;
+    }
+    
+    // Step 2: Ensure fix panel exists and is positioned correctly
+    if (!m_fixPanel) {
+        LOG_INF("OnPinButtonClicked: Creating new fix panel", "FlatUIBar");
+        m_fixPanel = new FlatUIFixPanel(this, wxID_ANY);
+        m_fixPanel->SetName("FixPanel");
+        m_fixPanel->SetDoubleBuffered(true);
+        
+        // Re-add all pages to the new fix panel
+        for (auto* page : m_pages) {
+            if (page) {
+                m_fixPanel->AddPage(page);
+            }
+        }
+        
+        // Get reference to unpin button from fix panel
+        m_unpinButton = m_fixPanel->GetUnpinButton();
+        
+        // Bind the unpin button event
+        Bind(wxEVT_UNPIN_BUTTON_CLICKED, &FlatUIBar::OnUnpinButtonClicked, this, m_unpinButton->GetId());
+    }
+    
     SetGlobalPinned(true);
     
     // Send the old compatible event for FlatFrame
@@ -354,12 +426,54 @@ void FlatUIBar::OnPinButtonClicked(wxCommandEvent& event)
     pinEvent.SetInt(1); // pinned = true
     GetParent()->GetEventHandler()->ProcessEvent(pinEvent);
     
+    LOG_INF("OnPinButtonClicked: Completed pin operation", "FlatUIBar");
     event.Skip();
 }
 
 void FlatUIBar::OnUnpinButtonClicked(wxCommandEvent& event)
 {
+    LOG_INF("OnUnpinButtonClicked: Unpin button clicked, switching to unpinned state", "FlatUIBar");
+    
+    // Step 1: Store current active page before destroying fix panel
+    size_t currentActivePage = m_activePage;
+    
+    // Step 2: Unbind unpin button event before destroying fix panel
+    if (m_unpinButton) {
+        Unbind(wxEVT_UNPIN_BUTTON_CLICKED, &FlatUIBar::OnUnpinButtonClicked, this, m_unpinButton->GetId());
+        m_unpinButton = nullptr; // Will be destroyed with fix panel
+    }
+    
+    // Step 3: Return pages to original parent before destroying fix panel
+    if (m_fixPanel) {
+        LOG_INF("OnUnpinButtonClicked: Returning pages to original parent", "FlatUIBar");
+        for (auto* page : m_pages) {
+            if (page) {
+                page->Reparent(this);
+                page->Hide();
+            }
+        }
+        
+        LOG_INF("OnUnpinButtonClicked: Destroying fix panel", "FlatUIBar");
+        m_fixPanel->Destroy();
+        m_fixPanel = nullptr;
+    }
+    
+    // Step 4: Create new float panel
+    if (!m_floatPanel) {
+        LOG_INF("OnUnpinButtonClicked: Creating new float panel", "FlatUIBar");
+        m_floatPanel = new FlatUIFloatPanel(this);
+        
+        // Bind pin button events from float panel
+        Bind(wxEVT_PIN_BUTTON_CLICKED, &FlatUIBar::OnPinButtonClicked, this);
+        
+        // Bind float panel dismiss event
+        Bind(wxEVT_FLOAT_PANEL_DISMISSED, &FlatUIBar::OnFloatPanelDismissed, this);
+    }
+    
     SetGlobalPinned(false);
+    
+    // Restore active page
+    m_activePage = currentActivePage;
     
     // Send the old compatible event for FlatFrame
     wxCommandEvent pinEvent(wxEVT_PIN_STATE_CHANGED, GetId());
@@ -367,6 +481,7 @@ void FlatUIBar::OnUnpinButtonClicked(wxCommandEvent& event)
     pinEvent.SetInt(0); // pinned = false
     GetParent()->GetEventHandler()->ProcessEvent(pinEvent);
     
+    LOG_INF("OnUnpinButtonClicked: Completed unpin operation", "FlatUIBar");
     event.Skip();
 }
 
@@ -452,14 +567,19 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
 {
     if (m_isGlobalPinned != pinned) {
         
+        LOG_INF("SetGlobalPinned: Changing from " + std::string(m_isGlobalPinned ? "pinned" : "unpinned") + 
+                " to " + std::string(pinned ? "pinned" : "unpinned"), "FlatUIBar");
+        
         if (!pinned) { // Transitioning to UNPINNED
             m_lastActivePageBeforeUnpin = m_activePage;
             m_activePage = wxNOT_FOUND; 
             m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+            
         } else { // Transitioning to PINNED
             // Ensure float panel is hidden when pinning
             HideFloatPanel();
             m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+            
             if (m_lastActivePageBeforeUnpin < m_pages.size()) { // Ensure index is valid
                 m_activePage = m_lastActivePageBeforeUnpin;
             } else if (!m_pages.empty()) {
@@ -471,10 +591,8 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
         
         m_isGlobalPinned = pinned;
         
-        // Update unpin button visibility (pin button is handled by float panel)
-        if (m_unpinButton) {
-            m_unpinButton->Show(pinned); // Show unpin button when pinned
-        }
+        // Update button visibility based on new state
+        UpdateButtonVisibility();
         
         // Apply pin state logic
         OnGlobalPinStateChanged(pinned);
@@ -512,45 +630,38 @@ void FlatUIBar::OnGlobalPinStateChanged(bool isPinned)
     }
 
     // Update layout and refresh
+    UpdateElementPositionsAndSizes(GetClientSize());
     InvalidateBestSize();
     wxWindow* parent = GetParent();
     if (parent) {
         parent->InvalidateBestSize();
         parent->Layout();
-        parent->Refresh();
     }
-    Layout();
     Refresh();
 }
 
 void FlatUIBar::ShowAllContent()
 {
-    LOG_INF("ShowAllContent: Showing all page content", "FlatUIBar");
+    LOG_INF("ShowAllContent: Showing all page content via FixPanel", "FlatUIBar");
     
-    // Show the active page if there is one
-    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* activePage = m_pages[m_activePage];
-        
-        LOG_INF("ShowAllContent: Active page found - " + activePage->GetLabel().ToStdString(), "FlatUIBar");
-        
-        // Always show the active page in pinned mode
-        if (!activePage->IsShown()) {
-            activePage->Show();
-            LOG_INF("ShowAllContent: Showed active page", "FlatUIBar");
+    // Show the fix panel and set active page
+    if (m_fixPanel) {
+        if (!m_fixPanel->IsShown()) {
+            m_fixPanel->Show();
+            LOG_INF("ShowAllContent: Showed FixPanel", "FlatUIBar");
         }
 
-        // Position and size the active page
-        wxSize barClientSize = GetClientSize();
-        int barStripHeight = GetBarHeight();
-        activePage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-        int pageHeight = barClientSize.GetHeight() - barStripHeight - m_barTopMargin;
-        if (pageHeight < 0) pageHeight = 0;
-        activePage->SetSize(wxSize(barClientSize.GetWidth(), pageHeight));
-        activePage->Layout();
-        activePage->UpdateLayout();
-        
-        LOG_INF("ShowAllContent: Positioned and sized active page", "FlatUIBar");
+        // Set active page in fix panel
+        if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
+            m_fixPanel->SetActivePage(m_activePage);
+            LOG_INF("ShowAllContent: Set active page in FixPanel - " + m_pages[m_activePage]->GetLabel().ToStdString(), "FlatUIBar");
+        }
+
+        LOG_INF("ShowAllContent: FixPanel shown, positioning will be handled by UpdateElementPositionsAndSizes", "FlatUIBar");
     }
+    
+    // Update button visibility after showing fix panel
+    UpdateButtonVisibility();
 
     // Clear temporarily shown page state since we're in pinned mode
     m_temporarilyShownPage = nullptr;
@@ -559,14 +670,12 @@ void FlatUIBar::ShowAllContent()
 
 void FlatUIBar::HideAllContentExceptBarSpace()
 {
-    LOG_INF("HideAllContentExceptBarSpace: Hiding all page content", "FlatUIBar");
+    LOG_INF("HideAllContentExceptBarSpace: Hiding all page content via FixPanel", "FlatUIBar");
     
-    // Hide all pages
-    for (auto& page : m_pages) {
-        if (page && page->IsShown()) {
-            LOG_INF("HideAllContentExceptBarSpace: Hiding page - " + page->GetLabel().ToStdString(), "FlatUIBar");
-            page->Hide();
-        }
+    // Hide the fix panel (which contains all pages)
+    if (m_fixPanel && m_fixPanel->IsShown()) {
+        m_fixPanel->Hide();
+        LOG_INF("HideAllContentExceptBarSpace: Hidden FixPanel", "FlatUIBar");
     }
 
     // Clear temporarily shown page state
@@ -586,12 +695,15 @@ void FlatUIBar::ShowPageInFloatPanel(FlatUIPage* page)
     wxWindow* frame = wxGetTopLevelParent(this);
     if (!frame) return;
 
-    // Calculate position and size as per requirements
-    // Position (0, 30) relative to the frame, converted to screen coordinates
-    wxPoint position = frame->ClientToScreen(wxPoint(2, 32)); 
+    // Calculate position and size to match FixPanel positioning
+    // Position (0, 30) relative to this bar, converted to screen coordinates
+    const int FLOAT_PANEL_Y = 30;
+    wxPoint position = this->ClientToScreen(wxPoint(0, FLOAT_PANEL_Y)); 
     
-    // Size: frame's width and fixed height of 60
-    wxSize size(frame->GetClientSize().GetWidth()-4, 60);
+    // Size: bar's width and calculated height based on page content
+    wxSize pageSize = page->GetBestSize();
+    int floatHeight = wxMax(60, pageSize.GetHeight()); // Minimum 60px height
+    wxSize size(GetClientSize().GetWidth(), floatHeight);
 
     if (m_floatPanel->IsShown()) {
         // Float panel is already shown, just update the content
@@ -632,5 +744,32 @@ void FlatUIBar::OnFloatPanelDismissed(wxCommandEvent& event)
     m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
     Refresh(); // Update tab visual state
     event.Skip();
+}
+
+void FlatUIBar::UpdateButtonVisibility()
+{
+    LOG_INF("UpdateButtonVisibility: Current state is " + std::string(m_isGlobalPinned ? "pinned" : "unpinned"), "FlatUIBar");
+    
+    // Unpin button logic: Show only when ribbon is pinned and fix panel is shown
+    if (m_fixPanel && m_unpinButton) {
+        bool shouldShowUnpin = m_isGlobalPinned && m_fixPanel->IsShown();
+        m_fixPanel->ShowUnpinButton(shouldShowUnpin);
+        LOG_INF("UpdateButtonVisibility: " + std::string(shouldShowUnpin ? "Showed" : "Hidden") + " unpin button in FixPanel", "FlatUIBar");
+    }
+    
+    // Pin button logic: Handled by float panel, should be hidden when ribbon is pinned
+    // When ribbon is unpinned, pin button will be shown by float panel when it's displayed
+    if (m_floatPanel && m_floatPanel->IsShown()) {
+        // Float panel is shown, pin button should be visible (handled by float panel)
+        LOG_INF("UpdateButtonVisibility: Float panel is shown, pin button managed by float panel", "FlatUIBar");
+    } else {
+        // Float panel is hidden, ensure pin button is not visible
+        LOG_INF("UpdateButtonVisibility: Float panel is hidden, pin button should be hidden", "FlatUIBar");
+    }
+    
+    // Refresh to update visual state, positioning is handled by UpdateElementPositionsAndSizes
+    if (IsShown()) {
+        Refresh();
+    }
 }
 

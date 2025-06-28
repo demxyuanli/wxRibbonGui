@@ -378,63 +378,52 @@ void FlatUIBar::UpdateElementPositionsAndSizes(const wxSize& barClientSz)
         }
     }
 
-    // --- New, Corrected Page Handling Logic ---
-    for (size_t i = 0; i < m_pages.size(); ++i) {
-        if (!m_pages[i]) {
-            continue;
-        }
+    // --- FixPanel Handling Logic ---
+    if (m_fixPanel) {
+        bool shouldShowFixPanel = false;
 
-        FlatUIPage* currentPage = m_pages[i];
-        bool shouldShow = false;
-
-        // Determine if this specific page should be visible
+        // Determine if FixPanel should be visible
         if (m_isGlobalPinned) {
-            // Pinned state: only the active page is shown
-            shouldShow = (i == m_activePage);
+            // Pinned state: FixPanel should be shown
+            shouldShowFixPanel = true;
         } else {
-            // Unpinned state: only the temporarily designated page is shown
-            shouldShow = (currentPage == m_temporarilyShownPage);
+            // Unpinned state: FixPanel should be hidden (content shown in float panel instead)
+            shouldShowFixPanel = false;
         }
 
-        if (shouldShow) {
-            // Position and size the page that needs to be shown
-            currentPage->SetPosition(wxPoint(0, barStripHeight + m_barTopMargin));
-            int pageHeight = barClientSz.GetHeight() - barStripHeight - m_barTopMargin;
-            if (pageHeight < 0) {
-                pageHeight = 0;
+        if (shouldShowFixPanel) {
+            // Position FixPanel at fixed location (0, 30) - always below BarSpace
+            const int FIXED_PANEL_Y = 30;
+            m_fixPanel->SetPosition(wxPoint(0, FIXED_PANEL_Y));
+            
+            // Calculate appropriate height for FixPanel
+            int fixPanelHeight = barClientSz.GetHeight() - FIXED_PANEL_Y;
+            if (fixPanelHeight < 0) {
+                fixPanelHeight = 0;
             }
-            currentPage->SetSize(barClientSz.GetWidth(), pageHeight);
-            currentPage->SetActive(true);
+            m_fixPanel->SetSize(barClientSz.GetWidth(), fixPanelHeight);
 
-            if (!currentPage->IsShown()) {
-                currentPage->Show();
-                currentPage->UpdateLayout();
+            if (!m_fixPanel->IsShown()) {
+                m_fixPanel->Show();
+                LOG_INF("UpdateElementPositionsAndSizes: Showed FixPanel at position (0, 30)", "FlatUIBar");
             }
+
+            // Set active page in FixPanel if in pinned state
+            if (m_activePage < m_pages.size()) {
+                m_fixPanel->SetActivePage(m_activePage);
+            }
+
+            m_fixPanel->UpdateLayout();
         } else {
-            // Hide all other pages
-            if (currentPage->IsShown()) {
-                currentPage->Hide();
+            // Hide FixPanel in unpinned state
+            if (m_fixPanel->IsShown()) {
+                m_fixPanel->Hide();
+                LOG_INF("UpdateElementPositionsAndSizes: Hidden FixPanel", "FlatUIBar");
             }
-            currentPage->SetActive(false);
         }
     }
 
-    if (m_activePage < m_pages.size() && m_pages[m_activePage]) {
-        FlatUIPage* currentPage = m_pages[m_activePage];
-        if (currentPage->IsShown()) {
-            currentPage->UpdateLayout();
-        }
-    }
-
-    // Position Unpin Button at the right-bottom corner of the entire ribbon
-    if (m_unpinButton && m_unpinButton->IsShown()) {
-        wxSize unpinSize = m_unpinButton->GetBestSize();
-        // Position at the bottom-right corner of the entire ribbon area
-        int unpinX = barClientSz.GetWidth() - unpinSize.GetWidth() - barPadding;
-        int unpinY = barClientSz.GetHeight() - unpinSize.GetHeight() - barPadding;
-        m_unpinButton->SetPosition(wxPoint(unpinX, unpinY));
-        m_unpinButton->SetSize(unpinSize);
-    }
+    // Unpin button is now positioned by FixPanel, no longer positioned here
 
     Refresh(); // Re-draw the bar itself
 }

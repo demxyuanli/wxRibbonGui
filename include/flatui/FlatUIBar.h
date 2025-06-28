@@ -12,6 +12,7 @@
 #include "flatui/FlatUIUnpinButton.h"
 // FlatUIPinButton is now handled by FlatUIFloatPanel
 #include "flatui/FlatUIFloatPanel.h"
+#include "flatui/FlatUIFixPanel.h"
 #include <wx/wx.h>
 #include <string> // Keep if std::string is used, though not visible here
 #include <wx/artprov.h>
@@ -26,6 +27,7 @@ class FlatUIProfileSpace;
 class FlatUISystemButtons;
 class FlatUISpacerControl;  
 class FlatUIFloatPanel;
+class FlatUIFixPanel;
 
 // Custom events
 wxDECLARE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent); // Backward compatibility with FlatFrame
@@ -175,6 +177,9 @@ public:
     // Helper method to determine if pages should be visible
     bool ShouldShowPages() const;
 
+    // Fixed panel for pinned state
+    FlatUIFixPanel* GetFixPanel() const { return m_fixPanel; }
+    
     // Float panel for unpinned state
     FlatUIFloatPanel* m_floatPanel;
     
@@ -182,6 +187,9 @@ public:
     void ShowPageInFloatPanel(FlatUIPage* page);
     void HideFloatPanel();
     void OnFloatPanelDismissed(wxCommandEvent& event);
+
+    // Button visibility management
+    void UpdateButtonVisibility();
 
 private:
 
@@ -224,6 +232,9 @@ private:
     FlatUISystemButtons* m_systemButtons;
     // Pin button is now handled by FlatUIFloatPanel
     FlatUIUnpinButton* m_unpinButton;
+    
+    // Fixed panel for containing pages in pinned state
+    FlatUIFixPanel* m_fixPanel;
     
 
     FlatUISpacerControl* m_tabFunctionSpacer;    
