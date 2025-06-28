@@ -10,7 +10,9 @@
 
 FlatUIBarLayoutManager::FlatUIBarLayoutManager(FlatUIBar* bar)
     : m_bar(bar),
-      m_layoutValid(false)
+      m_layoutValid(false),
+      m_layoutDirty(false),
+      m_refreshPending(false)
 {
     LOG_INF("FlatUIBarLayoutManager initialized", "LayoutManager");
 }
@@ -27,6 +29,7 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
 
     // Cache the new size
     m_lastBarSize = barClientSize;
+    m_layoutDirty = false;
     
     // Get all child components from the bar
     FlatUIHomeSpace* homeSpace = m_bar->GetHomeSpace();
@@ -57,6 +60,12 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
     int barBottomMargin = m_bar->GetBarBottomMargin();
     int innerHeight = barStripHeight - barTopMargin - barBottomMargin;
     int elementY = barTopMargin;
+    
+    // Debug: Log bar measurements
+    LOG_INF("Bar measurements: barStripHeight=" + std::to_string(barStripHeight) + 
+           ", barTopMargin=" + std::to_string(barTopMargin) + 
+           ", barBottomMargin=" + std::to_string(barBottomMargin) + 
+           ", innerHeight=" + std::to_string(innerHeight), "LayoutManager");
 
     // Home Space (Leftmost)
     if (homeSpace && homeSpace->IsShown()) {
@@ -300,19 +309,53 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
         bool shouldShowFixPanel = m_bar->GetStateManager()->IsPinned();
         
         if (shouldShowFixPanel) {
-            // Position FixPanel below the bar
-            const int FIXED_PANEL_Y = barStripHeight;
-            fixPanel->SetPosition(wxPoint(0, FIXED_PANEL_Y));
+            // Calculate the correct Y position for FixPanel
+            // Use the bar strip height + margins for proper positioning 
+            int totalBarHeight = barStripHeight + barBottomMargin;
+            int FIXED_PANEL_Y = totalBarHeight;
             
-            int fixPanelHeight = barClientSize.GetHeight() - FIXED_PANEL_Y;
-            if (fixPanelHeight < 0) {
-                fixPanelHeight = 0;
+            // Safety check: Ensure we have a minimum Y position
+            if (FIXED_PANEL_Y <= 0) {
+                FIXED_PANEL_Y = 31; // Standard fallback based on common bar height
+                LOG_INF("WARNING: Calculated bar height is " + std::to_string(totalBarHeight) + 
+                       ", using fallback Y position " + std::to_string(FIXED_PANEL_Y), "LayoutManager");
             }
+            
+            // Calculate proposed FixPanel height
+            int fixPanelHeight = barClientSize.GetHeight() - FIXED_PANEL_Y;
+            
+            // Minimum viable height check to prevent invisible or overlapping panels
+            const int MIN_FIXPANEL_HEIGHT = 20; // Must be at least 20px to be useful
+            if (fixPanelHeight < MIN_FIXPANEL_HEIGHT) {
+                LOG_WRN("FixPanel height too small (" + std::to_string(fixPanelHeight) + 
+                       "), deferring positioning to prevent barspace overlap", "LayoutManager");
+                
+                // Schedule a delayed layout update to retry when window size is proper
+                m_bar->CallAfter([this]() {
+                    if (m_bar && m_bar->GetSize().GetHeight() > 50) { // Minimum reasonable window height
+                        UpdateLayout(m_bar->GetSize());
+                    }
+                });
+                return; // Don't position with invalid height
+            }
+            
+            // Debug logging
+            LOG_INF("FixPanel positioning: barStripHeight=" + std::to_string(barStripHeight) + 
+                   ", barTopMargin=" + std::to_string(barTopMargin) + 
+                   ", barBottomMargin=" + std::to_string(barBottomMargin) + 
+                   ", totalBarHeight=" + std::to_string(totalBarHeight) + 
+                   ", FIXED_PANEL_Y=" + std::to_string(FIXED_PANEL_Y), "LayoutManager");
+            
+            fixPanel->SetPosition(wxPoint(0, FIXED_PANEL_Y));
             fixPanel->SetSize(barClientSize.GetWidth(), fixPanelHeight);
+
+            LOG_INF("Positioned FixPanel at (0, " + std::to_string(FIXED_PANEL_Y) + 
+                   ") with size (" + std::to_string(barClientSize.GetWidth()) + 
+                   ", " + std::to_string(fixPanelHeight) + ")", "LayoutManager");
 
             if (!fixPanel->IsShown()) {
                 fixPanel->Show();
-                LOG_INF("Showed FixPanel at position (0, " + std::to_string(FIXED_PANEL_Y) + ")", "LayoutManager");
+                LOG_INF("Showed FixPanel", "LayoutManager");
             }
 
             // Set active page in FixPanel
@@ -332,10 +375,26 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
     LOG_INF("Layout update completed", "LayoutManager");
     m_layoutValid = true;
     
-    // Force refresh of the bar
-    if (m_bar->IsShown()) {
-        m_bar->Refresh();
+    // Only use deferred refresh if not called during state transition
+    // During state transitions, the calling code manages refresh timing
+    if (m_bar && !m_bar->IsFrozen()) {
+        // Only refresh if the window is not frozen (indicating no ongoing state transition)
+        DeferredRefresh();
+    } else {
+        LOG_INF("Skipping DeferredRefresh during state transition (window frozen)", "LayoutManager");
     }
+}
+
+void FlatUIBarLayoutManager::UpdateLayoutIfNeeded(const wxSize& barClientSize)
+{
+    if (m_layoutDirty || barClientSize != m_lastBarSize || !m_layoutValid) {
+        UpdateLayout(barClientSize);
+    }
+}
+
+void FlatUIBarLayoutManager::MarkLayoutDirty()
+{
+    m_layoutDirty = true;
 }
 
 void FlatUIBarLayoutManager::ForceRefresh()
@@ -343,6 +402,19 @@ void FlatUIBarLayoutManager::ForceRefresh()
     if (m_bar && m_bar->IsShown()) {
         m_bar->Refresh();
         m_bar->Update();
+    }
+}
+
+void FlatUIBarLayoutManager::DeferredRefresh()
+{
+    if (!m_refreshPending && m_bar && m_bar->IsShown()) {
+        m_refreshPending = true;
+        m_bar->CallAfter([this]() {
+            if (m_refreshPending && m_bar && m_bar->IsShown()) {
+                m_bar->Refresh();
+                m_refreshPending = false;
+            }
+        });
     }
 }
 

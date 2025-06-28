@@ -41,6 +41,9 @@ private:
     wxWindow* m_parentWindow;
     FlatUIPinButton* m_pinButton;
     
+    // Pin button update optimization
+    bool m_pinButtonUpdatePending;
+    
     // Auto-hide functionality
     wxTimer m_autoHideTimer;
     static const int AUTO_HIDE_DELAY_MS = 1000; // Increased to 1 second for better UX
@@ -71,6 +74,9 @@ private:
     void CheckAutoHide();
     void DrawCustomBorder(wxDC& dc);
     void DrawShadow(wxDC& dc);
+    void SchedulePinButtonUpdate();
+    void UpdatePinButtonPosition();
+    void EnsurePinButtonVisible();
     
     wxDECLARE_EVENT_TABLE();
 };

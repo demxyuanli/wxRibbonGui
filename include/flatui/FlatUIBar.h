@@ -234,11 +234,6 @@ private:
     void HideAllContentExceptBarSpace();
     void UpdateButtonVisibility();
 
-    // Manager access helpers (private)
-    FlatUIPageManager* GetPageManager() const { return m_pageManager.get(); }
-    FlatUIBarLayoutManager* GetLayoutManager() const { return m_layoutManager.get(); }
-    FlatUIBarEventDispatcher* GetEventDispatcher() const { return m_eventDispatcher.get(); }
-
     // --- Child Component Controls ---
     FlatUIHomeSpace* m_homeSpace;
     // TabSpace is currently handled directly by FlatUIBar's m_pages and PaintTabs

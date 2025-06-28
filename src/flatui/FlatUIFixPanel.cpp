@@ -63,6 +63,14 @@ void FlatUIFixPanel::AddPage(FlatUIPage* page)
         return;
     }
 
+    // Check if page already exists to avoid duplicates
+    for (auto* existingPage : m_pages) {
+        if (existingPage == page) {
+            LOG_DBG("Page '" + page->GetLabel().ToStdString() + "' already exists in FixPanel, skipping", "FlatUIFixPanel");
+            return;
+        }
+    }
+
     // Reparent the page to this fix panel
     page->Reparent(this);
     m_pages.push_back(page);
@@ -85,24 +93,44 @@ void FlatUIFixPanel::SetActivePage(size_t pageIndex)
         return;
     }
 
-    // Hide current active page
-    if (m_activePageIndex < m_pages.size() && m_pages[m_activePageIndex]) {
-        m_pages[m_activePageIndex]->SetActive(false);
-        m_pages[m_activePageIndex]->Hide();
+    // Quick exit if already active
+    if (m_activePageIndex == pageIndex && m_activePageIndex < m_pages.size() && 
+        m_pages[m_activePageIndex] && m_pages[m_activePageIndex]->IsShown()) {
+        return;
     }
 
-    // Show new active page
-    m_activePageIndex = pageIndex;
-    FlatUIPage* newActivePage = m_pages[m_activePageIndex];
-    if (newActivePage) {
-        newActivePage->SetActive(true);
-        newActivePage->Show();
-        PositionActivePage();
-        
-        LOG_INF("Set active page to '" + newActivePage->GetLabel().ToStdString() + "'", "FlatUIFixPanel");
-    }
+    // Batch all page changes to minimize visual updates
+    Freeze();
+    
+    try {
+        // Hide current active page
+        if (m_activePageIndex < m_pages.size() && m_pages[m_activePageIndex]) {
+            m_pages[m_activePageIndex]->SetActive(false);
+            m_pages[m_activePageIndex]->Hide();
+        }
 
-    UpdateLayout();
+        // Show new active page
+        m_activePageIndex = pageIndex;
+        FlatUIPage* newActivePage = m_pages[m_activePageIndex];
+        if (newActivePage) {
+            newActivePage->SetActive(true);
+            newActivePage->Show();
+            PositionActivePage();
+            
+            LOG_INF("Set active page to '" + newActivePage->GetLabel().ToStdString() + "'", "FlatUIFixPanel");
+        }
+    }
+    catch (...) {
+        Thaw();
+        throw;
+    }
+    
+    Thaw();
+    
+    // Defer layout update to avoid multiple calls
+    CallAfter([this]() {
+        UpdateLayout();
+    });
 }
 
 void FlatUIFixPanel::SetActivePage(FlatUIPage* page)
@@ -141,13 +169,25 @@ void FlatUIFixPanel::UpdateLayout()
         return;
     }
 
+    // Only update if there are actual changes needed
+    FlatUIPage* activePage = GetActivePage();
+    if (!activePage) {
+        return;
+    }
+
     Freeze();
     
     PositionActivePage();
     PositionUnpinButton();
     
     Thaw();
-    Refresh(false);
+    
+    // Use deferred refresh to batch multiple layout updates
+    CallAfter([this]() {
+        if (IsShown()) {
+            Refresh(false);
+        }
+    });
 }
 
 void FlatUIFixPanel::RecalculateSize()
@@ -291,4 +331,62 @@ void FlatUIFixPanel::HideAllPages()
             page->Hide();
         }
     }
+}
+
+void FlatUIFixPanel::ClearContent()
+{
+    LOG_INF("Clearing FixPanel content", "FlatUIFixPanel");
+    
+    Freeze();
+    
+    // Hide and deactivate all pages
+    for (auto* page : m_pages) {
+        if (page) {
+            page->SetActive(false);
+            page->Hide();
+            // Don't destroy the page, just reparent it back to its original parent if needed
+        }
+    }
+    
+    // Clear the pages vector (pages are owned by their original creators)
+    m_pages.clear();
+    
+    // Reset active page index
+    m_activePageIndex = wxNOT_FOUND;
+    
+    // Hide unpin button
+    if (m_unpinButton) {
+        m_unpinButton->Hide();
+    }
+    
+    Thaw();
+    
+    LOG_INF("FixPanel content cleared", "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::ResetState()
+{
+    LOG_INF("Resetting FixPanel state", "FlatUIFixPanel");
+    
+    Freeze();
+    
+    // Hide all pages and deactivate them
+    for (auto* page : m_pages) {
+        if (page) {
+            page->SetActive(false);
+            page->Hide();
+        }
+    }
+    
+    // Reset active page index but keep pages
+    m_activePageIndex = wxNOT_FOUND;
+    
+    // Hide unpin button
+    if (m_unpinButton) {
+        m_unpinButton->Hide();
+    }
+    
+    Thaw();
+    
+    LOG_INF("FixPanel state reset", "FlatUIFixPanel");
 } 

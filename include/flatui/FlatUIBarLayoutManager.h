@@ -31,7 +31,10 @@ public:
     
     // Main layout methods
     void UpdateLayout(const wxSize& barClientSize);
+    void UpdateLayoutIfNeeded(const wxSize& barClientSize);
+    void MarkLayoutDirty();
     void ForceRefresh();
+    void DeferredRefresh();
     
     // Element positioning
     void PositionHomeSpace(int& currentX, int elementY, int innerHeight);
@@ -63,6 +66,8 @@ private:
     wxRect m_tabAreaRect;
     wxSize m_lastBarSize;
     bool m_layoutValid;
+    bool m_layoutDirty;
+    bool m_refreshPending;
     
     // Element info cache
     LayoutElementInfo m_homeSpaceInfo;

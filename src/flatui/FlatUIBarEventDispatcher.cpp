@@ -63,9 +63,8 @@ void FlatUIBarEventDispatcher::HandlePinButtonClick()
     TransitionToPinned();
     BroadcastStateChange(true);
 
-    // Layout update is handled by OnGlobalPinStateChanged in TransitionToPinned
-    // Only refresh display to ensure visual state is updated
-    RefreshDisplayAfterEvent();
+    // Layout update and refresh are handled by OnGlobalPinStateChanged in TransitionToPinned
+    // No additional refresh needed to prevent flickering
     EndEventProcessing();
 }
 
@@ -82,9 +81,8 @@ void FlatUIBarEventDispatcher::HandleUnpinButtonClick()
     TransitionToUnpinned();
     BroadcastStateChange(false);
 
-    // Layout update is handled by OnGlobalPinStateChanged in TransitionToUnpinned
-    // Only refresh display to ensure visual state is updated
-    RefreshDisplayAfterEvent();
+    // Layout update and refresh are handled by OnGlobalPinStateChanged in TransitionToUnpinned
+    // No additional refresh needed to prevent flickering
     EndEventProcessing();
 }
 
@@ -147,9 +145,18 @@ void FlatUIBarEventDispatcher::ProcessPinnedTabClick(size_t tabIndex)
         return;
     }
     
-    m_stateManager->SetActivePage(tabIndex);
-    m_pageManager->SetAllPagesInactive();
-    m_pageManager->SetPageActive(tabIndex, true);
+    // Use FlatUIBar's SetActivePage method to ensure proper page switching
+    // This will handle both state management and FixPanel page display
+    if (m_bar) {
+        m_bar->SetActivePage(tabIndex);
+        LOG_INF("Called FlatUIBar::SetActivePage for pinned tab click: " + std::to_string(tabIndex), "EventDispatcher");
+    } else {
+        // Fallback if bar is not available
+        m_stateManager->SetActivePage(tabIndex);
+        m_pageManager->SetAllPagesInactive();
+        m_pageManager->SetPageActive(tabIndex, true);
+        LOG_WRN("Used fallback logic for pinned tab click: " + std::to_string(tabIndex), "EventDispatcher");
+    }
     
     LOG_INF("Processed pinned tab click for index: " + std::to_string(tabIndex), "EventDispatcher");
 }
@@ -221,14 +228,14 @@ void FlatUIBarEventDispatcher::TransitionToUnpinned()
 void FlatUIBarEventDispatcher::UpdateLayoutAfterEvent()
 {
     if (m_layoutManager && m_bar) {
-        m_layoutManager->UpdateLayout(m_bar->GetClientSize());
+        m_layoutManager->UpdateLayoutIfNeeded(m_bar->GetClientSize());
     }
 }
 
 void FlatUIBarEventDispatcher::RefreshDisplayAfterEvent()
 {
     if (m_layoutManager) {
-        m_layoutManager->ForceRefresh();
+        m_layoutManager->DeferredRefresh();
     }
 }
 

@@ -329,18 +329,26 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
         return;
     }
 
-    // Check if already active to avoid unnecessary work
+    // Enhanced check to avoid unnecessary work - compare both state and visual state
     if (m_stateManager->GetActivePage() == pageIndex) {
         if (m_stateManager->IsPinned() && m_fixPanel && m_fixPanel->GetActivePage() == page) {
+            LOG_INF("Page " + std::to_string(pageIndex) + " already active and displayed, skipping update", "FlatUIBar");
             return; // Already active and properly displayed
+        }
+        if (!m_stateManager->IsPinned() && m_stateManager->GetActiveFloatingPage() == pageIndex) {
+            LOG_INF("Floating page " + std::to_string(pageIndex) + " already active, skipping update", "FlatUIBar");
+            return; // Already active floating page
         }
     }
 
-    // Use state manager to handle the page change
+    // Batch all updates to minimize redraws
+    bool needsLayout = false;
     size_t oldPageIndex = m_stateManager->GetActivePage();
+    
+    // Use state manager to handle the page change
     m_stateManager->SetActivePage(pageIndex);
 
-    // Update page active states
+    // Update page active states efficiently
     m_pageManager->SetAllPagesInactive();
     m_pageManager->SetPageActive(pageIndex, true);
 
@@ -348,13 +356,25 @@ void FlatUIBar::SetActivePage(size_t pageIndex)
     if (m_stateManager->IsPinned() && m_fixPanel) {
         m_fixPanel->SetActivePage(pageIndex);
         m_temporarilyShownPage = nullptr;
-        m_layoutManager->UpdateLayout(GetClientSize());
+        needsLayout = true;
+    }
+    
+    // Defer layout and refresh to avoid multiple updates
+    if (needsLayout) {
+        CallAfter([this]() {
+            m_layoutManager->UpdateLayout(GetClientSize());
+            Refresh();
+        });
+    } else {
+        // For unpinned state, just refresh tabs
+        CallAfter([this]() {
+            Refresh();
+        });
     }
     
     // Notify event dispatcher about the change
     m_eventDispatcher->BroadcastPageChange(oldPageIndex, pageIndex);
     
-    Refresh();
     LOG_INF("Set active page to '" + page->GetLabel().ToStdString() + "' (index " + std::to_string(pageIndex) + ")", "FlatUIBar");
 }
 
@@ -521,14 +541,9 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
         m_stateManager->TransitionTo(FlatUIBarStateManager::BarState::UNPINNED);
     }
     
-    // Update UI based on new state
-    UpdateButtonVisibility();
+    // OnGlobalPinStateChanged handles all UI updates, layout, and button visibility
+    // Don't call UpdateButtonVisibility() separately to avoid duplicate refresh
     OnGlobalPinStateChanged(pinned);
-    
-    // Update layout
-    if (m_layoutManager) {
-        m_layoutManager->UpdateLayout(GetClientSize());
-    }
     
     LOG_INF("Global pin state changed to: " + std::string(pinned ? "pinned" : "unpinned"), "FlatUIBar");
 }
@@ -554,34 +569,95 @@ void FlatUIBar::OnGlobalPinStateChanged(bool isPinned)
 {
     LOG_INF("OnGlobalPinStateChanged called with isPinned: " + std::string(isPinned ? "true" : "false"), "FlatUIBar");
 
-    if (isPinned) {
-        // Pinned state: Show all content including active page
-        ShowAllContent();
-        LOG_INF("Switched to pinned state - showing all content", "FlatUIBar");
-    }
-    else {
-        // Unpinned state: Hide all content except bar space (tabs area)
-        HideAllContentExceptBarSpace();
-        LOG_INF("Switched to unpinned state - hiding all content except bar space", "FlatUIBar");
-    }
-
-    // Update layout and refresh
-    m_layoutManager->UpdateLayout(GetClientSize());
-    InvalidateBestSize();
+    // Enhanced freezing to prevent flickering during panel switching
+    // Freeze both this window and parent to prevent any intermediate redraws
+    Freeze();
     wxWindow* parent = GetParent();
     if (parent) {
-        parent->InvalidateBestSize();
-        parent->Layout();
+        parent->Freeze();
     }
-    Refresh();
+    
+    try {
+        if (isPinned) {
+            // Pinned state: Show all content including active page
+            ShowAllContent();
+            LOG_INF("Switched to pinned state - showing all content", "FlatUIBar");
+        }
+        else {
+            // Unpinned state: Hide all content except bar space (tabs area)
+            HideAllContentExceptBarSpace();
+            LOG_INF("Switched to unpinned state - hiding all content except bar space", "FlatUIBar");
+        }
+
+        // Update layout only once after all changes, without immediate refresh
+        wxSize clientSize = GetClientSize();
+        LOG_INF("OnGlobalPinStateChanged: Calling UpdateLayout with size (" + 
+               std::to_string(clientSize.GetWidth()) + ", " + 
+               std::to_string(clientSize.GetHeight()) + ")", "FlatUIBar");
+        
+        m_layoutManager->UpdateLayout(clientSize);
+        
+        // Verify FixPanel position after layout
+        if (m_fixPanel && m_fixPanel->IsShown()) {
+            wxPoint fixPanelPos = m_fixPanel->GetPosition();
+            wxSize fixPanelSize = m_fixPanel->GetSize();
+            LOG_INF("OnGlobalPinStateChanged: FixPanel final position (" + 
+                   std::to_string(fixPanelPos.x) + ", " + std::to_string(fixPanelPos.y) + 
+                   ") size (" + std::to_string(fixPanelSize.GetWidth()) + ", " + 
+                   std::to_string(fixPanelSize.GetHeight()) + ")", "FlatUIBar");
+        }
+        
+        // Update size info without forcing immediate layout
+        InvalidateBestSize();
+        
+        if (parent) {
+            parent->InvalidateBestSize();
+            // Don't call Layout() immediately - let it happen naturally
+        }
+    }
+    catch (...) {
+        // Ensure both Thaw calls happen even if an exception occurs
+        if (parent) {
+            parent->Thaw();
+        }
+        Thaw();
+        throw;
+    }
+    
+    // Thaw parent first, then this window, then do a single refresh
+    if (parent) {
+        parent->Thaw();
+    }
+    Thaw();
+    
+    // Single deferred refresh to avoid flickering
+    CallAfter([this]() {
+        if (IsShown()) {
+            Refresh();
+            // Trigger parent layout only after our refresh is done
+            wxWindow* parent = GetParent();
+            if (parent) {
+                parent->Layout();
+            }
+        }
+    });
 }
 
 void FlatUIBar::ShowAllContent()
 {
     LOG_INF("ShowAllContent: Showing all page content via FixPanel", "FlatUIBar");
     
-    // Show the fix panel and set active page
+    // Show the fix panel and rebuild its content
     if (m_fixPanel) {
+        // Re-add all pages to FixPanel to ensure clean state
+        for (size_t i = 0; i < m_pageManager->GetPageCount(); ++i) {
+            FlatUIPage* page = m_pageManager->GetPage(i);
+            if (page) {
+                m_fixPanel->AddPage(page);
+                LOG_INF("ShowAllContent: Re-added page '" + page->GetLabel().ToStdString() + "' to FixPanel", "FlatUIBar");
+            }
+        }
+        
         if (!m_fixPanel->IsShown()) {
             m_fixPanel->Show();
             LOG_INF("ShowAllContent: Showed FixPanel", "FlatUIBar");
@@ -594,11 +670,9 @@ void FlatUIBar::ShowAllContent()
             m_fixPanel->SetActivePage(activePage);
             LOG_INF("ShowAllContent: Set active page in FixPanel - " + page->GetLabel().ToStdString(), "FlatUIBar");
         }
-
-        LOG_INF("ShowAllContent: FixPanel shown, positioning will be handled by UpdateElementPositionsAndSizes", "FlatUIBar");
     }
     
-    // Update button visibility after showing fix panel
+    // Update button visibility without causing refresh (caller handles refresh timing)
     UpdateButtonVisibility();
 
     // Clear temporarily shown page state since we're in pinned mode
@@ -610,10 +684,16 @@ void FlatUIBar::HideAllContentExceptBarSpace()
 {
     LOG_INF("HideAllContentExceptBarSpace: Hiding all page content via FixPanel", "FlatUIBar");
     
-    // Hide the fix panel (which contains all pages)
-    if (m_fixPanel && m_fixPanel->IsShown()) {
-        m_fixPanel->Hide();
-        LOG_INF("HideAllContentExceptBarSpace: Hidden FixPanel", "FlatUIBar");
+    // Clear FixPanel content and hide it to prevent display artifacts during state transitions
+    if (m_fixPanel) {
+        // First clear the content to reset all page states and unpin button
+        m_fixPanel->ClearContent();
+        
+        // Then hide the panel
+        if (m_fixPanel->IsShown()) {
+            m_fixPanel->Hide();
+            LOG_INF("HideAllContentExceptBarSpace: Hidden FixPanel", "FlatUIBar");
+        }
     }
 
     // Clear temporarily shown page state
@@ -705,10 +785,8 @@ void FlatUIBar::UpdateButtonVisibility()
         LOG_INF("UpdateButtonVisibility: Float panel is hidden, pin button should be hidden", "FlatUIBar");
     }
     
-    // Refresh to update visual state, positioning is handled by UpdateElementPositionsAndSizes
-    if (IsShown()) {
-        Refresh();
-    }
+    // NOTE: Don't call Refresh() here - let the calling code handle refresh timing
+    // This prevents redundant refreshes during state transitions
 }
 
 void FlatUIBar::HideTemporarilyShownPage()

@@ -32,6 +32,10 @@ public:
     void ShowUnpinButton(bool show = true);
     void HideUnpinButton() { ShowUnpinButton(false); }
     
+    // Content management
+    void ClearContent(); // Clear all pages and reset state
+    void ResetState(); // Reset internal state without removing pages
+    
     // Override to provide best size
     virtual wxSize DoGetBestSize() const override;
 
