@@ -39,15 +39,15 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
     m_sizer = new wxBoxSizer(wxVERTICAL);
     m_contentPanel->SetSizer(m_sizer);
     
-    // Create pin button for the float panel - make it a direct child of the frame
-    m_pinButton = new FlatUIPinButton(this, wxID_ANY);
+    // Create pin button for the float panel - make it a child of the content panel to avoid overlap
+    m_pinButton = new FlatUIPinButton(m_contentPanel, wxID_ANY);
     m_pinButton->SetName("FloatPanelPinButton");
     m_pinButton->Show(false); // Initially hidden, will be shown when float panel is displayed
     // Ensure pin button has proper layering and visibility settings
     m_pinButton->SetCanFocus(false); // Prevent focus issues
-    // Ensure pin button is always on top
+    // Ensure pin button is always on top within its parent
     m_pinButton->SetWindowStyleFlag(m_pinButton->GetWindowStyleFlag() | wxSTAY_ON_TOP);
-    LOG_INF("Created pin button for float panel, initially hidden", "FlatUIFloatPanel");
+    LOG_INF("Created pin button for float panel as child of content panel, initially hidden", "FlatUIFloatPanel");
     
     // Setup appearance and event handlers
     SetupAppearance();
@@ -127,6 +127,9 @@ void FlatUIFloatPanel::SetPageContent(FlatUIPage* page)
         Layout();
         
         LOG_INF("Set page content: " + m_currentPage->GetLabel().ToStdString(), "FlatUIFloatPanel");
+        
+        m_pinButton->Show(true);
+        m_pinButton->Raise();
     }
 }
 
@@ -172,35 +175,55 @@ void FlatUIFloatPanel::ShowAt(const wxPoint& position, const wxSize& size)
     // Show the panel itself before its children
     Show(true);
     
-    // Position and show pin button AFTER showing the panel
+    // Update page layout first
+    if (m_currentPage) {
+        m_currentPage->UpdateLayout();
+    }
+    
+    // Force a complete layout and refresh cycle first
+    Layout();
+    Refresh();
+    Update();
+    
+    // Position and show pin button AFTER all layout operations are complete
     if (m_pinButton) {
         wxSize pinSize = m_pinButton->GetBestSize();
         int margin = 4; // Small margin from edges
         
-        int pinX = wxMax(0, panelSize.GetWidth() - pinSize.GetWidth() - margin);
-        int pinY = wxMax(0, panelSize.GetHeight() - pinSize.GetHeight() - margin);
+        // Since pin button is now a child of content panel, use content panel size
+        wxSize contentSize = m_contentPanel->GetSize();
+        int pinX = wxMax(0, contentSize.GetWidth() - pinSize.GetWidth() - margin);
+        int pinY = wxMax(0, contentSize.GetHeight() - pinSize.GetHeight() - margin);
         
         m_pinButton->SetPosition(wxPoint(pinX, pinY));
         m_pinButton->SetSize(pinSize);
         
-        // Final explicit show and raise
+        // Force pin button to be always visible and on top - AFTER layout
         m_pinButton->Show(true);
         m_pinButton->Enable(true);
         m_pinButton->Raise();
-    }
-    
-    // Update page layout
-    if (m_currentPage) {
-        m_currentPage->UpdateLayout();
+        
+        // Force refresh to ensure pin button is rendered
+        m_pinButton->Update();
+        m_pinButton->Refresh();
+        
+        LOG_INF("Pin button positioned and shown at (" + 
+               std::to_string(pinX) + ", " + std::to_string(pinY) + ") relative to content panel AFTER layout", "FlatUIFloatPanel");
     }
     
     // Start auto-hide monitoring
     StartAutoHideTimer();
     
-    // Force a complete layout and refresh cycle to ensure everything is visible
-    Layout();
-    Refresh();
-    Update();
+    // Use CallAfter to ensure pin button is shown after all events are processed
+    CallAfter([this]() {
+        if (m_pinButton && IsShown()) {
+            m_pinButton->Show(true);
+            m_pinButton->Raise();
+            m_pinButton->Update();
+            m_pinButton->Refresh();
+            LOG_INF("CallAfter: Final pin button force show completed", "FlatUIFloatPanel");
+        }
+    });
 
     LOG_INF("Showed float panel at position (" + 
             std::to_string(adjustedPos.x) + ", " + std::to_string(adjustedPos.y) + ")", 
@@ -290,6 +313,13 @@ void FlatUIFloatPanel::StopAutoHideTimer()
 
 void FlatUIFloatPanel::CheckAutoHide()
 {
+    // Ensure pin button is always visible when panel is shown
+    if (m_pinButton && IsShown() && !m_pinButton->IsShown()) {
+        m_pinButton->Show(true);
+        m_pinButton->Raise();
+        LOG_INF("Pin button force shown during auto-hide check", "FlatUIFloatPanel");
+    }
+    
     wxPoint mousePos = wxGetMousePosition();
     if (ShouldAutoHide(mousePos)) {
         HidePanel();
@@ -341,21 +371,29 @@ void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
 {
     Layout();
     
-    // Reposition pin button when panel size changes
-    if (m_pinButton && m_pinButton->IsShown()) {
-        wxSize panelSize = GetSize();
+    // Reposition and ensure pin button is visible when panel size changes
+    if (m_pinButton && IsShown()) {
+        wxSize contentSize = m_contentPanel->GetSize();
         wxSize pinSize = m_pinButton->GetBestSize();
         int margin = 4;
         
-        // Ensure pin button is within the panel bounds
-        int maxPinX = panelSize.GetWidth() - pinSize.GetWidth() - margin;
-        int maxPinY = panelSize.GetHeight() - pinSize.GetHeight() - margin;
+        // Ensure pin button is within the content panel bounds
+        int maxPinX = contentSize.GetWidth() - pinSize.GetWidth() - margin;
+        int maxPinY = contentSize.GetHeight() - pinSize.GetHeight() - margin;
         
         // Make sure position is not negative
         int pinX = wxMax(0, maxPinX);
         int pinY = wxMax(0, maxPinY);
         
         m_pinButton->SetPosition(wxPoint(pinX, pinY));
+        
+        // Ensure pin button is always visible after repositioning
+        m_pinButton->Show(true);
+        m_pinButton->Raise();
+        m_pinButton->Update();
+        
+        LOG_INF("OnSize: Pin button repositioned to (" + 
+               std::to_string(pinX) + ", " + std::to_string(pinY) + ") relative to content panel", "FlatUIFloatPanel");
     }
     
     Refresh(); // Redraw custom border and shadow
@@ -365,6 +403,16 @@ void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
 void FlatUIFloatPanel::OnMouseEnter(wxMouseEvent& event)
 {
     StopAutoHideTimer();
+    
+    // Ensure pin button is visible when mouse enters
+    if (m_pinButton && IsShown()) {
+        if (!m_pinButton->IsShown()) {
+            m_pinButton->Show(true);
+            m_pinButton->Raise();
+            LOG_INF("Pin button shown on mouse enter", "FlatUIFloatPanel");
+        }
+    }
+    
     event.Skip();
 }
 
@@ -395,6 +443,13 @@ void FlatUIFloatPanel::OnKillFocus(wxFocusEvent& event)
 void FlatUIFloatPanel::OnAutoHideTimer(wxTimerEvent& event)
 {
     CheckAutoHide();
+    
+    // Additional check to ensure pin button remains visible
+    if (m_pinButton && IsShown() && !m_pinButton->IsShown()) {
+        m_pinButton->Show(true);
+        m_pinButton->Raise();
+        LOG_INF("Auto-hide timer: Force showed hidden pin button", "FlatUIFloatPanel");
+    }
 }
 
 void FlatUIFloatPanel::OnGlobalMouseMove(wxMouseEvent& event)

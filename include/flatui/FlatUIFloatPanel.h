@@ -43,7 +43,7 @@ private:
     
     // Auto-hide functionality
     wxTimer m_autoHideTimer;
-    static const int AUTO_HIDE_DELAY_MS = 100;
+    static const int AUTO_HIDE_DELAY_MS = 1000; // Increased to 1 second for better UX
     
     // Appearance
     wxColour m_borderColour;
