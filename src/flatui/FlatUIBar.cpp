@@ -411,6 +411,12 @@ void FlatUIBar::OnPinButtonClicked(wxCommandEvent& event)
             }
         }
         
+        // Set the correct active page in the fix panel
+        if (m_activePage < m_pages.size()) {
+            m_fixPanel->SetActivePage(m_activePage);
+            LOG_INF("OnPinButtonClicked: Set active page " + std::to_string(m_activePage) + " in new FixPanel", "FlatUIBar");
+        }
+        
         // Get reference to unpin button from fix panel
         m_unpinButton = m_fixPanel->GetUnpinButton();
         
@@ -434,8 +440,7 @@ void FlatUIBar::OnUnpinButtonClicked(wxCommandEvent& event)
 {
     LOG_INF("OnUnpinButtonClicked: Unpin button clicked, switching to unpinned state", "FlatUIBar");
     
-    // Step 1: Store current active page before destroying fix panel
-    size_t currentActivePage = m_activePage;
+    // Step 1: m_activePage will be preserved through the transition
     
     // Step 2: Unbind unpin button event before destroying fix panel
     if (m_unpinButton) {
@@ -472,8 +477,7 @@ void FlatUIBar::OnUnpinButtonClicked(wxCommandEvent& event)
     
     SetGlobalPinned(false);
     
-    // Restore active page
-    m_activePage = currentActivePage;
+    // m_activePage is preserved and will be used when switching back to pinned state
     
     // Send the old compatible event for FlatFrame
     wxCommandEvent pinEvent(wxEVT_PIN_STATE_CHANGED, GetId());
@@ -572,21 +576,29 @@ void FlatUIBar::SetGlobalPinned(bool pinned)
         
         if (!pinned) { // Transitioning to UNPINNED
             m_lastActivePageBeforeUnpin = m_activePage;
-            m_activePage = wxNOT_FOUND; 
-            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
+            // Keep m_activePage as is - don't reset it to wxNOT_FOUND
+            // This allows seamless transitions back to pinned state
+            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection initially
             
         } else { // Transitioning to PINNED
             // Ensure float panel is hidden when pinning
             HideFloatPanel();
-            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
             
-            if (m_lastActivePageBeforeUnpin < m_pages.size()) { // Ensure index is valid
-                m_activePage = m_lastActivePageBeforeUnpin;
-            } else if (!m_pages.empty()) {
-                m_activePage = 0; // Fallback to first page
+            // m_activePage should already be correct from float panel interactions
+            // Just validate and provide fallbacks if needed
+            if (m_activePage >= m_pages.size() || m_activePage == wxNOT_FOUND) {
+                if (!m_pages.empty()) {
+                    m_activePage = 0; // Fallback to first page
+                    LOG_INF("SetGlobalPinned: Invalid active page, fallback to first page", "FlatUIBar");
+                } else {
+                    m_activePage = wxNOT_FOUND; // No pages available
+                    LOG_INF("SetGlobalPinned: No pages available", "FlatUIBar");
+                }
             } else {
-                m_activePage = wxNOT_FOUND; // No pages available
+                LOG_INF("SetGlobalPinned: Using current active page " + std::to_string(m_activePage) + " for pinned state", "FlatUIBar");
             }
+            
+            m_activeFloatingPage = wxNOT_FOUND; // Reset floating page selection
         }
         
         m_isGlobalPinned = pinned;

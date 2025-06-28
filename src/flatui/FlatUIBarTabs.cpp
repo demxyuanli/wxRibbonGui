@@ -54,8 +54,9 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
                     // Unpinned: Always handle tab clicks to show/update float panel
                     FlatUIPage* clickedPage = m_pages[i];
                     
-                    // Update the active floating page
+                    // Update both floating page and active page for consistency
                     m_activeFloatingPage = i;
+                    m_activePage = i; // Keep m_activePage synchronized for pin state transitions
                     
                     if (m_floatPanel && m_floatPanel->IsShown()) {
                         // Float panel is already shown, just update the content
