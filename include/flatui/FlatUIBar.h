@@ -10,14 +10,17 @@
 #include "flatui/FlatUIEventManager.h"
 #include "flatui/FlatUISpacerControl.h"
 #include "flatui/FlatUIUnpinButton.h"
-// FlatUIPinButton is now handled by FlatUIFloatPanel
 #include "flatui/FlatUIFloatPanel.h"
 #include "flatui/FlatUIFixPanel.h"
+#include "flatui/FlatUIBarConfig.h"
+#include "flatui/FlatUIBarStateManager.h"
+#include "flatui/FlatUIPageManager.h"
+#include "flatui/FlatUIBarLayoutManager.h"
+#include "flatui/FlatUIBarEventDispatcher.h"
 #include <wx/wx.h>
-#include <string> // Keep if std::string is used, though not visible here
 #include <wx/artprov.h>
-#include <vector>      // Added for std::vector
-#include <memory>      // Added for std::unique_ptr
+#include <vector>
+#include <memory>
 
 // Forward declarations of the new component classes
 class FlatUIPage; 
@@ -49,11 +52,11 @@ public:
     void SetHomeButtonIcon(const wxBitmap& icon = wxNullBitmap);
     void SetHomeButtonWidth(int width);
 
-    // Page Tabs Management (remains directly managed by FlatUIBar for now)
+    // Page Tabs Management (now managed by PageManager)
     void AddPage(FlatUIPage* page);
     void SetActivePage(size_t index);
     size_t GetPageCount() const noexcept;
-    size_t GetActivePage() const noexcept { return m_activePage; }
+    size_t GetActivePage() const noexcept;
     FlatUIPage* GetPage(size_t index) const;
     
     // Tab Style Configuration
@@ -163,15 +166,24 @@ public:
     FlatUISpacerControl* GetTabFunctionSpacer() { return m_tabFunctionSpacer; }
     FlatUISpacerControl* GetFunctionProfileSpacer() { return m_functionProfileSpacer; }
 
-
+    // Component access methods for layout manager
     FlatUIHomeSpace* GetHomeSpace() { return m_homeSpace; }
+    FlatUISystemButtons* GetSystemButtons() { return m_systemButtons; }
+    FlatUIFunctionSpace* GetFunctionSpace() { return m_functionSpace; }
+    FlatUIProfileSpace* GetProfileSpace() { return m_profileSpace; }
+    
+    // Layout data access
+    void SetTabAreaRect(const wxRect& rect) { m_tabAreaRect = rect; }
+    wxRect GetTabAreaRect() const { return m_tabAreaRect; }
+    
+    // Layout configuration access
+    bool GetFunctionSpaceCenterAlign() const { return m_functionSpaceCenterAlign; }
+    bool GetProfileSpaceRightAlign() const { return m_profileSpaceRightAlign; }
 
-    // Pin management methods
+    // Pin management methods (now using StateManager)
     bool IsBarPinned() const;
-
-    // Global pin management methods
     void SetGlobalPinned(bool pinned);
-    bool IsGlobalPinned() const { return m_isGlobalPinned; }
+    bool IsGlobalPinned() const;
     void ToggleGlobalPinState();
     
     // Helper method to determine if pages should be visible
@@ -183,46 +195,49 @@ public:
     // Float panel for unpinned state
     FlatUIFloatPanel* m_floatPanel;
     
+    // Manager access for subcomponents
+    FlatUIBarStateManager* GetStateManager() const { return m_stateManager.get(); }
+    
     // Methods for float panel
     void ShowPageInFloatPanel(FlatUIPage* page);
     void HideFloatPanel();
     void OnFloatPanelDismissed(wxCommandEvent& event);
-
-    // Button visibility management
-    void UpdateButtonVisibility();
-
-private:
-
-    size_t m_activePage;
-    wxVector<FlatUIPage*> m_pages;
-    FlatUIPage* m_temporarilyShownPage; // Pointer to the page that is currently shown temporarily
-    void HideTemporarilyShownPage();
-
-    // Global pin state
-    bool m_isGlobalPinned;
-    int m_barUnpinnedHeight;
-    size_t m_lastActivePageBeforeUnpin; // To store the active page before unpinning
-    size_t m_activeFloatingPage; // Track which page is currently shown in floating window
-
-    // Helper methods for global pin control
-    void ShowAllContent();
-    void HideAllContentExceptBarSpace();
+    
+    // State change handling (called by EventDispatcher)
     void OnGlobalPinStateChanged(bool isPinned);
 
-    // Event handlers
+private:
+    // Core managers - centralized logic
+    std::unique_ptr<FlatUIBarStateManager> m_stateManager;
+    std::unique_ptr<FlatUIPageManager> m_pageManager;
+    std::unique_ptr<FlatUIBarLayoutManager> m_layoutManager;
+    std::unique_ptr<FlatUIBarEventDispatcher> m_eventDispatcher;
+
+    // Legacy support - will be gradually removed
+    FlatUIPage* m_temporarilyShownPage;
+    int m_barUnpinnedHeight;
+
+    // Event handlers - simplified
     void OnGlobalMouseDown(wxMouseEvent& event);
     void OnPinButtonClicked(wxCommandEvent& event);
     void OnUnpinButtonClicked(wxCommandEvent& event);
+    void OnShow(wxShowEvent& event);
 
-
-    // Helper methods
+    // Helper methods - simplified
     bool IsPointInBarArea(const wxPoint& point) const;
-
-
     void SetupGlobalMouseCapture();
     void ReleaseGlobalMouseCapture();
+    void HideTemporarilyShownPage();
+    
+    // Legacy methods - kept for compatibility
+    void ShowAllContent();
+    void HideAllContentExceptBarSpace();
+    void UpdateButtonVisibility();
 
-    void OnShow(wxShowEvent& event);
+    // Manager access helpers (private)
+    FlatUIPageManager* GetPageManager() const { return m_pageManager.get(); }
+    FlatUIBarLayoutManager* GetLayoutManager() const { return m_layoutManager.get(); }
+    FlatUIBarEventDispatcher* GetEventDispatcher() const { return m_eventDispatcher.get(); }
 
     // --- Child Component Controls ---
     FlatUIHomeSpace* m_homeSpace;
@@ -274,7 +289,6 @@ private:
     // static const int BAR_PADDING = 2;     // Removed
 
     // --- Helper methods ---
-    void UpdateElementPositionsAndSizes(const wxSize& barSize);
     void PaintTabs(wxDC& dc, int availableWidth, int& currentXOffset); // For drawing tabs directly
     int CalculateTabsWidth(wxDC& dc) const; // For calculating width needed by direct tabs
     void DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive); // Draw tab border with style

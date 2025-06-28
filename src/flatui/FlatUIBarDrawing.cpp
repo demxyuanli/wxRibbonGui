@@ -18,7 +18,7 @@ void FlatUIBar::DrawBackground(wxDC& dc)
     dc.SetPen(*wxTRANSPARENT_PEN);
     dc.DrawRectangle(0, 0, clientSize.GetWidth(), barH);
 
-    if (!m_isGlobalPinned && m_temporarilyShownPage == nullptr) {
+    if (!IsBarPinned() && m_temporarilyShownPage == nullptr) {
         int unpinnedIndicatorHeight = 5;
         dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
         dc.SetPen(*wxTRANSPARENT_PEN);
@@ -43,7 +43,7 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
 
     LOG_DBG("FlatUIBar The Border Pos: (" + std::to_string(GetSize().GetWidth()) + "," + std::to_string(GetBarHeight()) + ")", "FlatUIBar");
 
-    if (!m_pages.empty() && m_tabAreaRect.GetWidth() > 0) {
+    if (GetPageCount() > 0 && m_tabAreaRect.GetWidth() > 0) {
         wxDCClipper clip(dc, m_tabAreaRect);
         int offset = m_tabAreaRect.GetX();
         PaintTabsArea(dc, m_tabAreaRect.GetWidth(), offset);

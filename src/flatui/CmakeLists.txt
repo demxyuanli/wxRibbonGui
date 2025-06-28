@@ -9,6 +9,7 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIGallery.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFixPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIHomeSpace.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFunctionSpace.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIProfileSpace.cpp
@@ -16,10 +17,13 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIEventManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUISpacerControl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIHomeMenu.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarStateManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarLayoutManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPageManager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarEventDispatcher.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPinButton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIUnPinButton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFloatPanel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFixPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/UIHierarchyDebugger.cpp
     PARENT_SCOPE
 )

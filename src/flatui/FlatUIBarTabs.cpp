@@ -1,5 +1,6 @@
 #include "flatui/FlatUIBar.h"
 #include "flatui/FlatUIPage.h"
+#include "flatui/FlatUIBarStateManager.h"
 #include <wx/dcbuffer.h>
 #include <string>
 #include "config/ConstantsConfig.h"
@@ -26,59 +27,40 @@ void FlatUIBar::HandleTabAreaClick(const wxPoint& pos)
     if (m_systemButtons && m_systemButtons->IsShown()) {
         tabEndX = m_systemButtons->GetRect().GetLeft() - CFG_INT("BarElementSpacing");
     }
-    wxClientDC dc(this);
+    
     if (pos.y >= 0 && pos.y < barH && pos.x >= tabStartX && pos.x < tabEndX) {
+        wxClientDC dc(this);
         int currentX = tabStartX;
         bool clickedOnTab = false;
         
-        for (size_t i = 0; i < m_pages.size(); ++i) {
-            if (!m_pages[i]) continue;
-            FlatUIPage* page = m_pages[i];
+        for (size_t i = 0; i < GetPageCount(); ++i) {
+            FlatUIPage* page = GetPage(i);
+            if (!page) continue;
+            
             wxSize labelSize = dc.GetTextExtent(page->GetLabel());
             int tabWidth = labelSize.GetWidth() + CFG_INT("BarTabPadding") * 2;
             wxRect rect(currentX, 0, tabWidth, barH);
+            
             if (rect.Contains(pos)) {
                 clickedOnTab = true;
                 
-                // If pinned, check if tab is already selected and handle accordingly
-                if (m_isGlobalPinned) {
-                    // Check if this tab is already selected to avoid unnecessary actions
-                    if (i == m_activePage) {
-                        LOG_INF("Tab " + std::to_string(i) + " is already active in pinned mode, ignoring click", "FlatUIBar");
-                        break;
-                    }
-                    // Set the active page directly
+                // Use event dispatcher to handle the tab click
+                if (m_eventDispatcher) {
+                    m_eventDispatcher->HandleTabClick(i);
+                } else {
+                    // Fallback to direct handling
                     SetActivePage(i);
-                }
-                else {
-                    // Unpinned: Always handle tab clicks to show/update float panel
-                    FlatUIPage* clickedPage = m_pages[i];
-                    
-                    // Update both floating page and active page for consistency
-                    m_activeFloatingPage = i;
-                    m_activePage = i; // Keep m_activePage synchronized for pin state transitions
-                    
-                    if (m_floatPanel && m_floatPanel->IsShown()) {
-                        // Float panel is already shown, just update the content
-                        LOG_INF("Updating float panel content to tab " + std::to_string(i), "FlatUIBar");
-                        m_floatPanel->SetPageContent(clickedPage);
-                    } else {
-                        // Float panel is not shown, show it with the clicked page
-                        LOG_INF("Showing float panel with tab " + std::to_string(i), "FlatUIBar");
-                        ShowPageInFloatPanel(clickedPage);
-                    }
-                    
-                    // Refresh to update tab visual state
-                    Refresh();
+                    LOG_INF("Tab clicked (fallback): " + std::to_string(i), "FlatUIBar");
                 }
                 break;
             }
+            
             currentX += tabWidth + CFG_INT("BarTabSpacing");
             if (currentX >= tabEndX) break;
         }
         
         // If clicked in tab area but not on any specific tab, hide float panel (if unpinned)
-        if (!clickedOnTab && !m_isGlobalPinned) {
+        if (!clickedOnTab && !IsBarPinned()) {
             HideFloatPanel();
         }
     }
@@ -94,11 +76,11 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
 
     dc.SetFont(CFG_DEFAULTFONT());
 
-    for (size_t i = 0; i < m_pages.size(); ++i)
+    for (size_t i = 0; i < GetPageCount(); ++i)
     {
-        if (!m_pages[i]) continue;
+        FlatUIPage* page = GetPage(i);
+        if (!page) continue;
 
-        FlatUIPage* page = m_pages[i];
         wxString label = page->GetLabel();
         wxSize labelSize = dc.GetTextExtent(label);
         int tabWidth = labelSize.GetWidth() + tabPadding * 2;
@@ -111,10 +93,10 @@ void FlatUIBar::PaintTabs(wxDC& dc, int availableTotalWidth, int& currentXOffset
 
         // Determine if this tab should be drawn as active
         bool isActiveTab = false;
-        if (m_isGlobalPinned) {
-            isActiveTab = (i == m_activePage);
+        if (IsBarPinned()) {
+            isActiveTab = (i == GetActivePage());
         } else {
-            isActiveTab = (i == m_activeFloatingPage);
+            isActiveTab = (i == GetStateManager()->GetActiveFloatingPage());
         }
 
         if (isActiveTab)
@@ -362,7 +344,7 @@ void FlatUIBar::SetBarTopMargin(int margin)
 {
     m_barTopMargin = margin;
     if (IsShown()) {
-        UpdateElementPositionsAndSizes(GetClientSize());
+        m_layoutManager->UpdateLayout(GetClientSize());
         Refresh();
     }
 }
@@ -371,7 +353,7 @@ void FlatUIBar::SetBarBottomMargin(int margin)
 {
 	m_barBottomMargin = margin;
 	if (IsShown()) {
-		UpdateElementPositionsAndSizes(GetClientSize());
+		m_layoutManager->UpdateLayout(GetClientSize());
 		Refresh();
 	}
 }
