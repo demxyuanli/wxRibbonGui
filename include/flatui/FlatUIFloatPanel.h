@@ -7,7 +7,7 @@
 class FlatUIPage;
 class FlatUIPinButton;
 
-// Custom event for float panel dismiss
+// Custom event for float panel dismissal
 wxDECLARE_EVENT(wxEVT_FLOAT_PANEL_DISMISSED, wxCommandEvent);
 
 class FlatUIFloatPanel : public wxFrame
@@ -35,25 +35,22 @@ public:
     void ForceHide();
 
 private:
-    FlatUIPage* m_currentPage;
+    wxWindow* m_parentWindow;
     wxPanel* m_contentPanel;
     wxBoxSizer* m_sizer;
-    wxWindow* m_parentWindow;
+    FlatUIPage* m_currentPage;
     FlatUIPinButton* m_pinButton;
-    
-    // Pin button update optimization
-    bool m_pinButtonUpdatePending;
-    
-    // Auto-hide functionality
+
+    // Auto-hide members
     wxTimer m_autoHideTimer;
-    static const int AUTO_HIDE_DELAY_MS = 1000; // Increased to 1 second for better UX
+    static const int AUTO_HIDE_DELAY_MS = 300;
     
-    // Appearance
+    // Appearance members
     wxColour m_borderColour;
     wxColour m_backgroundColour;
+    wxColour m_shadowColour;
     int m_borderWidth;
     int m_shadowOffset;
-    wxColour m_shadowColour;
     
     // Event handlers
     void OnPaint(wxPaintEvent& event);
@@ -66,17 +63,19 @@ private:
     void OnGlobalMouseMove(wxMouseEvent& event);
     void OnPinButtonClicked(wxCommandEvent& event);
     
-    // Helper methods
-    void SetupAppearance();
-    void SetupEventHandlers();
+    // Auto-hide logic
     void StartAutoHideTimer();
     void StopAutoHideTimer();
     void CheckAutoHide();
+
+    // Layout
+    void DoUpdateLayout();
+    
+    // Helper methods
+    void SetupAppearance();
+    void SetupEventHandlers();
     void DrawCustomBorder(wxDC& dc);
     void DrawShadow(wxDC& dc);
-    void SchedulePinButtonUpdate();
-    void UpdatePinButtonPosition();
-    void EnsurePinButtonVisible();
     
     wxDECLARE_EVENT_TABLE();
 };
