@@ -55,7 +55,7 @@ wxSize FlatUIPinButton::DoGetBestSize() const
     }
     
     // Fallback to a larger default size
-    return wxSize(20, 20);
+    return wxSize(CONTROL_WIDTH, CONTROL_HEIGHT);
 }
 
 void FlatUIPinButton::NotifyPinClicked()
@@ -75,22 +75,10 @@ void FlatUIPinButton::OnPaint(wxPaintEvent& evt)
     wxAutoBufferedPaintDC dc(this);
 
     // Clear background
-    dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
+    dc.SetBackground(*wxWHITE);
     dc.Clear();
 
-    // Draw a visible background for debugging
-    dc.SetBrush(wxBrush(wxColour(240, 240, 240)));
-    dc.SetPen(wxPen(wxColour(200, 200, 200)));
-    dc.DrawRectangle(0, 0, GetSize().GetWidth(), GetSize().GetHeight());
-
-    // Draw hover background
-    if (m_iconHover) {
-        dc.SetBrush(wxBrush(wxColour(200, 200, 200, 100)));
-        dc.SetPen(wxPen(wxColour(150, 150, 150)));
-        dc.DrawRectangle(0, 0, GetSize().GetWidth(), GetSize().GetHeight());
-    }
-
-    // Draw pin icon
+    // Draw unpin icon
     DrawPinIcon(dc);
 }
 
@@ -149,41 +137,32 @@ void FlatUIPinButton::DrawPinIcon(wxDC& dc)
 void FlatUIPinButton::DrawSvgIcon(wxDC& dc)
 {
     auto& iconManager = SvgIconManager::GetInstance();
-    // Use a fixed size to ensure visibility
-    wxBitmap iconBitmap = iconManager.GetIconBitmap("thumbtack", wxSize(12, 12));
-    
+    wxBitmap iconBitmap = iconManager.GetIconBitmap("thumbtack", wxSize(8, 8));
+
     if (iconBitmap.IsOk()) {
         wxRect clientRect = GetClientRect();
         // Center the icon in the control
-        wxPoint iconPos = clientRect.GetPosition() + 
-                         wxSize((clientRect.GetWidth() - iconBitmap.GetWidth())/2, 
-                               (clientRect.GetHeight() - iconBitmap.GetHeight())/2);
+        wxPoint iconPos = clientRect.GetPosition() +
+            wxSize((clientRect.GetWidth() - iconBitmap.GetWidth()) / 2,
+                (clientRect.GetHeight() - iconBitmap.GetHeight()) / 2);
         dc.DrawBitmap(iconBitmap, iconPos);
-        LOG_INF("Drew SVG pin icon at (" + std::to_string(iconPos.x) + ", " + std::to_string(iconPos.y) + ")", "FlatUIPinButton");
-    } else {
-        LOG_INF("SVG icon bitmap is not OK", "FlatUIPinButton");
-        throw std::runtime_error("SVG icon not available");
     }
 }
 
 void FlatUIPinButton::DrawFallbackIcon(wxDC& dc)
 {
     wxRect clientRect = GetClientRect();
-    wxPoint center = clientRect.GetPosition() + wxSize(clientRect.GetWidth()/2, clientRect.GetHeight()/2);
-    
-    // Use a more visible color - dark blue
-    wxColour iconColor = wxColour(0, 100, 200);
+    wxPoint center = clientRect.GetPosition() + wxSize(clientRect.GetWidth() / 2, clientRect.GetHeight() / 2);
+
+    wxColour iconColor = CFG_COLOUR("BarActiveTextColour");
     dc.SetPen(wxPen(iconColor, 2));
     dc.SetBrush(wxBrush(iconColor));
-    
-    // Draw pin icon (thumbtack shape) - make it larger
-    // Draw the head of the thumbtack
-    dc.DrawCircle(center.x, center.y - 3, 4);
-    // Draw the pin part
-    dc.DrawLine(center.x, center.y + 1, center.x, center.y + 6);
-    // Draw the point
-    dc.SetPen(wxPen(iconColor, 2));
-    dc.DrawLine(center.x - 2, center.y + 6, center.x + 2, center.y + 6);
-    
-    LOG_INF("Drew fallback pin icon at center (" + std::to_string(center.x) + ", " + std::to_string(center.y) + ")", "FlatUIPinButton");
+
+    // Draw up arrow icon
+    wxPoint arrow[3];
+    arrow[0] = wxPoint(center.x, center.y - 4);     // Top point
+    arrow[1] = wxPoint(center.x - 4, center.y + 2); // Bottom left
+    arrow[2] = wxPoint(center.x + 4, center.y + 2); // Bottom right
+
+    dc.DrawPolygon(3, arrow);
 } 

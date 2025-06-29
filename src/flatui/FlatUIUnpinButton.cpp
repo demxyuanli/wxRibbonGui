@@ -45,7 +45,7 @@ wxSize FlatUIUnpinButton::DoGetBestSize() const
 {
     try {
         auto& iconManager = SvgIconManager::GetInstance();
-        if (iconManager.HasIcon("thumbtack")) {
+        if (iconManager.HasIcon("up")) {
             // Use a larger fixed size to ensure visibility
             int padding = 4; // 4px padding on each side
             return wxSize(12 + padding * 2, 12 + padding * 2); // 20x20 total
@@ -75,15 +75,8 @@ void FlatUIUnpinButton::OnPaint(wxPaintEvent& evt)
     wxAutoBufferedPaintDC dc(this);
 
     // Clear background
-    dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
+    dc.SetBackground(*wxWHITE);
     dc.Clear();
-
-    // Draw hover background
-    if (m_iconHover) {
-        dc.SetBrush(wxBrush(wxColour(200, 200, 200, 50)));
-        dc.SetPen(wxPen(wxColour(200, 200, 200, 50)));
-        dc.DrawRectangle(0, 0, GetSize().GetWidth(), GetSize().GetHeight());
-    }
 
     // Draw unpin icon
     DrawUnpinIcon(dc);
@@ -144,7 +137,7 @@ void FlatUIUnpinButton::DrawUnpinIcon(wxDC& dc)
 void FlatUIUnpinButton::DrawSvgIcon(wxDC& dc)
 {
     auto& iconManager = SvgIconManager::GetInstance();
-    wxBitmap iconBitmap = iconManager.GetIconBitmap("up", wxDefaultSize);
+    wxBitmap iconBitmap = iconManager.GetIconBitmap("up", wxSize(8,8));
     
     if (iconBitmap.IsOk()) {
         wxRect clientRect = GetClientRect();

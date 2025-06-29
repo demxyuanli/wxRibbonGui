@@ -325,7 +325,7 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
             int fixPanelHeight = barClientSize.GetHeight() - FIXED_PANEL_Y;
             
             // Minimum viable height check to prevent invisible or overlapping panels
-            const int MIN_FIXPANEL_HEIGHT = 20; // Must be at least 20px to be useful
+            const int MIN_FIXPANEL_HEIGHT = 60; // Must be at least 20px to be useful
             if (fixPanelHeight < MIN_FIXPANEL_HEIGHT) {
                 LOG_WRN("FixPanel height too small (" + std::to_string(fixPanelHeight) + 
                        "), deferring positioning to prevent barspace overlap", "LayoutManager");

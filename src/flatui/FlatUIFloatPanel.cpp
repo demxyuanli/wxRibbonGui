@@ -188,7 +188,7 @@ void FlatUIFloatPanel::ShowAt(const wxPoint& position, const wxSize& size)
     // Position and show pin button AFTER all layout operations are complete
     if (m_pinButton) {
         wxSize pinSize = m_pinButton->GetBestSize();
-        int margin = 4; // Small margin from edges
+        int margin = 2; // Small margin from edges
 
         // Since pin button is now a child of content panel, use content panel size
         wxSize contentSize = m_contentPanel->GetSize();

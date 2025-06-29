@@ -276,7 +276,7 @@ void FlatUIFixPanel::PositionUnpinButton()
     wxSize buttonSize = m_unpinButton->GetBestSize();
     
     // Position at bottom-right corner with small margin
-    int margin = 5;
+    int margin = 2;
     wxPoint buttonPos(
         panelSize.GetWidth() - buttonSize.GetWidth() - margin,
         panelSize.GetHeight() - buttonSize.GetHeight() - margin
