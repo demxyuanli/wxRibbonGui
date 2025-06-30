@@ -28,7 +28,9 @@ void FlatUIBar::SetFunctionSpaceControl(wxWindow* funcControl, int width)
     if (m_functionSpace) {
         m_functionSpace->SetChildControl(funcControl);
         if (width > 0) m_functionSpace->SetSpaceWidth(width);
-        m_functionSpace->Show(funcControl != nullptr);
+        // Only show if control exists and user toggle state is visible
+        bool shouldShow = (funcControl != nullptr) && m_functionSpaceUserVisible;
+        m_functionSpace->Show(shouldShow);
         if (IsShown()) Layout(); // Trigger re-layout of FlatUIBar
     }
 }
@@ -38,7 +40,9 @@ void FlatUIBar::SetProfileSpaceControl(wxWindow* profControl, int width)
     if (m_profileSpace) {
         m_profileSpace->SetChildControl(profControl);
         if (width > 0) m_profileSpace->SetSpaceWidth(width);
-        m_profileSpace->Show(profControl != nullptr);
+        // Only show if control exists and user toggle state is visible
+        bool shouldShow = (profControl != nullptr) && m_profileSpaceUserVisible;
+        m_profileSpace->Show(shouldShow);
         if (IsShown()) Layout(); // Trigger re-layout of FlatUIBar
     }
 }
@@ -165,6 +169,7 @@ void FlatUIBar::ToggleFunctionSpaceVisibility()
     if (m_functionSpace) {
         bool visible = m_functionSpace->IsShown();
         bool newVisible = !visible;
+        m_functionSpaceUserVisible = newVisible;  // Update user toggle state
         m_functionSpace->Show(newVisible);
         if (m_tabFunctionSpacer) {
             m_tabFunctionSpacer->Show(newVisible);
@@ -181,6 +186,7 @@ void FlatUIBar::ToggleProfileSpaceVisibility()
     if (m_profileSpace) {
         bool visible = m_profileSpace->IsShown();
         bool newVisible = !visible;
+        m_profileSpaceUserVisible = newVisible;  // Update user toggle state
         m_profileSpace->Show(newVisible);
         if (m_functionProfileSpacer) {
             m_functionProfileSpacer->Show(newVisible);

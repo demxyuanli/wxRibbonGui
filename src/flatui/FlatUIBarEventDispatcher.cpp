@@ -257,6 +257,49 @@ bool FlatUIBarEventDispatcher::ValidateComponents() const
            m_layoutManager != nullptr;
 }
 
+void FlatUIBarEventDispatcher::HandleTabAreaClick(const wxPoint& position)
+{
+    if (!CanHandleEvent()) {
+        LOG_ERR("Cannot handle tab area click", "EventDispatcher");
+        return;
+    }
+
+    BeginEventProcessing();
+    LogEventInfo("TabAreaClick", "Position: (" + std::to_string(position.x) + "," + std::to_string(position.y) + ")");
+
+    // Get tab index from position
+    size_t tabIndex = GetTabIndexFromPosition(position);
+    if (tabIndex != static_cast<size_t>(-1)) {
+        HandleTabClick(tabIndex);
+    }
+
+    EndEventProcessing();
+}
+
+size_t FlatUIBarEventDispatcher::GetTabIndexFromPosition(const wxPoint& position) const
+{
+    // This would need to be implemented based on the tab layout logic
+    // For now, return invalid index
+    LOG_WRN("GetTabIndexFromPosition not implemented", "EventDispatcher");
+    return static_cast<size_t>(-1);
+}
+
+bool FlatUIBarEventDispatcher::IsPositionInTabArea(const wxPoint& position) const
+{
+    // This would need to be implemented based on the tab area bounds
+    // For now, return false
+    LOG_WRN("IsPositionInTabArea not implemented", "EventDispatcher");
+    return false;
+}
+
+bool FlatUIBarEventDispatcher::IsPositionInBarArea(const wxPoint& position) const
+{
+    if (!m_bar) return false;
+    
+    wxRect barRect = m_bar->GetRect();
+    return barRect.Contains(position);
+}
+
 void FlatUIBarEventDispatcher::LogEventInfo(const wxString& eventType, const wxString& details) const
 {
     wxString logMessage = "Event: " + eventType;

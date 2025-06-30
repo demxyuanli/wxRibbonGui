@@ -4,6 +4,7 @@
 #include "config/ConstantsConfig.h"
 #include "logger/Logger.h"
 #include <wx/dcmemory.h>
+#include <wx/button.h>
 
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
@@ -67,31 +68,20 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
            ", barBottomMargin=" + std::to_string(barBottomMargin) + 
            ", innerHeight=" + std::to_string(innerHeight), "LayoutManager");
 
-    // Home Space (Leftmost)
+    // Skip HomeSpace and SystemButtons - they are now managed by BarContainer
+    // Just calculate their widths for tab area calculation
+    int homeSpaceWidth = 0;
     if (homeSpace && homeSpace->IsShown()) {
-        int bW = homeSpace->GetButtonWidth();
-        homeSpace->SetPosition(wxPoint(currentX, elementY));
-        homeSpace->SetSize(bW, innerHeight);
-        homeSpace->Show(true);
-        currentX += bW + elemSpacing;
-        LOG_INF("Positioned HomeSpace at (" + std::to_string(currentX - bW - elemSpacing) + 
-               "," + std::to_string(elementY) + ") size (" + std::to_string(bW) + 
-               "," + std::to_string(innerHeight) + ")", "LayoutManager");
-    }
-    else {
-        if (homeSpace) homeSpace->Show(false);
+        homeSpaceWidth = homeSpace->GetButtonWidth() + elemSpacing;
+        currentX += homeSpaceWidth;
+        LOG_INF("HomeSpace width (managed by container): " + std::to_string(homeSpaceWidth), "LayoutManager");
     }
 
-    // System Buttons (Rightmost) - Calculate position first
+    // System Buttons (Rightmost) - Just calculate width for boundary calculation
     int sysButtonsWidth = 0;
     if (systemButtons && systemButtons->IsShown()) {
         sysButtonsWidth = systemButtons->GetRequiredWidth();
-        int ctrlX = barClientSize.GetWidth() - barPadding - sysButtonsWidth;
-        systemButtons->SetPosition(wxPoint(ctrlX, elementY));
-        systemButtons->SetSize(sysButtonsWidth, innerHeight);
-        systemButtons->Show(true);
-        LOG_INF("Positioned SystemButtons at (" + std::to_string(ctrlX) + 
-               "," + std::to_string(elementY) + ")", "LayoutManager");
+        LOG_INF("SystemButtons width (managed by container): " + std::to_string(sysButtonsWidth), "LayoutManager");
     }
 
     // Calculate right boundary for flexible elements (excluding system buttons)
@@ -100,208 +90,21 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
         rightBoundaryForFlexibleElements -= (sysButtonsWidth + elemSpacing);
     }
 
-    // Tabs
-    int tabsNeededWidth = CalculateTabsWidth(dc);
-    wxRect tabAreaRect;
-    if (tabsNeededWidth > 0) {
-        tabAreaRect = wxRect(currentX, elementY, tabsNeededWidth, barStripHeight);
-        currentX += tabsNeededWidth + elemSpacing;
-        LOG_INF("Tab area calculated: width=" + std::to_string(tabsNeededWidth), "LayoutManager");
+    // Tabs are now managed by FlatBarSpaceContainer
+    // No longer calculate tab area here
+    LOG_INF("Tab area calculation skipped - managed by FlatBarSpaceContainer", "LayoutManager");
+
+    // Function and Profile spaces are now managed by BarContainer
+    // Skip their positioning logic entirely
+    LOG_INF("FunctionSpace and ProfileSpace are managed by BarContainer", "LayoutManager");
+
+    // Spacers are still managed by the old layout manager for now
+    // Hide them since we're using the container approach
+    if (tabFunctionSpacer) {
+        tabFunctionSpacer->Show(false);
     }
-    else {
-        tabAreaRect = wxRect();
-    }
-    
-    // Store tab area for painting
-    m_bar->SetTabAreaRect(tabAreaRect);
-
-    // Function and Profile spaces positioning with proper layout logic
-    
-    // Get visibility and requested widths for function and profile spaces
-    int funcRequestedWidth = 0;
-    bool funcSpaceIsEffectivelyVisible = functionSpace && functionSpace->IsShown() && functionSpace->GetChildControl();
-    if (funcSpaceIsEffectivelyVisible) {
-        funcRequestedWidth = functionSpace->GetSpaceWidth();
-    }
-    else {
-        if (functionSpace) functionSpace->Show(false);
-    }
-
-    int profileRequestedWidth = 0;
-    bool profileSpaceIsEffectivelyVisible = profileSpace && profileSpace->IsShown() && profileSpace->GetChildControl();
-    if (profileSpaceIsEffectivelyVisible) {
-        profileRequestedWidth = profileSpace->GetSpaceWidth();
-    }
-    else {
-        if (profileSpace) profileSpace->Show(false);
-    }
-
-    // Get spacer states
-    bool tabFuncSpacerVisible = tabFunctionSpacer && tabFunctionSpacer->IsShown();
-    bool tabFuncSpacerAutoExpand = tabFuncSpacerVisible && tabFunctionSpacer->GetAutoExpand();
-    bool funcProfileSpacerVisible = functionProfileSpacer && functionProfileSpacer->IsShown();
-    bool funcProfileSpacerAutoExpand = funcProfileSpacerVisible && functionProfileSpacer->GetAutoExpand();
-
-    // Calculate total width needed for all elements
-    int totalFixedWidth = 0;
-    if (funcSpaceIsEffectivelyVisible) {
-        totalFixedWidth += funcRequestedWidth;
-    }
-    if (profileSpaceIsEffectivelyVisible) {
-        totalFixedWidth += profileRequestedWidth;
-        if (funcSpaceIsEffectivelyVisible) {
-            totalFixedWidth += elemSpacing; // Spacing between function and profile
-        }
-    }
-
-    // Calculate available space for flexible elements
-    int availableWidth = rightBoundaryForFlexibleElements - currentX;
-    availableWidth = wxMax(0, availableWidth);
-
-    // Calculate remaining space to distribute
-    int remainingSpace = availableWidth - totalFixedWidth;
-    remainingSpace = wxMax(0, remainingSpace);
-
-    // Layout Logic - Check if function space should be centered
-    if (m_bar->GetFunctionSpaceCenterAlign() && funcSpaceIsEffectivelyVisible) {
-        // Calculate space distribution for centering
-        int spaceBeforeFunction = remainingSpace / 2;
-        int spaceAfterFunction = remainingSpace - spaceBeforeFunction;
-
-        // Position tabFunctionSpacer (left spacer)
-        if (tabFuncSpacerVisible) { 
-            int spacerWidth = tabFunctionSpacer->GetSpacerWidth();
-            if (tabFuncSpacerAutoExpand) {
-                spacerWidth = spaceBeforeFunction;
-            }
-            tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            tabFunctionSpacer->SetSize(spacerWidth, innerHeight);
-            tabFunctionSpacer->Show(true);
-            currentX += spacerWidth;
-            LOG_INF("Positioned TabFunctionSpacer for centering: width=" + std::to_string(spacerWidth), "LayoutManager");
-        }
-        else if (spaceBeforeFunction > 0) {
-            currentX += spaceBeforeFunction;
-        }
-
-        // Position function space in center
-        if (funcSpaceIsEffectivelyVisible) {
-            functionSpace->SetPosition(wxPoint(currentX, elementY));
-            functionSpace->SetSize(funcRequestedWidth, innerHeight);
-            functionSpace->Show(true);
-            currentX += funcRequestedWidth;
-            LOG_INF("Positioned FunctionSpace (centered) at (" + std::to_string(currentX - funcRequestedWidth) + 
-                   "," + std::to_string(elementY) + ")", "LayoutManager");
-        }
-
-        // Add spacing between function and profile if both are visible
-        if (funcSpaceIsEffectivelyVisible && profileSpaceIsEffectivelyVisible) {
-            currentX += elemSpacing;
-        }
-
-        // Calculate the actual space available for the right spacer
-        int rightSpacerAvailableSpace = 0;
-        if (profileSpaceIsEffectivelyVisible) {
-            rightSpacerAvailableSpace = rightBoundaryForFlexibleElements - currentX - profileRequestedWidth;
-        }
-        rightSpacerAvailableSpace = wxMax(0, rightSpacerAvailableSpace);
-
-        // Position functionProfileSpacer (right spacer)
-        if (funcProfileSpacerVisible) {
-            int spacerWidth = functionProfileSpacer->GetSpacerWidth();
-            if (funcProfileSpacerAutoExpand) {
-                spacerWidth = rightSpacerAvailableSpace;
-            }
-            functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            functionProfileSpacer->SetSize(spacerWidth, innerHeight);
-            functionProfileSpacer->Show(true);
-            currentX += spacerWidth;
-            LOG_INF("Positioned FunctionProfileSpacer: width=" + std::to_string(spacerWidth), "LayoutManager");
-        }
-        else if (rightSpacerAvailableSpace > 0) {
-            currentX += rightSpacerAvailableSpace;
-        }
-
-        // Position profile space at the right (before system buttons)
-        if (profileSpaceIsEffectivelyVisible) {
-            int profileX = rightBoundaryForFlexibleElements - profileRequestedWidth;
-            profileSpace->SetPosition(wxPoint(profileX, elementY));
-            profileSpace->SetSize(profileRequestedWidth, innerHeight);
-            profileSpace->Show(true);
-            LOG_INF("Positioned ProfileSpace at right: (" + std::to_string(profileX) + 
-                   "," + std::to_string(elementY) + ")", "LayoutManager");
-        }
-    }
-    else {
-        // Sequential layout logic (no centering)
-        // Position tabFunctionSpacer
-        if (tabFuncSpacerVisible) {
-            int spacerWidth = tabFunctionSpacer->GetSpacerWidth();
-            if (tabFuncSpacerAutoExpand) {
-                // Calculate available space for both spacers
-                int availableSpaceForSpacers = rightBoundaryForFlexibleElements - currentX;
-                if (profileSpaceIsEffectivelyVisible) {
-                    availableSpaceForSpacers -= (profileRequestedWidth + elemSpacing);
-                }
-                if (funcSpaceIsEffectivelyVisible) {
-                    availableSpaceForSpacers -= (funcRequestedWidth + elemSpacing);
-                }
-                availableSpaceForSpacers = wxMax(0, availableSpaceForSpacers);
-                spacerWidth = availableSpaceForSpacers / 2; // Use half of available space
-            }
-            tabFunctionSpacer->SetPosition(wxPoint(currentX, elementY));
-            tabFunctionSpacer->SetSize(spacerWidth, innerHeight);
-            tabFunctionSpacer->Show(true);
-            currentX += spacerWidth;
-        }
-
-        // Position function space
-        if (funcSpaceIsEffectivelyVisible) {
-            if (currentX > barPadding) { // Add spacing if there are elements before
-                currentX += elemSpacing;
-            }
-            functionSpace->SetPosition(wxPoint(currentX, elementY));
-            functionSpace->SetSize(funcRequestedWidth, innerHeight);
-            functionSpace->Show(true);
-            currentX += funcRequestedWidth;
-            LOG_INF("Positioned FunctionSpace (sequential) at (" + std::to_string(currentX - funcRequestedWidth) + 
-                   "," + std::to_string(elementY) + ")", "LayoutManager");
-        }
-
-        // Calculate available space for right spacer
-        int rightSpacerAvailableSpace = 0;
-        if (profileSpaceIsEffectivelyVisible) {
-            rightSpacerAvailableSpace = rightBoundaryForFlexibleElements - currentX - profileRequestedWidth;
-            if (funcSpaceIsEffectivelyVisible) {
-                rightSpacerAvailableSpace -= elemSpacing; // Account for spacing between function and profile
-            }
-        }
-        rightSpacerAvailableSpace = wxMax(0, rightSpacerAvailableSpace);
-
-        // Position functionProfileSpacer
-        if (funcProfileSpacerVisible) {
-            int spacerWidth = functionProfileSpacer->GetSpacerWidth();
-            if (funcProfileSpacerAutoExpand) {
-                spacerWidth = rightSpacerAvailableSpace;
-            }
-            if (funcSpaceIsEffectivelyVisible) {
-                currentX += elemSpacing;
-            }
-            functionProfileSpacer->SetPosition(wxPoint(currentX, elementY));
-            functionProfileSpacer->SetSize(spacerWidth, innerHeight);
-            functionProfileSpacer->Show(true);
-            currentX += spacerWidth;
-        }
-
-        // Position profile space at the right (before system buttons)
-        if (profileSpaceIsEffectivelyVisible) {
-            int profileX = rightBoundaryForFlexibleElements - profileRequestedWidth;
-            profileSpace->SetPosition(wxPoint(profileX, elementY));
-            profileSpace->SetSize(profileRequestedWidth, innerHeight);
-            profileSpace->Show(true);
-            LOG_INF("Positioned ProfileSpace at right: (" + std::to_string(profileX) + 
-                   "," + std::to_string(elementY) + ")", "LayoutManager");
-        }
+    if (functionProfileSpacer) {
+        functionProfileSpacer->Show(false);
     }
 
     // FixPanel handling based on pin state
@@ -325,7 +128,7 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
             int fixPanelHeight = barClientSize.GetHeight() - FIXED_PANEL_Y;
             
             // Minimum viable height check to prevent invisible or overlapping panels
-            const int MIN_FIXPANEL_HEIGHT = 60; // Must be at least 20px to be useful
+            const int MIN_FIXPANEL_HEIGHT = 30; // Must be at least 20px to be useful
             if (fixPanelHeight < MIN_FIXPANEL_HEIGHT) {
                 LOG_WRN("FixPanel height too small (" + std::to_string(fixPanelHeight) + 
                        "), deferring positioning to prevent barspace overlap", "LayoutManager");
@@ -443,6 +246,37 @@ int FlatUIBarLayoutManager::CalculateTabsWidth(wxDC& dc) const
     }
     
     return totalWidth;
+}
+
+TabLayoutParams FlatUIBarLayoutManager::CalculateVisibleTabs(wxDC& dc, int availableWidth) const
+{
+    TabLayoutParams result;
+    if (!m_bar) return result;
+
+    int tabPadding = CFG_INT("BarTabPadding");
+    int tabSpacing = CFG_INT("BarTabSpacing");
+    int currentWidth = 0;
+    size_t pageCount = m_bar->GetPageCount();
+
+    for (size_t i = 0; i < pageCount; ++i) {
+        FlatUIPage* page = m_bar->GetPage(i);
+        if (!page) continue;
+
+        wxString label = page->GetLabel();
+        wxSize labelSize = dc.GetTextExtent(label);
+        int tabWidth = labelSize.GetWidth() + tabPadding * 2;
+        int widthWithSpacing = tabWidth + (result.visibleCount > 0 ? tabSpacing : 0);
+
+        if (result.visibleCount == 0 || (currentWidth + widthWithSpacing) <= availableWidth) {
+            currentWidth += widthWithSpacing;
+            result.visibleCount++;
+        } else {
+            result.hiddenIndices.push_back(i);
+        }
+    }
+    
+    result.visibleWidth = currentWidth;
+    return result;
 }
 
 wxRect FlatUIBarLayoutManager::CalculateTabAreaRect(int currentX, int elementY, int tabsWidth, int barHeight) const

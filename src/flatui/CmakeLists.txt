@@ -2,6 +2,7 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/BorderlessFrameLogic.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFrame.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBar.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatBarSpaceContainer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarSpaces.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarTabs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarDrawing.cpp
@@ -24,6 +25,7 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPinButton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIUnPinButton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFloatPanel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUITabDropdown.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/UIHierarchyDebugger.cpp
     PARENT_SCOPE
 )

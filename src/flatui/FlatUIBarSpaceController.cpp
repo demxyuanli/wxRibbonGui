@@ -61,7 +61,9 @@ void FlatUIBarSpaceController::SetFunctionSpaceControl(wxWindow* funcControl, in
     if (m_bar->m_functionSpace) {
         m_bar->m_functionSpace->SetChildControl(funcControl);
         if (width > 0) m_bar->m_functionSpace->SetSpaceWidth(width);
-        m_bar->m_functionSpace->Show(funcControl != nullptr);
+        // Only show if control exists and user toggle state is visible
+        bool shouldShow = (funcControl != nullptr) && m_bar->GetFunctionSpaceUserVisible();
+        m_bar->m_functionSpace->Show(shouldShow);
         if (m_bar->IsShown()) {
             m_bar->m_layoutManager->UpdateLayout(m_bar->GetClientSize());
             m_bar->Refresh();
@@ -74,6 +76,7 @@ void FlatUIBarSpaceController::ToggleFunctionSpaceVisibility()
     if (m_bar->m_functionSpace) {
         bool visible = m_bar->m_functionSpace->IsShown();
         bool newVisible = !visible;
+        m_bar->SetFunctionSpaceUserVisible(newVisible);  // Update user toggle state
         m_bar->m_functionSpace->Show(newVisible);
         if (m_bar->m_tabFunctionSpacer) {
             m_bar->m_tabFunctionSpacer->Show(newVisible);
@@ -90,7 +93,9 @@ void FlatUIBarSpaceController::SetProfileSpaceControl(wxWindow* profControl, int
     if (m_bar->m_profileSpace) {
         m_bar->m_profileSpace->SetChildControl(profControl);
         if (width > 0) m_bar->m_profileSpace->SetSpaceWidth(width);
-        m_bar->m_profileSpace->Show(profControl != nullptr);
+        // Only show if control exists and user toggle state is visible
+        bool shouldShow = (profControl != nullptr) && m_bar->GetProfileSpaceUserVisible();
+        m_bar->m_profileSpace->Show(shouldShow);
         if (m_bar->IsShown()) {
             m_bar->m_layoutManager->UpdateLayout(m_bar->GetClientSize());
             m_bar->Refresh();
@@ -103,6 +108,7 @@ void FlatUIBarSpaceController::ToggleProfileSpaceVisibility()
     if (m_bar->m_profileSpace) {
         bool visible = m_bar->m_profileSpace->IsShown();
         bool newVisible = !visible;
+        m_bar->SetProfileSpaceUserVisible(newVisible);  // Update user toggle state
         m_bar->m_profileSpace->Show(newVisible);
         if (m_bar->m_functionProfileSpacer) {
             m_bar->m_functionProfileSpacer->Show(newVisible);

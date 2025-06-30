@@ -260,8 +260,8 @@ void FlatUIFixPanel::OnPaint(wxPaintEvent& event)
     dc.Clear();
 
     // Draw border if needed
-    dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour"), CFG_INT("PanelBorderWidth")));
-    dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
+    // dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour"), CFG_INT("PanelBorderWidth")));
+    // dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
 
     event.Skip();
 }

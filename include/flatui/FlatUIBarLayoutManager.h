@@ -2,6 +2,7 @@
 #define FLATUIBAR_LAYOUT_MANAGER_H
 
 #include <wx/wx.h>
+#include <vector>
 
 // Forward declarations
 class FlatUIBar;
@@ -22,6 +23,13 @@ struct LayoutElementInfo {
     LayoutElementInfo() : control(nullptr), visible(false) {}
     LayoutElementInfo(wxWindow* ctrl, const wxPoint& pos, const wxSize& sz, bool vis)
         : control(ctrl), position(pos), size(sz), visible(vis) {}
+};
+
+// Helper structure for tab layout calculation results
+struct TabLayoutParams {
+    int visibleWidth = 0;
+    size_t visibleCount = 0;
+    std::vector<size_t> hiddenIndices;
 };
 
 class FlatUIBarLayoutManager {
@@ -81,6 +89,7 @@ private:
     bool ShouldShowElement(wxWindow* element) const;
     int GetElementSpacing() const;
     int GetBarPadding() const;
+    TabLayoutParams CalculateVisibleTabs(wxDC& dc, int availableWidth) const;
     
     // Specific layout logic
     void HandleCenteredFunctionSpace(int& currentX, int elementY, int innerHeight, 

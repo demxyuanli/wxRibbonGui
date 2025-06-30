@@ -17,6 +17,7 @@
 #include "flatui/FlatUIPageManager.h"
 #include "flatui/FlatUIBarLayoutManager.h"
 #include "flatui/FlatUIBarEventDispatcher.h"
+#include "flatui/FlatBarSpaceContainer.h"
 #include <wx/wx.h>
 #include <wx/artprov.h>
 #include <vector>
@@ -31,6 +32,9 @@ class FlatUISystemButtons;
 class FlatUISpacerControl;  
 class FlatUIFloatPanel;
 class FlatUIFixPanel;
+class FlatBarSpaceContainer;
+class wxButton; // Forward declare wxButton
+class wxMenu;   // Forward declare wxMenu
 
 // Custom events
 wxDECLARE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent); // Backward compatibility with FlatFrame
@@ -206,6 +210,21 @@ public:
     // State change handling (called by EventDispatcher)
     void OnGlobalPinStateChanged(bool isPinned);
 
+    // Methods for tab truncation and dropdown
+    wxButton* GetTabsDropdownButton() const { return m_tabsDropdownButton; }
+    void UpdateHiddenTabsMenu(const std::vector<size_t>& hiddenIndices);
+    void SetVisibleTabsCount(size_t count);
+    size_t GetVisibleTabsCount() const;
+
+    // Tab width calculation (for layout purposes)
+    int CalculateTabsWidth(wxDC& dc) const;
+
+    // User toggle state management
+    bool GetFunctionSpaceUserVisible() const { return m_functionSpaceUserVisible; }
+    void SetFunctionSpaceUserVisible(bool visible) { m_functionSpaceUserVisible = visible; }
+    bool GetProfileSpaceUserVisible() const { return m_profileSpaceUserVisible; }
+    void SetProfileSpaceUserVisible(bool visible) { m_profileSpaceUserVisible = visible; }
+
 private:
     // Core managers - centralized logic
     std::unique_ptr<FlatUIBarStateManager> m_stateManager;
@@ -222,6 +241,8 @@ private:
     void OnPinButtonClicked(wxCommandEvent& event);
     void OnUnpinButtonClicked(wxCommandEvent& event);
     void OnShow(wxShowEvent& event);
+    void OnTabsDropdown(wxCommandEvent& event);
+    void OnHiddenTabMenuItem(wxCommandEvent& event);
 
     // Helper methods - simplified
     bool IsPointInBarArea(const wxPoint& point) const;
@@ -235,6 +256,7 @@ private:
     void UpdateButtonVisibility();
 
     // --- Child Component Controls ---
+    FlatBarSpaceContainer* m_barContainer;  // New container for all bar components
     FlatUIHomeSpace* m_homeSpace;
     // TabSpace is currently handled directly by FlatUIBar's m_pages and PaintTabs
     FlatUIFunctionSpace* m_functionSpace;
@@ -246,6 +268,9 @@ private:
     // Fixed panel for containing pages in pinned state
     FlatUIFixPanel* m_fixPanel;
     
+    // Dropdown for hidden tabs
+    wxButton* m_tabsDropdownButton;
+    wxMenu* m_hiddenTabsMenu;
 
     FlatUISpacerControl* m_tabFunctionSpacer;    
     FlatUISpacerControl* m_functionProfileSpacer; 
@@ -284,22 +309,24 @@ private:
     // static const int BAR_PADDING = 2;     // Removed
 
     // --- Helper methods ---
-    void PaintTabs(wxDC& dc, int availableWidth, int& currentXOffset); // For drawing tabs directly
-    int CalculateTabsWidth(wxDC& dc) const; // For calculating width needed by direct tabs
-    void DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive); // Draw tab border with style
+    void DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive); // Draw tab border with style (for container use)
 
     // GetTopLevelFrame might now be primarily used by m_systemButtons internally
     // wxFrame* GetTopLevelFrame() const; 
 
     void DrawBackground(wxDC& dc);
     void DrawBarSeparator(wxDC& dc);
-    void PaintTabsArea(wxDC& dc, int availableWidth, int& currentXOffset);
-    void HandleTabAreaClick(const wxPoint& pos);
 
     bool m_functionSpaceCenterAlign;
     bool m_profileSpaceRightAlign;
 
     // Helper methods for floating window
+    
+    // User toggle states for spaces
+    bool m_functionSpaceUserVisible;  // Track user's toggle state for function space
+    bool m_profileSpaceUserVisible;   // Track user's toggle state for profile space
+
+    size_t m_visibleTabsCount; // Number of tabs that fit in the current layout
 
 };
 

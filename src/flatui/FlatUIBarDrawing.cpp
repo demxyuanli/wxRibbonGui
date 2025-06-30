@@ -41,13 +41,7 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
     DrawBackground(dc);
     DrawBarSeparator(dc);
 
-    LOG_DBG("FlatUIBar The Border Pos: (" + std::to_string(GetSize().GetWidth()) + "," + std::to_string(GetBarHeight()) + ")", "FlatUIBar");
-
-    if (GetPageCount() > 0 && m_tabAreaRect.GetWidth() > 0) {
-        wxDCClipper clip(dc, m_tabAreaRect);
-        int offset = m_tabAreaRect.GetX();
-        PaintTabsArea(dc, m_tabAreaRect.GetWidth(), offset);
-    }
+    LOG_DBG("FlatUIBar OnPaint: Background and separator drawn. Tabs handled by FlatBarSpaceContainer.", "FlatUIBar");
 }
 
 void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)

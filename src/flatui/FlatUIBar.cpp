@@ -21,6 +21,8 @@
 #include "flatui/FlatUIUnpinButton.h"
 // FlatUIPinButton is now handled by FlatUIFloatPanel
 #include <memory> // Required for std::unique_ptr and std::move
+#include <wx/button.h>
+#include <wx/menu.h>
 // Define the backward compatibility event
 wxDEFINE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
 
@@ -55,7 +57,12 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_profileSpaceRightAlign(false),
     m_temporarilyShownPage(nullptr),
     m_barUnpinnedHeight(CFG_INT("BarUnpinnedHeight")),
-    m_floatPanel(nullptr)
+    m_floatPanel(nullptr),
+    m_tabsDropdownButton(nullptr),
+    m_hiddenTabsMenu(nullptr),
+    m_visibleTabsCount(0),
+    m_functionSpaceUserVisible(true),  // Default to visible
+    m_profileSpaceUserVisible(true)    // Default to visible
 {
     SetName("FlatUIBar");
     SetFont(CFG_DEFAULTFONT());
@@ -97,11 +104,24 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     SetBarTopMargin(0);
     SetBarBottomMargin(1);
 
+    // Create the main container first
+    m_barContainer = new FlatBarSpaceContainer(this, wxID_ANY);
+    m_barContainer->SetName("BarSpaceContainer");
+    m_barContainer->SetDoubleBuffered(true);
+    
     // Create child component controls
-    m_homeSpace = new FlatUIHomeSpace(this, wxID_ANY);
-    m_functionSpace = new FlatUIFunctionSpace(this, wxID_ANY);
-    m_profileSpace = new FlatUIProfileSpace(this, wxID_ANY);
-    m_systemButtons = new FlatUISystemButtons(this, wxID_ANY);
+    m_homeSpace = new FlatUIHomeSpace(m_barContainer, wxID_ANY);
+    m_functionSpace = new FlatUIFunctionSpace(m_barContainer, wxID_ANY);
+    m_profileSpace = new FlatUIProfileSpace(m_barContainer, wxID_ANY);
+    m_systemButtons = new FlatUISystemButtons(m_barContainer, wxID_ANY);
+    
+    // Set up the container with components
+    m_barContainer->SetHomeSpace(m_homeSpace);
+    m_barContainer->SetFunctionSpace(m_functionSpace);
+    m_barContainer->SetProfileSpace(m_profileSpace);
+    m_barContainer->SetSystemButtons(m_systemButtons);
+    m_barContainer->SetFunctionSpaceCenterAlign(m_functionSpaceCenterAlign);
+    m_barContainer->SetProfileSpaceRightAlign(m_profileSpaceRightAlign);
 
     // Set names for all controls
     m_homeSpace->SetName("HomeSpace");
@@ -135,8 +155,18 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_tabFunctionSpacer->SetCanDragWindow(true);
     m_functionProfileSpacer->SetCanDragWindow(true);
 
-    m_tabFunctionSpacer->Hide();
-    m_functionProfileSpacer->Hide();
+    //m_tabFunctionSpacer->Hide();
+    //m_functionProfileSpacer->Hide();
+
+    // Create the dropdown button for truncated tabs
+    m_tabsDropdownButton = new wxButton(this, wxID_ANY, "...", wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxBU_EXACTFIT);
+    m_tabsDropdownButton->Hide(); // Initially hidden
+    m_hiddenTabsMenu = new wxMenu();
+    Bind(wxEVT_BUTTON, &FlatUIBar::OnTabsDropdown, this, m_tabsDropdownButton->GetId());
+    Bind(wxEVT_MENU, &FlatUIBar::OnHiddenTabMenuItem, this);
+
+    // Temporarily disable dropdown functionality
+    m_tabsDropdownButton->Show(false);
 
     // m_pages is default constructed (empty wxVector)
 
@@ -152,8 +182,9 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
 
     // Ensure child controls are initially hidden if they don't have content
     // or based on some initial state. FlatUIBar will Show() them as needed during layout.
-    m_functionSpace->Show(false);
-    m_profileSpace->Show(false);
+    // Don't force hide here - let the layout manager handle visibility based on content and user state
+    // m_functionSpace->Show(false);
+    // m_profileSpace->Show(false);
 
     // Bind unpin button event (fix panel is already created above)
     if (m_stateManager->IsPinned() && m_unpinButton) {
@@ -196,6 +227,12 @@ FlatUIBar::~FlatUIBar() {
 
     // Release global mouse capture
     ReleaseGlobalMouseCapture();
+
+    // Destroy the menu associated with the dropdown
+    if (m_hiddenTabsMenu) {
+        delete m_hiddenTabsMenu;
+        m_hiddenTabsMenu = nullptr;
+    }
 
     FlatUIEventManager::getInstance().unbindBarEvents(this);
     FlatUIEventManager::getInstance().unbindHomeSpaceEvents(m_homeSpace);
@@ -386,14 +423,23 @@ void FlatUIBar::OnSize(wxSizeEvent& evt)
 {
     wxSize newSize = GetClientSize();
     
-    // Use layout manager for positioning
+    // Position the container to fill the bar area
+    if (m_barContainer) {
+        int barHeight = GetBarHeight();
+        m_barContainer->SetPosition(wxPoint(0, m_barTopMargin));
+        m_barContainer->SetSize(newSize.GetWidth(), barHeight);
+        
+        // Force container layout update
+        m_barContainer->UpdateLayout();
+    }
+    
+    // Use layout manager for positioning other components (like fixPanel)
     m_layoutManager->UpdateLayout(newSize);
 
-    // Update child controls
-    if (m_homeSpace) m_homeSpace->Update();
-    if (m_functionSpace) m_functionSpace->Update();
-    if (m_profileSpace) m_profileSpace->Update();
-    if (m_systemButtons) m_systemButtons->Update();
+    // Update child controls through container
+    if (m_barContainer) {
+        m_barContainer->Update();
+    }
     if (m_tabFunctionSpacer) m_tabFunctionSpacer->Update();
     if (m_functionProfileSpacer) m_functionProfileSpacer->Update();
 
@@ -762,6 +808,52 @@ void FlatUIBar::OnFloatPanelDismissed(wxCommandEvent& event)
     m_stateManager->SetActiveFloatingPage(static_cast<size_t>(-1)); // Reset floating page selection
     Refresh(); // Update tab visual state
     event.Skip();
+}
+
+void FlatUIBar::OnTabsDropdown(wxCommandEvent& event)
+{
+    if (m_hiddenTabsMenu && m_hiddenTabsMenu->GetMenuItemCount() > 0) {
+        PopupMenu(m_hiddenTabsMenu);
+    }
+    event.Skip();
+}
+
+void FlatUIBar::OnHiddenTabMenuItem(wxCommandEvent& event)
+{
+    int selectedIndex = event.GetId() - FlatUIBarConfig::MENU_ID_RANGE_START;
+    if (selectedIndex >= 0) {
+        SetActivePage(static_cast<size_t>(selectedIndex));
+    }
+    event.Skip();
+}
+
+void FlatUIBar::UpdateHiddenTabsMenu(const std::vector<size_t>& hiddenIndices)
+{
+    if (!m_hiddenTabsMenu) return;
+
+    // Clear existing menu items
+    while (m_hiddenTabsMenu->GetMenuItemCount() > 0) {
+        m_hiddenTabsMenu->Destroy(m_hiddenTabsMenu->FindItemByPosition(0));
+    }
+
+    for (const auto& index : hiddenIndices) {
+        FlatUIPage* page = GetPage(index);
+        if (page) {
+            // Use a range of IDs for menu items
+            int menuId = FlatUIBarConfig::MENU_ID_RANGE_START + index;
+            m_hiddenTabsMenu->Append(menuId, page->GetLabel());
+        }
+    }
+}
+
+void FlatUIBar::SetVisibleTabsCount(size_t count)
+{
+    m_visibleTabsCount = count;
+}
+
+size_t FlatUIBar::GetVisibleTabsCount() const
+{
+    return m_visibleTabsCount;
 }
 
 void FlatUIBar::UpdateButtonVisibility()

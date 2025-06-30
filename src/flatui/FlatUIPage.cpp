@@ -63,11 +63,11 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
 
     dc.Clear();
 
-    dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour"), CFG_INT("PanelBorderWidth")));
+    // dc.SetPen(wxPen(CFG_COLOUR("PanelBorderColour"), CFG_INT("PanelBorderWidth")));
 
     //dc.DrawLine(2, 0, size.GetWidth()-2, 0);
 
-    dc.DrawLine(2, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
+    // dc.DrawLine(2, size.GetHeight() - 1, size.GetWidth()-2, size.GetHeight() - 1);
 
 
     // Ribbon style: Page typically doesn't have its own prominent border distinct from the active tab
