@@ -49,6 +49,11 @@ protected:
     // DPI awareness methods
     void UpdateBorderThreshold();
     double GetCurrentDPIScale();
+    
+#ifdef __WXMSW__
+    // Windows-specific coordinate conversion for DPI scaling
+    wxRect ConvertLogicalToPhysicalRect(const wxRect& logicalRect);
+#endif
 
     virtual int GetMinWidth() const ;
     virtual int GetMinHeight() const ;

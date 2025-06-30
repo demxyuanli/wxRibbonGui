@@ -100,6 +100,23 @@ void BorderlessFrameLogic::OnDPIChanged(wxDPIChangedEvent& event)
 
     event.Skip();
 }
+
+wxRect BorderlessFrameLogic::ConvertLogicalToPhysicalRect(const wxRect& logicalRect)
+{
+    double scaleFactor = GetCurrentDPIScale();
+    
+    // Only apply scaling if we have actual DPI scaling (not 100%)
+    if (scaleFactor == 1.0) {
+        return logicalRect;  // No scaling needed
+    }
+    
+    return wxRect(
+        static_cast<int>(logicalRect.x * scaleFactor),
+        static_cast<int>(logicalRect.y * scaleFactor),
+        static_cast<int>(logicalRect.width * scaleFactor),
+        static_cast<int>(logicalRect.height * scaleFactor)
+    );
+}
 #endif
 
 void BorderlessFrameLogic::OnLeftDown(wxMouseEvent& event)
@@ -238,6 +255,16 @@ void BorderlessFrameLogic::OnMotion(wxMouseEvent& event)
             m_resizeStartWindowRect.GetWidth(),    // Original width
             m_resizeStartWindowRect.GetHeight()    // Original height
         );
+        
+        // Debug logging for coordinate tracking
+        static int logCount = 0;
+        if (logCount++ % 10 == 0) { // Log every 10th call to avoid spam
+            LOG_DBG("OnMotion drag: mouseScreen=(" + std::to_string(mousePosOnScreen.x) + "," + std::to_string(mousePosOnScreen.y) + ")" +
+                    ", dragStart=(" + std::to_string(m_dragStartPos.x) + "," + std::to_string(m_dragStartPos.y) + ")" +
+                    ", newRect=(" + std::to_string(newRect.x) + "," + std::to_string(newRect.y) + "," + 
+                    std::to_string(newRect.width) + "," + std::to_string(newRect.height) + ")", "BorderlessFrameLogic");
+        }
+        
         if (!m_rubberBandVisible || lastDrawnRect != newRect && (currentTime - lastDrawTime > 16 ||
             abs(newRect.x - lastDrawnRect.x) > 5 || abs(newRect.y - lastDrawnRect.y) > 5)) {
             if (m_rubberBandVisible) EraseRubberBand();
@@ -355,17 +382,23 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
 {
     if (m_rubberBandVisible) EraseRubberBand();
 
-    // Convert logical coordinates to physical coordinates for DPI scaling
-    double scaleFactor = GetCurrentDPIScale();
-    wxRect physicalRect(
-        static_cast<int>(rect.x * scaleFactor),
-        static_cast<int>(rect.y * scaleFactor),
-        static_cast<int>(rect.width * scaleFactor),
-        static_cast<int>(rect.height * scaleFactor)
-    );
+    wxRect drawRect = rect;
 
 #ifdef __WXMSW__
-    // Get current DPI scaling factor for pen width
+    // Windows-specific DPI scaling adjustment for rubber band
+    // On Windows, when system DPI scaling is enabled, the GDI coordinate system
+    // requires conversion from logical to physical coordinates
+    drawRect = ConvertLogicalToPhysicalRect(rect);
+    double scaleFactor = GetCurrentDPIScale();
+
+    // Debug logging for Windows DPI scaling
+    LOG_DBG("DrawRubberBand [Windows]: scaleFactor=" + std::to_string(scaleFactor) + 
+            ", logical=(" + std::to_string(rect.x) + "," + std::to_string(rect.y) + "," + 
+            std::to_string(rect.width) + "," + std::to_string(rect.height) + ")" +
+            ", physical=(" + std::to_string(drawRect.x) + "," + std::to_string(drawRect.y) + "," + 
+            std::to_string(drawRect.width) + "," + std::to_string(drawRect.height) + ")", "BorderlessFrameLogic");
+
+    // Calculate pen width with DPI scaling
     int penWidth = static_cast<int>(3 * scaleFactor);
     if (penWidth < 1) penWidth = 1;
 
@@ -375,8 +408,8 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
-    ::Rectangle(hdc, physicalRect.GetLeft(), physicalRect.GetTop(),
-        physicalRect.GetRight(), physicalRect.GetBottom());
+    ::Rectangle(hdc, drawRect.GetLeft(), drawRect.GetTop(),
+        drawRect.GetRight(), drawRect.GetBottom());
 
     ::SelectObject(hdc, hOldBrush);
     ::SelectObject(hdc, hOldPen);
@@ -384,22 +417,22 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
     ::SetROP2(hdc, oldROP);
     ::ReleaseDC(NULL, hdc);
 #else
-    if (m_rubberBandVisible) EraseRubberBand();
-
+    // Non-Windows platforms: use wxWidgets drawing directly
+    // These platforms handle DPI scaling automatically
     wxScreenDC dc;
     dc.SetLogicalFunction(wxINVERT);
 
-    // Adjust pen width for high DPI displays
+    double scaleFactor = GetCurrentDPIScale();
     int penWidth = static_cast<int>(3 * scaleFactor);
     if (penWidth < 1) penWidth = 1;
 
     wxPen pen(wxColour(100, 100, 100), penWidth, wxPENSTYLE_SOLID);
     dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(physicalRect);
+    dc.DrawRectangle(drawRect);
 #endif
 
-    m_currentRubberBandRect = physicalRect;
+    m_currentRubberBandRect = drawRect;
     m_rubberBandVisible = true;
 }
 
@@ -408,9 +441,8 @@ void BorderlessFrameLogic::EraseRubberBand()
     if (!m_rubberBandVisible) return;
 
 #ifdef __WXMSW__
-    // Get current DPI scaling factor
+    // Windows-specific rubber band erasure with DPI scaling
     double scaleFactor = GetCurrentDPIScale();
-
     int penWidth = static_cast<int>(3 * scaleFactor);
     if (penWidth < 1) penWidth = 1;
 
@@ -420,6 +452,7 @@ void BorderlessFrameLogic::EraseRubberBand()
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
+    // Use the stored m_currentRubberBandRect which already contains the correct coordinates
     ::Rectangle(hdc, m_currentRubberBandRect.GetLeft(), m_currentRubberBandRect.GetTop(),
         m_currentRubberBandRect.GetRight(), m_currentRubberBandRect.GetBottom());
 
@@ -429,6 +462,7 @@ void BorderlessFrameLogic::EraseRubberBand()
     ::SetROP2(hdc, oldROP);
     ::ReleaseDC(NULL, hdc);
 #else
+    // Non-Windows platforms: direct wxWidgets drawing
     wxScreenDC dc;
     dc.SetLogicalFunction(wxINVERT);
 

@@ -37,11 +37,74 @@ void FlatUIBar::DrawBarSeparator(wxDC& dc)
 
 void FlatUIBar::OnPaint(wxPaintEvent& evt)
 {
+    if (m_performanceManager) {
+        m_performanceManager->StartPerformanceTimer("FlatUIBar_OnPaint");
+    }
+
     wxAutoBufferedPaintDC dc(this);
-    DrawBackground(dc);
-    DrawBarSeparator(dc);
+    
+    // Use performance manager's optimized graphics context if available
+    if (m_performanceManager && m_performanceManager->IsHardwareAccelerationEnabled()) {
+        wxGraphicsContext* gc = m_performanceManager->CreateOptimizedGraphicsContext(dc);
+        if (gc) {
+            // Use hardware-accelerated rendering
+            DrawBackgroundOptimized(*gc);
+            DrawBarSeparatorOptimized(*gc);
+            delete gc;
+        } else {
+            // Fallback to traditional rendering
+            DrawBackground(dc);
+            DrawBarSeparator(dc);
+        }
+    } else {
+        // Traditional rendering
+        DrawBackground(dc);
+        DrawBarSeparator(dc);
+    }
+
+    if (m_performanceManager) {
+        m_performanceManager->EndPerformanceTimer("FlatUIBar_OnPaint");
+    }
 
     LOG_DBG("FlatUIBar OnPaint: Background and separator drawn. Tabs handled by FlatBarSpaceContainer.", "FlatUIBar");
+}
+
+void FlatUIBar::DrawBackgroundOptimized(wxGraphicsContext& gc)
+{
+    wxSize clientSize = GetClientSize();
+    int padding = m_performanceManager ? 
+        m_performanceManager->GetDPIAwareValue("BarPadding", CFG_INT("BarPadding")) : 
+        CFG_INT("BarPadding");
+    int barH = GetBarHeight();
+    
+    // Use hardware-accelerated drawing
+    gc.SetBrush(wxBrush(CFG_COLOUR("BarBackgroundColour")));
+    gc.SetPen(*wxTRANSPARENT_PEN);
+    gc.DrawRectangle(0, 0, clientSize.GetWidth(), barH);
+
+    if (!IsBarPinned() && m_temporarilyShownPage == nullptr) {
+        int unpinnedIndicatorHeight = m_performanceManager ? 
+            m_performanceManager->GetDPIAwareValue("UnpinnedIndicatorHeight", 5) : 5;
+        gc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        gc.SetPen(*wxTRANSPARENT_PEN);
+        gc.DrawRectangle(0, barH, clientSize.GetWidth(), unpinnedIndicatorHeight);
+    }
+}
+
+void FlatUIBar::DrawBarSeparatorOptimized(wxGraphicsContext& gc)
+{
+    wxSize clientSize = GetClientSize();
+    int padding = m_performanceManager ? 
+        m_performanceManager->GetDPIAwareValue("BarPadding", CFG_INT("BarPadding")) : 
+        CFG_INT("BarPadding");
+    int barH = GetBarHeight() - m_barBottomMargin;
+    
+    // Use DPI-aware pen width
+    int penWidth = m_performanceManager ? 
+        m_performanceManager->GetDPIAwareValue("BorderWidth", 1) : 1;
+    
+    gc.SetPen(wxPen(CFG_COLOUR("BarBorderColour"), penWidth));
+    gc.StrokeLine(padding, barH, clientSize.GetWidth() - padding, barH);
 }
 
 void FlatUIBar::DrawTabBorder(wxDC& dc, const wxRect& tabRect, bool isActive)

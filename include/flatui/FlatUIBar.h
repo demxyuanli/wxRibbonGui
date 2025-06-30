@@ -17,6 +17,7 @@
 #include "flatui/FlatUIPageManager.h"
 #include "flatui/FlatUIBarLayoutManager.h"
 #include "flatui/FlatUIBarEventDispatcher.h"
+#include "flatui/FlatUIBarPerformanceManager.h"
 #include "flatui/FlatBarSpaceContainer.h"
 #include <wx/wx.h>
 #include <wx/artprov.h>
@@ -201,6 +202,7 @@ public:
     
     // Manager access for subcomponents
     FlatUIBarStateManager* GetStateManager() const { return m_stateManager.get(); }
+    FlatUIBarPerformanceManager* GetPerformanceManager() const { return m_performanceManager.get(); }
     
     // Methods for float panel
     void ShowPageInFloatPanel(FlatUIPage* page);
@@ -231,6 +233,7 @@ private:
     std::unique_ptr<FlatUIPageManager> m_pageManager;
     std::unique_ptr<FlatUIBarLayoutManager> m_layoutManager;
     std::unique_ptr<FlatUIBarEventDispatcher> m_eventDispatcher;
+    std::unique_ptr<FlatUIBarPerformanceManager> m_performanceManager;
 
     // Legacy support - will be gradually removed
     FlatUIPage* m_temporarilyShownPage;
@@ -316,6 +319,10 @@ private:
 
     void DrawBackground(wxDC& dc);
     void DrawBarSeparator(wxDC& dc);
+    
+    // Hardware-accelerated drawing methods
+    void DrawBackgroundOptimized(wxGraphicsContext& gc);
+    void DrawBarSeparatorOptimized(wxGraphicsContext& gc);
 
     bool m_functionSpaceCenterAlign;
     bool m_profileSpaceRightAlign;

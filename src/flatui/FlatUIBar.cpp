@@ -72,6 +72,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_pageManager = std::make_unique<FlatUIPageManager>();
     m_layoutManager = std::make_unique<FlatUIBarLayoutManager>(this);
     m_eventDispatcher = std::make_unique<FlatUIBarEventDispatcher>(this);
+    m_performanceManager = std::make_unique<FlatUIBarPerformanceManager>(this);
     
     // Initialize event dispatcher with managers
     m_eventDispatcher->Initialize(m_stateManager.get(), m_pageManager.get(), m_layoutManager.get());
@@ -422,6 +423,11 @@ FlatUIPage* FlatUIBar::GetPage(size_t index) const { return m_pageManager->GetPa
 void FlatUIBar::OnSize(wxSizeEvent& evt)
 {
     wxSize newSize = GetClientSize();
+    
+    // Notify performance manager about size changes for invalidation
+    if (m_performanceManager) {
+        m_performanceManager->InvalidateAll();
+    }
     
     // Position the container to fill the bar area
     if (m_barContainer) {

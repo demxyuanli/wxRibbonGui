@@ -6,6 +6,7 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarSpaces.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarTabs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarDrawing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIBarPerformanceManager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIButtonBar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIGallery.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIPage.cpp
