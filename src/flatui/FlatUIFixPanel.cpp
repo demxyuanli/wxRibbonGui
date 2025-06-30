@@ -311,9 +311,10 @@ void FlatUIFixPanel::OnPaint(wxPaintEvent& event)
     dc.SetBackground(wxBrush(*wxWHITE));
     dc.Clear();
 
-    // Draw 1 pixel bottom border
+    // Draw border around the entire panel
     dc.SetPen(wxPen(*wxRED, 1));
-    dc.DrawLine(0, size.GetHeight(), size.GetWidth(), size.GetHeight());
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.DrawLine(0, size.GetHeight()-1, size.GetWidth(), size.GetHeight()-1);
 
     event.Skip();
 }
@@ -393,8 +394,17 @@ void FlatUIFixPanel::PositionActivePage()
     // Position page in scroll container with scroll offset
     wxPoint pagePos(-m_scrollOffset, 0);
     activePage->SetPosition(pagePos);
-    activePage->SetSize(wxSize(pageSize.GetWidth(), containerSize.GetHeight()));
+    // Reduce page height by 1 pixel to create visual separation
+    int adjustedHeight = containerSize.GetHeight() - 1;
+    activePage->SetSize(wxSize(pageSize.GetWidth(), adjustedHeight));
     activePage->Layout();
+    
+    // Debug logging for heights
+    wxSize fixPanelSize = GetSize();
+    LOG_INF("Height debug - FixPanel: " + std::to_string(fixPanelSize.GetHeight()) + 
+           ", ScrollContainer: " + std::to_string(containerSize.GetHeight()) + 
+           ", PageBestSize: " + std::to_string(pageSize.GetHeight()) + 
+           ", PageSetSize: " + std::to_string(adjustedHeight), "FlatUIFixPanel");
     
     // Ensure unpin button is on top by raising it after positioning the page
     if (m_unpinButton && m_unpinButton->IsShown()) {

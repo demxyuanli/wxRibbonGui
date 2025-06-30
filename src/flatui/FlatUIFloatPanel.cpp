@@ -29,7 +29,7 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
     m_pinButton(nullptr),
     m_autoHideTimer(this),
     m_borderWidth(0),
-    m_shadowOffset(1),
+    m_shadowOffset(0),
     m_scrollingEnabled(false),
     m_scrollContainer(nullptr),
     m_leftScrollButton(nullptr),
@@ -114,6 +114,7 @@ void FlatUIFloatPanel::SetupAppearance()
     m_borderColour = wxColour(*wxRED);
     m_backgroundColour = wxColour(*wxWHITE);
     m_shadowColour = wxColour(255, 255, 255, 100);
+    m_borderWidth = 1; // Ensure border width is set
 
     // Always use white background
     SetBackgroundColour(*wxWHITE);
@@ -199,8 +200,28 @@ void FlatUIFloatPanel::SetPageContent(FlatUIPage* page)
 
         LOG_INF("Set page content: " + m_currentPage->GetLabel().ToStdString(), "FlatUIFloatPanel");
 
-        m_pinButton->Show(true);
-        m_pinButton->Raise();
+        // Ensure pin button is visible and on top after all layout operations
+        if (m_pinButton) {
+            // Position pin button correctly
+            wxSize contentSize = m_contentPanel->GetSize();
+            wxSize pinSize = m_pinButton->GetBestSize();
+            int margin = 2;
+            
+            int pinX = wxMax(0, contentSize.GetWidth() - pinSize.GetWidth() - margin);
+            int pinY = wxMax(0, contentSize.GetHeight() - pinSize.GetHeight() - margin);
+            
+            m_pinButton->SetPosition(wxPoint(pinX, pinY));
+            m_pinButton->SetSize(pinSize);
+            m_pinButton->Show(true);
+            m_pinButton->Enable(true);
+            m_pinButton->Raise();
+            
+            // Force immediate update of pin button
+            m_pinButton->Update();
+            m_pinButton->Refresh();
+            
+            LOG_INF("Pin button repositioned and raised after page content change", "FlatUIFloatPanel");
+        }
     }
 }
 
@@ -399,16 +420,8 @@ void FlatUIFloatPanel::OnPaint(wxPaintEvent& event)
     // Draw shadow first (behind the panel)
     DrawShadow(dc);
 
-    // Draw custom border
+    // Draw custom border (bottom border only)
     DrawCustomBorder(dc);
-
-    // Draw 1 pixel bottom border on content area
-    if (m_contentPanel) {
-        wxRect contentRect = m_contentPanel->GetRect();
-        dc.SetPen(wxPen(m_borderColour, 1));
-        dc.DrawLine(contentRect.x, contentRect.y + contentRect.height - 1, 
-                   contentRect.x + contentRect.width, contentRect.y + contentRect.height - 1);
-    }
 
     event.Skip();
 }
@@ -433,12 +446,15 @@ void FlatUIFloatPanel::DrawCustomBorder(wxDC& dc)
     if (m_borderWidth <= 0) return;
 
     wxSize size = GetSize();
-    wxRect borderRect(0, 0, size.GetWidth() - m_shadowOffset, size.GetHeight() - m_shadowOffset);
-
-    // Draw border
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    
+    // Calculate bottom border position - subtract shadow offset to keep within bounds
+    int borderBottom = size.GetHeight() - m_shadowOffset - 1;
+    int borderRight = size.GetWidth() - m_shadowOffset;
+    
     dc.SetPen(wxPen(m_borderColour, m_borderWidth));
-    dc.DrawRectangle(borderRect);
+    
+    // Draw only bottom border
+    dc.DrawLine(0, borderBottom, borderRight, borderBottom);
 }
 
 void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
@@ -531,6 +547,14 @@ void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
                 UpdateScrollButtons();
                 m_contentPanel->Layout();
                 Layout();
+                
+                // Ensure pin button is still visible and on top after layout changes
+                if (m_pinButton) {
+                    m_pinButton->Show(true);
+                    m_pinButton->Raise();
+                    m_pinButton->Update();
+                    LOG_INF("OnSize CallAfter: Ensured pin button visibility after scroll state correction", "FlatUIFloatPanel");
+                }
             }
         }
     });

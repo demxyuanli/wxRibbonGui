@@ -103,7 +103,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
     SetBarTopMargin(0);
-    SetBarBottomMargin(1);
+    SetBarBottomMargin(0);
 
     // Create the main container first
     m_barContainer = new FlatBarSpaceContainer(this, wxID_ANY);
