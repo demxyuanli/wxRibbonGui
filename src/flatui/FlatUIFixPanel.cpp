@@ -11,12 +11,22 @@
 wxBEGIN_EVENT_TABLE(FlatUIFixPanel, wxPanel)
     EVT_SIZE(FlatUIFixPanel::OnSize)
     EVT_PAINT(FlatUIFixPanel::OnPaint)
+    EVT_BUTTON(wxID_BACKWARD, FlatUIFixPanel::OnScrollLeft)
+    EVT_BUTTON(wxID_FORWARD, FlatUIFixPanel::OnScrollRight)
 wxEND_EVENT_TABLE()
 
 FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     : wxPanel(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_activePageIndex(wxNOT_FOUND),
-    m_unpinButton(nullptr)
+    m_unpinButton(nullptr),
+    m_scrollingEnabled(false),
+    m_scrollContainer(nullptr),
+    m_leftScrollButton(nullptr),
+    m_rightScrollButton(nullptr),
+    m_scrollOffset(0),
+    m_scrollStep(50),
+    m_mainSizer(nullptr),
+    m_scrollSizer(nullptr)
 {
     SetName("FlatUIFixPanel");
     SetDoubleBuffered(true);
@@ -31,6 +41,23 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     }
 #endif
 
+    // Create main sizer for scroll layout
+    m_mainSizer = new wxBoxSizer(wxHORIZONTAL);
+    SetSizer(m_mainSizer);
+
+    // Create scroll container with clipping enabled
+    m_scrollContainer = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN);
+    m_scrollContainer->SetName("FixPanelScrollContainer");
+    m_scrollContainer->SetBackgroundColour(GetBackgroundColour());
+    m_scrollContainer->SetCanFocus(false);
+    
+    // Create scroll sizer for content
+    m_scrollSizer = new wxBoxSizer(wxHORIZONTAL);
+    m_scrollContainer->SetSizer(m_scrollSizer);
+    
+    // Add scroll container to main sizer (initially takes full space)
+    m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+
     // Create unpin button
     m_unpinButton = new FlatUIUnpinButton(this, wxID_ANY);
     m_unpinButton->SetName("FixPanelUnpinButton");
@@ -40,7 +67,10 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     // Ensure unpin button is on top by default
     m_unpinButton->Raise();
 
-    LOG_INF("Created FlatUIFixPanel with unpin button", "FlatUIFixPanel");
+    // Create scroll controls (initially hidden)
+    CreateScrollControls();
+
+    LOG_INF("Created FlatUIFixPanel with scroll functionality", "FlatUIFixPanel");
 }
 
 FlatUIFixPanel::~FlatUIFixPanel()
@@ -115,6 +145,10 @@ void FlatUIFixPanel::SetActivePage(size_t pageIndex)
         if (newActivePage) {
             newActivePage->SetActive(true);
             newActivePage->Show();
+            
+            // Reset scroll position when changing pages
+            m_scrollOffset = 0;
+            
             PositionActivePage();
             
             LOG_INF("Set active page to '" + newActivePage->GetLabel().ToStdString() + "'", "FlatUIFixPanel");
@@ -179,6 +213,7 @@ void FlatUIFixPanel::UpdateLayout()
     
     PositionActivePage();
     PositionUnpinButton();
+    UpdateScrollButtons();
     
     Thaw();
     
@@ -296,32 +331,50 @@ void FlatUIFixPanel::PositionUnpinButton()
 void FlatUIFixPanel::PositionActivePage()
 {
     FlatUIPage* activePage = GetActivePage();
-    if (!activePage) {
+    if (!activePage || !m_scrollContainer) {
         return;
     }
 
-    wxSize panelSize = GetSize();
-    wxSize buttonSize(0, 0);
-    int margin = 5;
-    
-    // Reserve space for unpin button if it's shown
-    if (m_unpinButton && m_unpinButton->IsShown()) {
-        buttonSize = m_unpinButton->GetBestSize();
+    // Reparent page to scroll container if needed
+    if (activePage->GetParent() != m_scrollContainer) {
+        activePage->Reparent(m_scrollContainer);
     }
     
-    // Page takes up the entire panel area except for button area
-    activePage->SetPosition(wxPoint(0, 0));
-    activePage->SetSize(panelSize);
+    wxSize containerSize = m_scrollContainer->GetSize();
+    wxSize pageSize = activePage->GetBestSize();
+    
+    // Position page in scroll container with scroll offset
+    wxPoint pagePos(-m_scrollOffset, 0);
+    activePage->SetPosition(pagePos);
+    activePage->SetSize(wxSize(pageSize.GetWidth(), containerSize.GetHeight()));
     activePage->Layout();
+    
+    // Update scroll layout
+    if (NeedsScrolling()) {
+        EnableScrolling(true);
+        
+        // Adjust main sizer to make room for scroll buttons
+        m_mainSizer->Clear();
+        m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND | wxRIGHT, 2);
+        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+        m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxLEFT, 2);
+    } else {
+        EnableScrolling(false);
+        
+        // Use full space for scroll container
+        m_mainSizer->Clear();
+        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+    }
     
     // Ensure unpin button is on top by raising it after positioning the page
     if (m_unpinButton && m_unpinButton->IsShown()) {
         m_unpinButton->Raise();
     }
     
+    UpdateScrollButtons();
+    
     LOG_DBG("Positioned active page '" + activePage->GetLabel().ToStdString() + 
-           "' at size (" + std::to_string(panelSize.GetWidth()) + "," + 
-           std::to_string(panelSize.GetHeight()) + ") and raised unpin button", "FlatUIFixPanel");
+           "' in scroll container with offset " + std::to_string(m_scrollOffset), "FlatUIFixPanel");
 }
 
 void FlatUIFixPanel::HideAllPages()
@@ -386,7 +439,156 @@ void FlatUIFixPanel::ResetState()
         m_unpinButton->Hide();
     }
     
+    // Reset scroll position
+    m_scrollOffset = 0;
+    UpdateScrollButtons();
+    
     Thaw();
     
     LOG_INF("FixPanel state reset", "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::EnableScrolling(bool enable)
+{
+    if (m_scrollingEnabled == enable) {
+        return;
+    }
+    
+    m_scrollingEnabled = enable;
+    UpdateScrollButtons();
+    UpdateLayout();
+    
+    LOG_INF("Scrolling " + std::string(enable ? "enabled" : "disabled"), "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::ScrollLeft()
+{
+    if (!m_scrollingEnabled || !NeedsScrolling()) {
+        return;
+    }
+    
+    m_scrollOffset = wxMax(0, m_scrollOffset - m_scrollStep);
+    UpdateScrollPosition();
+    UpdateScrollButtons();
+    
+    LOG_DBG("Scrolled left, offset: " + std::to_string(m_scrollOffset), "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::ScrollRight()
+{
+    if (!m_scrollingEnabled || !NeedsScrolling()) {
+        return;
+    }
+    
+    FlatUIPage* activePage = GetActivePage();
+    if (!activePage) {
+        return;
+    }
+    
+    wxSize pageSize = activePage->GetBestSize();
+    wxSize containerSize = m_scrollContainer->GetSize();
+    int maxOffset = wxMax(0, pageSize.GetWidth() - containerSize.GetWidth());
+    
+    m_scrollOffset = wxMin(maxOffset, m_scrollOffset + m_scrollStep);
+    UpdateScrollPosition();
+    UpdateScrollButtons();
+    
+    LOG_DBG("Scrolled right, offset: " + std::to_string(m_scrollOffset), "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::UpdateScrollButtons()
+{
+    if (!m_leftScrollButton || !m_rightScrollButton) {
+        return;
+    }
+    
+    bool needsScrolling = NeedsScrolling();
+    
+    if (needsScrolling && m_scrollingEnabled) {
+        m_leftScrollButton->Show();
+        m_rightScrollButton->Show();
+        
+        // Enable/disable based on scroll position
+        m_leftScrollButton->Enable(m_scrollOffset > 0);
+        
+        FlatUIPage* activePage = GetActivePage();
+        if (activePage) {
+            wxSize pageSize = activePage->GetBestSize();
+            wxSize containerSize = m_scrollContainer->GetSize();
+            int maxOffset = wxMax(0, pageSize.GetWidth() - containerSize.GetWidth());
+            m_rightScrollButton->Enable(m_scrollOffset < maxOffset);
+        }
+    } else {
+        m_leftScrollButton->Hide();
+        m_rightScrollButton->Hide();
+    }
+    
+    Layout();
+}
+
+void FlatUIFixPanel::CreateScrollControls()
+{
+    // Create left scroll button
+    m_leftScrollButton = new wxButton(this, wxID_BACKWARD, "<", 
+                                      wxDefaultPosition, wxSize(20, -1));
+    m_leftScrollButton->SetName("LeftScrollButton");
+    m_leftScrollButton->Hide();
+    
+    // Create right scroll button
+    m_rightScrollButton = new wxButton(this, wxID_FORWARD, ">", 
+                                       wxDefaultPosition, wxSize(20, -1));
+    m_rightScrollButton->SetName("RightScrollButton");
+    m_rightScrollButton->Hide();
+    
+    LOG_INF("Created scroll control buttons", "FlatUIFixPanel");
+}
+
+void FlatUIFixPanel::UpdateScrollPosition()
+{
+    FlatUIPage* activePage = GetActivePage();
+    if (!activePage || !m_scrollContainer) {
+        return;
+    }
+    
+    // Move the page within the scroll container based on scroll offset
+    wxPoint newPos(-m_scrollOffset, 0);
+    activePage->SetPosition(newPos);
+    
+    // Force immediate layout and refresh of both the page and container
+    activePage->Layout();
+    activePage->Refresh();
+    activePage->Update();
+    
+    m_scrollContainer->Layout();
+    m_scrollContainer->Refresh();
+    m_scrollContainer->Update();
+    
+    // Also refresh the entire panel to ensure proper redraw
+    Refresh();
+    Update();
+}
+
+bool FlatUIFixPanel::NeedsScrolling() const
+{
+    FlatUIPage* activePage = GetActivePage();
+    if (!activePage || !m_scrollContainer) {
+        return false;
+    }
+    
+    wxSize pageSize = activePage->GetBestSize();
+    wxSize containerSize = m_scrollContainer->GetSize();
+    
+    return pageSize.GetWidth() > containerSize.GetWidth();
+}
+
+void FlatUIFixPanel::OnScrollLeft(wxCommandEvent& event)
+{
+    ScrollLeft();
+    event.Skip();
+}
+
+void FlatUIFixPanel::OnScrollRight(wxCommandEvent& event)
+{
+    ScrollRight();
+    event.Skip();
 } 

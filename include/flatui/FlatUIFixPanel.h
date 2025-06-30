@@ -36,12 +36,21 @@ public:
     void ClearContent(); // Clear all pages and reset state
     void ResetState(); // Reset internal state without removing pages
     
+    // Scroll functionality
+    void EnableScrolling(bool enable = true);
+    bool IsScrollingEnabled() const { return m_scrollingEnabled; }
+    void ScrollLeft();
+    void ScrollRight();
+    void UpdateScrollButtons();
+    
     // Override to provide best size
     virtual wxSize DoGetBestSize() const override;
 
 protected:
     void OnSize(wxSizeEvent& event);
     void OnPaint(wxPaintEvent& event);
+    void OnScrollLeft(wxCommandEvent& event);
+    void OnScrollRight(wxCommandEvent& event);
 
 private:
     // Page management
@@ -51,10 +60,23 @@ private:
     // Controls
     FlatUIUnpinButton* m_unpinButton;
     
+    // Scroll functionality
+    bool m_scrollingEnabled;
+    wxPanel* m_scrollContainer;
+    wxButton* m_leftScrollButton;
+    wxButton* m_rightScrollButton;
+    int m_scrollOffset;
+    int m_scrollStep;
+    wxBoxSizer* m_mainSizer;
+    wxBoxSizer* m_scrollSizer;
+    
     // Layout
     void PositionUnpinButton();
     void PositionActivePage();
     void HideAllPages();
+    void CreateScrollControls();
+    void UpdateScrollPosition();
+    bool NeedsScrolling() const;
     
     wxDECLARE_EVENT_TABLE();
 };

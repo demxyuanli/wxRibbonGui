@@ -33,6 +33,13 @@ public:
     
     // Force hide the panel (used by parent when needed)
     void ForceHide();
+    
+    // Scroll functionality
+    void EnableScrolling(bool enable = true);
+    bool IsScrollingEnabled() const { return m_scrollingEnabled; }
+    void ScrollLeft();
+    void ScrollRight();
+    void UpdateScrollButtons();
 
 private:
     wxWindow* m_parentWindow;
@@ -52,6 +59,16 @@ private:
     int m_borderWidth;
     int m_shadowOffset;
     
+    // Scroll functionality
+    bool m_scrollingEnabled;
+    wxPanel* m_scrollContainer;
+    wxButton* m_leftScrollButton;
+    wxButton* m_rightScrollButton;
+    int m_scrollOffset;
+    int m_scrollStep;
+    wxBoxSizer* m_mainSizer;
+    wxBoxSizer* m_scrollSizer;
+    
     // Event handlers
     void OnPaint(wxPaintEvent& event);
     void OnSize(wxSizeEvent& event);
@@ -62,6 +79,8 @@ private:
     void OnAutoHideTimer(wxTimerEvent& event);
     void OnGlobalMouseMove(wxMouseEvent& event);
     void OnPinButtonClicked(wxCommandEvent& event);
+    void OnScrollLeft(wxCommandEvent& event);
+    void OnScrollRight(wxCommandEvent& event);
     
     // Auto-hide logic
     void StartAutoHideTimer();
@@ -76,6 +95,9 @@ private:
     void SetupEventHandlers();
     void DrawCustomBorder(wxDC& dc);
     void DrawShadow(wxDC& dc);
+    void CreateScrollControls();
+    void UpdateScrollPosition();
+    bool NeedsScrolling() const;
     
     wxDECLARE_EVENT_TABLE();
 };
