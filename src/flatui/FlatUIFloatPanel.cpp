@@ -52,11 +52,12 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
     // Create scroll container
     m_scrollContainer = new wxPanel(m_contentPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN);
     m_scrollContainer->SetName("FloatPanelScrollContainer");
+    m_scrollContainer->SetBackgroundColour(*wxWHITE);
     // Enable clipping to ensure content outside the container is not visible
     m_scrollContainer->SetCanFocus(false);
     
-    // Create scroll sizer for page content
-    m_scrollSizer = new wxBoxSizer(wxVERTICAL);
+    // Create scroll sizer for page content (horizontal for proper scrolling)
+    m_scrollSizer = new wxBoxSizer(wxHORIZONTAL);
     m_scrollContainer->SetSizer(m_scrollSizer);
     
     // Add scroll container to main sizer (initially takes full space)
@@ -114,13 +115,9 @@ void FlatUIFloatPanel::SetupAppearance()
     m_backgroundColour = wxColour(*wxWHITE);
     m_shadowColour = wxColour(255, 255, 255, 100);
 
-    // Try to get colors from parent or config
-    if (m_parentWindow) {
-        m_backgroundColour = m_parentWindow->GetBackgroundColour();
-    }
-
-    SetBackgroundColour(m_backgroundColour);
-    m_contentPanel->SetBackgroundColour(m_backgroundColour);
+    // Always use white background
+    SetBackgroundColour(*wxWHITE);
+    m_contentPanel->SetBackgroundColour(*wxWHITE);
 }
 
 void FlatUIFloatPanel::SetupEventHandlers()
@@ -148,25 +145,45 @@ void FlatUIFloatPanel::SetPageContent(FlatUIPage* page)
     m_currentPage = page;
     if (m_currentPage) {
         m_currentPage->Reparent(m_scrollContainer);
-        m_sizer->Add(m_currentPage, 1, wxEXPAND | wxALL, 0);
+        // Don't use sizer for page positioning - we need direct control for scrolling
         m_currentPage->Show();
+        
+        // Get page size for scroll calculation
+        wxSize pageSize = m_currentPage->GetBestSize();
+        wxSize currentContainerSize = m_scrollContainer->GetSize();
+        
+        // Determine if we need scrolling first
+        bool needsScrolling = pageSize.GetWidth() > currentContainerSize.GetWidth();
 
-        // Check if scrolling is needed and update layout
-        if (NeedsScrolling()) {
+        // Update layout first
+        if (needsScrolling) {
             EnableScrolling(true);
             
             // Adjust main sizer to make room for scroll buttons
             m_mainSizer->Clear();
-            m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND | wxRIGHT, 2);
+            m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND);
             m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
-            m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxLEFT, 2);
+            m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxRIGHT, 12);
+            
+            // Force layout update
+            m_contentPanel->Layout();
         } else {
             EnableScrolling(false);
             
             // Use full space for scroll container
             m_mainSizer->Clear();
             m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+            
+            // Force layout update
+            m_contentPanel->Layout();
         }
+        
+        // Set position and size for the page after layout
+        wxSize containerSize = m_scrollContainer->GetSize();
+        int pageWidth = pageSize.GetWidth();
+        int pageHeight = wxMax(pageSize.GetHeight(), containerSize.GetHeight());
+        m_currentPage->SetPosition(wxPoint(0, 0));
+        m_currentPage->SetSize(pageWidth, pageHeight);
 
         // Update layout
         m_contentPanel->Layout();
@@ -295,7 +312,6 @@ void FlatUIFloatPanel::HidePanel()
 
         // Return page to original parent
         if (m_currentPage) {
-            m_sizer->Detach(m_currentPage);
             m_currentPage->Reparent(m_parentWindow);
             m_currentPage->Hide();
             m_currentPage = nullptr;
@@ -374,12 +390,25 @@ void FlatUIFloatPanel::CheckAutoHide()
 void FlatUIFloatPanel::OnPaint(wxPaintEvent& event)
 {
     wxPaintDC dc(this);
+    wxSize size = GetSize();
+
+    // Fill background with white
+    dc.SetBackground(wxBrush(*wxWHITE));
+    dc.Clear();
 
     // Draw shadow first (behind the panel)
     DrawShadow(dc);
 
     // Draw custom border
     DrawCustomBorder(dc);
+
+    // Draw 1 pixel bottom border on content area
+    if (m_contentPanel) {
+        wxRect contentRect = m_contentPanel->GetRect();
+        dc.SetPen(wxPen(m_borderColour, 1));
+        dc.DrawLine(contentRect.x, contentRect.y + contentRect.height - 1, 
+                   contentRect.x + contentRect.width, contentRect.y + contentRect.height - 1);
+    }
 
     event.Skip();
 }
@@ -418,14 +447,21 @@ void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
 
     // Update scroll functionality when size changes
     if (m_currentPage) {
-        if (NeedsScrolling()) {
+        // Get page and current container size
+        wxSize pageSize = m_currentPage->GetBestSize();
+        wxSize currentContainerSize = m_scrollContainer->GetSize();
+        
+        // Determine if we need scrolling
+        bool needsScrolling = pageSize.GetWidth() > currentContainerSize.GetWidth();
+        
+        if (needsScrolling) {
             EnableScrolling(true);
             
             // Adjust main sizer to make room for scroll buttons
             m_mainSizer->Clear();
-            m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND | wxRIGHT, 2);
+            m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND);
             m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
-            m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxLEFT, 2);
+            m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxRIGHT, 12);
         } else {
             EnableScrolling(false);
             
@@ -467,6 +503,37 @@ void FlatUIFloatPanel::OnSize(wxSizeEvent& event)
         LOG_INF("OnSize: Pin button repositioned to (" +
             std::to_string(pinX) + ", " + std::to_string(pinY) + ") relative to content panel", "FlatUIFloatPanel");
     }
+
+    // Force a deferred scroll check for edge cases
+    CallAfter([this]() {
+        if (m_currentPage && m_scrollContainer) {
+            wxSize pageSize = m_currentPage->GetBestSize();
+            wxSize containerSize = m_scrollContainer->GetSize();
+            bool shouldNeedScrolling = pageSize.GetWidth() > containerSize.GetWidth();
+            
+            if (shouldNeedScrolling != m_scrollingEnabled) {
+                LOG_INF("OnSize: Correcting scroll state - should be " + 
+                       std::string(shouldNeedScrolling ? "enabled" : "disabled"), "FlatUIFloatPanel");
+                
+                // Re-apply correct layout
+                if (shouldNeedScrolling) {
+                    EnableScrolling(true);
+                    m_mainSizer->Clear();
+                    m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND);
+                    m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+                    m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxRIGHT, 12);
+                } else {
+                    EnableScrolling(false);
+                    m_mainSizer->Clear();
+                    m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+                }
+                
+                UpdateScrollButtons();
+                m_contentPanel->Layout();
+                Layout();
+            }
+        }
+    });
 
     Refresh(); // Redraw custom border and shadow
     event.Skip();
@@ -619,19 +686,64 @@ void FlatUIFloatPanel::UpdateScrollButtons()
 
 void FlatUIFloatPanel::CreateScrollControls()
 {
-    // Create left scroll button
+    // Create left scroll button with custom border
     m_leftScrollButton = new wxButton(m_contentPanel, wxID_BACKWARD, "<", 
-                                      wxDefaultPosition, wxSize(20, -1));
+                                      wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_leftScrollButton->SetName("LeftScrollButton");
+    m_leftScrollButton->SetBackgroundColour(*wxWHITE);
     m_leftScrollButton->Hide();
     
-    // Create right scroll button
+    // Create right scroll button with custom border
     m_rightScrollButton = new wxButton(m_contentPanel, wxID_FORWARD, ">", 
-                                       wxDefaultPosition, wxSize(20, -1));
+                                       wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_rightScrollButton->SetName("RightScrollButton");
+    m_rightScrollButton->SetBackgroundColour(*wxWHITE);
     m_rightScrollButton->Hide();
     
-    LOG_INF("Created scroll control buttons", "FlatUIFloatPanel");
+    // Bind paint events for custom border drawing
+    m_leftScrollButton->Bind(wxEVT_PAINT, [this](wxPaintEvent& event) {
+        wxPaintDC dc(m_leftScrollButton);
+        wxSize size = m_leftScrollButton->GetSize();
+        
+        // Clear background
+        dc.SetBackground(wxBrush(m_leftScrollButton->GetBackgroundColour()));
+        dc.Clear();
+        
+        // Draw button text
+        dc.SetTextForeground(*wxBLACK);
+        wxString text = "<";
+        wxSize textSize = dc.GetTextExtent(text);
+        int x = (size.GetWidth() - textSize.GetWidth()) / 2;
+        int y = (size.GetHeight() - textSize.GetHeight()) / 2;
+        dc.DrawText(text, x, y);
+        
+        // Draw right border
+        dc.SetPen(wxPen(m_borderColour, 1));
+        dc.DrawLine(size.GetWidth() - 1, 0, size.GetWidth() - 1, size.GetHeight());
+    });
+    
+    m_rightScrollButton->Bind(wxEVT_PAINT, [this](wxPaintEvent& event) {
+        wxPaintDC dc(m_rightScrollButton);
+        wxSize size = m_rightScrollButton->GetSize();
+        
+        // Clear background
+        dc.SetBackground(wxBrush(m_rightScrollButton->GetBackgroundColour()));
+        dc.Clear();
+        
+        // Draw button text
+        dc.SetTextForeground(*wxBLACK);
+        wxString text = ">";
+        wxSize textSize = dc.GetTextExtent(text);
+        int x = (size.GetWidth() - textSize.GetWidth()) / 2;
+        int y = (size.GetHeight() - textSize.GetHeight()) / 2;
+        dc.DrawText(text, x, y);
+        
+        // Draw left border
+        dc.SetPen(wxPen(m_borderColour, 1));
+        dc.DrawLine(0, 0, 0, size.GetHeight());
+    });
+    
+    LOG_INF("Created scroll control buttons with custom borders", "FlatUIFloatPanel");
 }
 
 void FlatUIFloatPanel::UpdateScrollPosition()
@@ -640,16 +752,23 @@ void FlatUIFloatPanel::UpdateScrollPosition()
         return;
     }
     
-    // Move the page within the scroll container based on scroll offset
+    wxSize containerSize = m_scrollContainer->GetSize();
+    wxSize pageSize = m_currentPage->GetBestSize();
+    
+    // Set page size to its best size, but at least as tall as the container
+    int pageWidth = pageSize.GetWidth();
+    int pageHeight = wxMax(pageSize.GetHeight(), containerSize.GetHeight());
+    
+    // Position the page with scroll offset
     wxPoint newPos(-m_scrollOffset, 0);
     m_currentPage->SetPosition(newPos);
+    m_currentPage->SetSize(pageWidth, pageHeight);
     
     // Force immediate layout and refresh of both the page and container
     m_currentPage->Layout();
     m_currentPage->Refresh();
     m_currentPage->Update();
     
-    m_scrollContainer->Layout();
     m_scrollContainer->Refresh();
     m_scrollContainer->Update();
     
