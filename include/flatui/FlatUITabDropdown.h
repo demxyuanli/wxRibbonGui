@@ -3,12 +3,13 @@
 
 #include <wx/wx.h>
 #include <vector>
+#include "flatui/CustomDropDown.h"
 
 // Forward declarations
 class FlatUIPage;
 class FlatUIBar;
 
-class FlatUITabDropdown : public wxControl
+class FlatUITabDropdown : public wxPanel
 {
 public:
     FlatUITabDropdown(wxWindow* parent, wxWindowID id = wxID_ANY,
@@ -33,45 +34,25 @@ public:
     // Parent bar reference
     void SetParentBar(FlatUIBar* parentBar) { m_parentBar = parentBar; }
     FlatUIBar* GetParentBar() const { return m_parentBar; }
-    
-    // Menu operations
-    void ShowMenu();
 
     // Override for best size calculation
     virtual wxSize DoGetBestSize() const override;
 
 protected:
     // Event handlers
-    void OnPaint(wxPaintEvent& event);
-    void OnMouseDown(wxMouseEvent& event);
-    void OnMouseEnter(wxMouseEvent& event);
-    void OnMouseLeave(wxMouseEvent& event);
-    void OnMenuItemSelected(wxCommandEvent& event);
+    void OnDropdownSelection(wxCommandEvent& event);
 
 private:
-    // Drawing
-    void DrawDropdownButton(wxDC& dc);
-    void DrawDropdownArrow(wxDC& dc, const wxRect& rect);
+    // Setup custom dropdown
+    void SetupCustomDropdown();
+    void UpdateDropdownItems();
+    void ApplyCustomStyling();
     
-    // Menu management
-    void CreateMenu();
-    void PopulateMenu();
-    
-    // State management
-    bool IsMouseOver() const { return m_isMouseOver; }
-    void SetMouseOver(bool over);
-
     // Member variables
     FlatUIBar* m_parentBar;
-    wxMenu* m_dropdownMenu;
+    CustomDropDown* m_customDropdown;
     std::vector<size_t> m_hiddenTabIndices;
     wxRect m_dropdownRect;
-    bool m_isMouseOver;
-    bool m_isPressed;
-    
-    // Menu ID range for hidden tabs
-    static constexpr int MENU_ID_START = 5000;
-    static constexpr int MENU_ID_END = 5999;
 
     wxDECLARE_EVENT_TABLE();
 };

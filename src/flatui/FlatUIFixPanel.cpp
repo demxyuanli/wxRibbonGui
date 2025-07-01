@@ -31,7 +31,7 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     SetName("FlatUIFixPanel");
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(*wxBLACK);
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -228,7 +228,7 @@ void FlatUIFixPanel::UpdateLayout()
 void FlatUIFixPanel::RecalculateSize()
 {
     if (m_pages.empty()) {
-        SetMinSize(wxSize(100, 50));
+        SetMinSize(wxSize(100, 60));
         return;
     }
 
@@ -263,7 +263,7 @@ void FlatUIFixPanel::ShowUnpinButton(bool show)
 wxSize FlatUIFixPanel::DoGetBestSize() const
 {
     if (m_pages.empty()) {
-        return wxSize(100, 50);
+        return wxSize(100, 60);
     }
 
     // Return the size of the largest page

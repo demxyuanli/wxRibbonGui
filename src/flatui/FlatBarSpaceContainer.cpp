@@ -119,7 +119,7 @@ wxSize FlatBarSpaceContainer::DoGetBestSize() const
         width += m_profileSpace->GetSpaceWidth() + ELEMENT_SPACING;
     }
     
-    width += BAR_PADDING * 2;
+    width += 0;
     
     return wxSize(wxMax(width, 200), height);
 }
@@ -156,7 +156,7 @@ void FlatBarSpaceContainer::UpdateLayout()
 void FlatBarSpaceContainer::PositionComponents()
 {
     wxSize clientSize = GetClientSize();
-    int currentX = BAR_PADDING;
+    int currentX = 0;
     int elementY = 0;
     int innerHeight = clientSize.GetHeight() - 1; // Reserve 1 pixel for bottom border
     
@@ -171,7 +171,7 @@ void FlatBarSpaceContainer::PositionComponents()
     
     // 2. Calculate SystemButtons position (rightmost) - always visible
     int sysButtonsWidth = 0;
-    int sysButtonsX = clientSize.GetWidth() - BAR_PADDING;
+    int sysButtonsX = clientSize.GetWidth();
     if (m_systemButtons) {
         sysButtonsWidth = m_systemButtons->GetRequiredWidth();
         sysButtonsX -= sysButtonsWidth;
@@ -578,8 +578,7 @@ bool FlatBarSpaceContainer::HandleTabClick(const wxPoint& pos)
         wxRect dropdownRect = m_tabDropdown->GetDropdownRect();
         if (dropdownRect.Contains(pos)) {
             LOG_INF("Dropdown button clicked", "BarSpaceContainer");
-            // Directly call the dropdown's ShowMenu method instead of forwarding events
-            m_tabDropdown->ShowMenu();
+            // The custom dropdown will handle the click automatically
             return true;
         }
     }

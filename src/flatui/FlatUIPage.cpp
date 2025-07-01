@@ -125,7 +125,7 @@ void FlatUIPage::RecalculatePageHeight()
     Freeze();
 
     if (m_panels.empty()) {
-        wxSize defaultSize(100, 50);
+        wxSize defaultSize(100, 60);
         SetMinSize(defaultSize);
         if (m_sizer) {
             m_sizer->SetDimension(0, 0, defaultSize.GetWidth(), defaultSize.GetHeight());

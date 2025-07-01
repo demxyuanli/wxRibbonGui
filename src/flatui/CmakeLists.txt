@@ -28,5 +28,6 @@ set(FLATUI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUIFloatPanel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FlatUITabDropdown.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/UIHierarchyDebugger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CustomDropDown.cpp
     PARENT_SCOPE
 )

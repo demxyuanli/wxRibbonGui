@@ -3,53 +3,40 @@
 #include "flatui/FlatUIPage.h"
 #include "flatui/FlatUIBarStateManager.h"
 #include "config/ConstantsConfig.h"
-#include "config/SvgIconManager.h"
 #include "logger/Logger.h"
-#include <wx/dcbuffer.h>
+#include <wx/sizer.h>
 
 #define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
 #define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 
-wxBEGIN_EVENT_TABLE(FlatUITabDropdown, wxControl)
-    EVT_PAINT(FlatUITabDropdown::OnPaint)
-    EVT_LEFT_DOWN(FlatUITabDropdown::OnMouseDown)
-    EVT_ENTER_WINDOW(FlatUITabDropdown::OnMouseEnter)
-    EVT_LEAVE_WINDOW(FlatUITabDropdown::OnMouseLeave)
-    EVT_MENU_RANGE(FlatUITabDropdown::MENU_ID_START, FlatUITabDropdown::MENU_ID_END, FlatUITabDropdown::OnMenuItemSelected)
+wxBEGIN_EVENT_TABLE(FlatUITabDropdown, wxPanel)
+    EVT_COMMAND(wxID_ANY, wxEVT_CUSTOM_DROPDOWN_SELECTION, FlatUITabDropdown::OnDropdownSelection)
 wxEND_EVENT_TABLE()
 
 FlatUITabDropdown::FlatUITabDropdown(wxWindow* parent, wxWindowID id,
                                    const wxPoint& pos, const wxSize& size, long style)
-    : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
+    : wxPanel(parent, id, pos, size, style | wxBORDER_NONE),
       m_parentBar(nullptr),
-      m_dropdownMenu(nullptr),
-      m_isMouseOver(false),
-      m_isPressed(false)
+      m_customDropdown(nullptr)
 {
     SetName("FlatUITabDropdown");
-    SetDoubleBuffered(true);
-    SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(CFG_COLOUR("BarBackgroundColour"));
     
-    CreateMenu();
+    SetupCustomDropdown();
     
-    LOG_INF("Created FlatUITabDropdown", "TabDropdown");
+    LOG_INF("Created FlatUITabDropdown with CustomDropDown", "TabDropdown");
 }
 
 FlatUITabDropdown::~FlatUITabDropdown()
 {
-    if (m_dropdownMenu) {
-        delete m_dropdownMenu;
-        m_dropdownMenu = nullptr;
-    }
-    
+    // m_customDropdown will be destroyed automatically as a child window
     LOG_INF("Destroyed FlatUITabDropdown", "TabDropdown");
 }
 
 void FlatUITabDropdown::UpdateHiddenTabs(const std::vector<size_t>& hiddenIndices)
 {
     m_hiddenTabIndices = hiddenIndices;
-    PopulateMenu();
+    UpdateDropdownItems();
     
     // Show or hide the dropdown based on whether there are hidden tabs
     ShowDropdown(!hiddenIndices.empty());
@@ -59,11 +46,8 @@ void FlatUITabDropdown::UpdateHiddenTabs(const std::vector<size_t>& hiddenIndice
 
 void FlatUITabDropdown::ClearMenu()
 {
-    if (m_dropdownMenu) {
-        // Clear existing menu items
-        while (m_dropdownMenu->GetMenuItemCount() > 0) {
-            m_dropdownMenu->Destroy(m_dropdownMenu->FindItemByPosition(0));
-        }
+    if (m_customDropdown) {
+        m_customDropdown->Clear();
     }
     // Don't clear m_hiddenTabIndices here as it's managed by UpdateHiddenTabs
 }
@@ -93,54 +77,23 @@ void FlatUITabDropdown::SetDropdownRect(const wxRect& rect)
 
 wxSize FlatUITabDropdown::DoGetBestSize() const
 {
-    return wxSize(20, 20); // Default dropdown button size
-}
-
-void FlatUITabDropdown::OnPaint(wxPaintEvent& event)
-{
-    wxAutoBufferedPaintDC dc(this);
-    DrawDropdownButton(dc);
-    event.Skip();
-}
-
-void FlatUITabDropdown::OnMouseDown(wxMouseEvent& event)
-{
-    if (!m_parentBar || m_hiddenTabIndices.empty()) {
-        event.Skip();
-        return;
+    if (m_customDropdown) {
+        return m_customDropdown->GetBestSize();
     }
-    
-    m_isPressed = true;
-    ShowMenu();
-    m_isPressed = false;
-    
-    // Don't skip the event to prevent interference with menu handling
+    return wxSize(80, 20); // Default size for custom dropdown
 }
 
-void FlatUITabDropdown::OnMouseEnter(wxMouseEvent& event)
-{
-    SetMouseOver(true);
-    event.Skip();
-}
-
-void FlatUITabDropdown::OnMouseLeave(wxMouseEvent& event)
-{
-    SetMouseOver(false);
-    event.Skip();
-}
-
-void FlatUITabDropdown::OnMenuItemSelected(wxCommandEvent& event)
+void FlatUITabDropdown::OnDropdownSelection(wxCommandEvent& event)
 {
     if (!m_parentBar) {
         return;
     }
     
-    int menuId = event.GetId();
-    int menuIndex = menuId - MENU_ID_START;
+    int selection = event.GetInt();
     
-    // Validate menu index
-    if (menuIndex >= 0 && menuIndex < static_cast<int>(m_hiddenTabIndices.size())) {
-        size_t actualTabIndex = m_hiddenTabIndices[menuIndex];
+    // Validate selection index
+    if (selection >= 0 && selection < static_cast<int>(m_hiddenTabIndices.size())) {
+        size_t actualTabIndex = m_hiddenTabIndices[selection];
         
         // Verify the page exists
         FlatUIPage* selectedPage = m_parentBar->GetPage(actualTabIndex);
@@ -169,135 +122,105 @@ void FlatUITabDropdown::OnMenuItemSelected(wxCommandEvent& event)
         if (parent) {
             parent->Refresh();
         }
-    }
-    
-    // Don't call event.Skip() here to prevent further event processing
-    // that might interfere with our tab activation
-}
-
-void FlatUITabDropdown::DrawDropdownButton(wxDC& dc)
-{
-    wxSize size = GetSize();
-    
-    // Fill background with margins: top margin 4px, bottom margin 0px
-    const int TOP_MARGIN = 4;
-    const int BOTTOM_MARGIN = 0;
-    
-    wxColour bgColour = CFG_COLOUR("BarBackgroundColour");
-    if (m_isMouseOver) {
-        // Slightly darker when mouse over
-        bgColour = wxColour(
-            wxMax(0, bgColour.Red() - 20),
-            wxMax(0, bgColour.Green() - 20),
-            wxMax(0, bgColour.Blue() - 20)
-        );
-    }
-    
-    // Draw background with vertical margins
-    dc.SetBrush(wxBrush(bgColour));
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    wxRect bgRect(0, TOP_MARGIN, size.GetWidth(), size.GetHeight() - TOP_MARGIN - BOTTOM_MARGIN);
-    dc.DrawRectangle(bgRect);
-    
-    // Draw only the right border line
-    dc.SetPen(wxPen(CFG_COLOUR("BarBorderColour"), 1));
-    dc.DrawLine(size.GetWidth() - 1, TOP_MARGIN, 
-                size.GetWidth() - 1, size.GetHeight() - BOTTOM_MARGIN);
-    
-    // Draw dropdown arrow in the adjusted area
-    DrawDropdownArrow(dc, bgRect);
-}
-
-void FlatUITabDropdown::DrawDropdownArrow(wxDC& dc, const wxRect& rect)
-{
-    // Use down.svg icon with 12x12 size
-    wxSize iconSize(12, 12);
-    wxBitmap iconBitmap = SvgIconManager::GetInstance().GetIconBitmap("down", iconSize);
-    
-    if (iconBitmap.IsOk()) {
-        // Center the icon in the rect
-        int iconX = rect.x + (rect.width - iconSize.GetWidth()) / 2;
-        int iconY = rect.y + (rect.height - iconSize.GetHeight()) / 2;
         
-        dc.DrawBitmap(iconBitmap, iconX, iconY, true);
-    } else {
-        // Fallback to text if SVG icon is not available
-        wxColour arrowColour = CFG_COLOUR("BarInactiveTextColour");
-        dc.SetTextForeground(arrowColour);
-        
-        wxString dropdownText = "...";
-        wxSize textSize = dc.GetTextExtent(dropdownText);
-        
-        int textX = rect.x + (rect.width - textSize.GetWidth()) / 2;
-        int textY = rect.y + (rect.height - textSize.GetHeight()) / 2;
-        
-        dc.DrawText(dropdownText, textX, textY);
+        LOG_INF("Selected hidden tab: " + selectedPage->GetLabel().ToStdString(), "TabDropdown");
     }
 }
 
-void FlatUITabDropdown::CreateMenu()
+void FlatUITabDropdown::SetupCustomDropdown()
 {
-    if (m_dropdownMenu) {
-        delete m_dropdownMenu;
-    }
+    // Create a sizer to hold the custom dropdown
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     
-    m_dropdownMenu = new wxMenu();
-    LOG_DBG("Created dropdown menu", "TabDropdown");
+    // Create the custom dropdown
+    m_customDropdown = new CustomDropDown(this, wxID_ANY, "...");
+    
+    // Apply custom styling to match the bar theme
+    ApplyCustomStyling();
+    
+    // Add to sizer
+    sizer->Add(m_customDropdown, 1, wxEXPAND);
+    SetSizer(sizer);
+    
+    LOG_DBG("Setup custom dropdown", "TabDropdown");
 }
 
-void FlatUITabDropdown::ShowMenu()
+void FlatUITabDropdown::UpdateDropdownItems()
 {
-    if (!m_dropdownMenu || m_hiddenTabIndices.empty()) {
+    if (!m_customDropdown || !m_parentBar) {
         return;
     }
     
-    // Ensure menu is populated with current hidden tabs
-    PopulateMenu();
+    // Clear existing items
+    m_customDropdown->Clear();
     
-    // Show the popup menu at the bottom of the dropdown button
-    PopupMenu(m_dropdownMenu, 0, GetSize().GetHeight());
-}
-
-void FlatUITabDropdown::PopulateMenu()
-{
-    if (!m_dropdownMenu || !m_parentBar) {
-        return;
-    }
-    
-    // Clear existing menu items only (not hidden tab indices)
-    if (m_dropdownMenu) {
-        while (m_dropdownMenu->GetMenuItemCount() > 0) {
-            m_dropdownMenu->Destroy(m_dropdownMenu->FindItemByPosition(0));
-        }
-    }
-    
-    // Add menu items for hidden tabs
+    // Add items for hidden tabs
     size_t totalPageCount = m_parentBar->GetPageCount();
     
-    for (size_t i = 0; i < m_hiddenTabIndices.size(); ++i) {
-        size_t tabIndex = m_hiddenTabIndices[i];
-        
+    for (size_t tabIndex : m_hiddenTabIndices) {
         // Check if tab index is within valid range
         if (tabIndex >= totalPageCount) {
             continue;
         }
         
         FlatUIPage* page = m_parentBar->GetPage(tabIndex);
-        
         if (page) {
-            int menuId = MENU_ID_START + i;
-            m_dropdownMenu->Append(menuId, page->GetLabel());
+            m_customDropdown->Append(page->GetLabel());
         }
     }
+    
+    // Set default text if no items
+    if (m_customDropdown->GetCount() == 0) {
+        m_customDropdown->SetValue("...");
+    } else {
+        m_customDropdown->SetValue("...");
+    }
+    
+    LOG_DBG("Updated dropdown items: " + std::to_string(m_customDropdown->GetCount()) + " items", "TabDropdown");
 }
 
-void FlatUITabDropdown::SetMouseOver(bool over)
+void FlatUITabDropdown::ApplyCustomStyling()
 {
-    if (m_isMouseOver != over) {
-        m_isMouseOver = over;
-        // Only refresh if the control is visible
-        if (IsShown()) {
-            Refresh();
-        }
+    if (!m_customDropdown) {
+        return;
     }
+    
+    // Match the bar theme colors
+    wxColour barBgColour = CFG_COLOUR("BarBackgroundColour");
+    wxColour barTextColour = CFG_COLOUR("BarInactiveTextColour");
+    wxColour borderColour = CFG_COLOUR("BarBorderColour");
+    
+    // Set basic colors
+    m_customDropdown->SetBackgroundColour(barBgColour);
+    m_customDropdown->SetForegroundColour(barTextColour);
+    
+    // Flat design: minimal or no border
+    m_customDropdown->SetBorderColour(borderColour);
+    m_customDropdown->SetBorderWidth(0); // No border for flat design
+    
+    // Set dropdown button colors to match bar (flat style)
+    m_customDropdown->SetDropDownButtonColour(barBgColour);
+    // Subtle hover effect for flat design
+    wxColour hoverColour = wxColour(
+        wxMax(0, barBgColour.Red() - 10),
+        wxMax(0, barBgColour.Green() - 10),
+        wxMax(0, barBgColour.Blue() - 10)
+    );
+    m_customDropdown->SetDropDownButtonHoverColour(hoverColour);
+    
+    // Set popup colors
+    m_customDropdown->SetPopupBackgroundColour(*wxWHITE);
+    m_customDropdown->SetPopupBorderColour(borderColour);
+    
+    // Set selection colors to match system
+    wxColour selectionBg = CFG_COLOUR("BarActiveTabBgColour");
+    wxColour selectionFg = CFG_COLOUR("BarActiveTextColour");
+    m_customDropdown->SetSelectionBackgroundColour(selectionBg);
+    m_customDropdown->SetSelectionForegroundColour(selectionFg);
+    
+    // Set size constraints
+    m_customDropdown->SetMinDropDownWidth(120);
+    m_customDropdown->SetMaxDropDownHeight(200);
+    
+    LOG_DBG("Applied flat styling to dropdown", "TabDropdown");
 } 
