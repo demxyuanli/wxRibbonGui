@@ -5,11 +5,9 @@
 #include "flatui/FlatUIBar.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+#include "config/ThemeManager.h"
+
+
 
 FlatUIPage::FlatUIPage(wxWindow* parent, const wxString& label)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE), 

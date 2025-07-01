@@ -5,8 +5,8 @@
 #ifdef __WXMSW__
 #include <windows.h> // For Windows specific GDI calls for rubber band
 #endif
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#include "config/ThemeManager.h"
+
 
 wxBEGIN_EVENT_TABLE(BorderlessFrameLogic, wxFrame)
 EVT_LEFT_DOWN(BorderlessFrameLogic::OnLeftDown)
@@ -404,7 +404,8 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
 
     HDC hdc = ::GetDC(NULL);
     int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
-    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(100, 100, 100));
+    wxColour penColour = CFG_COLOUR("BorderlessFramePenColour");
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(penColour.Red(), penColour.Green(), penColour.Blue()));
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
@@ -426,7 +427,7 @@ void BorderlessFrameLogic::DrawRubberBand(const wxRect& rect)
     int penWidth = static_cast<int>(3 * scaleFactor);
     if (penWidth < 1) penWidth = 1;
 
-    wxPen pen(wxColour(100, 100, 100), penWidth, wxPENSTYLE_SOLID);
+    wxPen pen(CFG_COLOUR("BorderlessFramePenColour"), penWidth, wxPENSTYLE_SOLID);
     dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRectangle(drawRect);
@@ -448,7 +449,8 @@ void BorderlessFrameLogic::EraseRubberBand()
 
     HDC hdc = ::GetDC(NULL);
     int oldROP = ::SetROP2(hdc, R2_NOTXORPEN);
-    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(100, 100, 100));
+    wxColour penColour = CFG_COLOUR("BorderlessFramePenColour");
+    HPEN hPen = ::CreatePen(PS_GEOMETRIC | PS_SOLID, penWidth, RGB(penColour.Red(), penColour.Green(), penColour.Blue()));
     HPEN hOldPen = (HPEN)::SelectObject(hdc, hPen);
     HBRUSH hOldBrush = (HBRUSH)::SelectObject(hdc, GetStockObject(NULL_BRUSH));
 
@@ -470,7 +472,7 @@ void BorderlessFrameLogic::EraseRubberBand()
     int penWidth = static_cast<int>(3 * scaleFactor);
     if (penWidth < 1) penWidth = 1;
 
-    wxPen pen(wxColour(100, 100, 100), penWidth, wxPENSTYLE_SOLID);
+    wxPen pen(CFG_COLOUR("BorderlessFramePenColour"), penWidth, wxPENSTYLE_SOLID);
     dc.SetPen(pen);
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawRectangle(m_currentRubberBandRect);

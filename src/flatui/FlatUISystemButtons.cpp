@@ -1,12 +1,8 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIFrame.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "config/SvgIconManager.h"
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
-
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 
 FlatUISystemButtons::FlatUISystemButtons(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
@@ -88,15 +84,15 @@ wxFrame* FlatUISystemButtons::GetTopLevelFrame() const
 
 void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxString& symbol, bool hover, bool isClose, bool isMaximizedOrPseudo)
 {
-    wxColour btnTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT);
-    wxColour hoverBgColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
-    wxColour hoverTextColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT);
+    wxColour btnTextColour = CFG_COLOUR("SystemButtonTextColour");
+    wxColour hoverBgColour = CFG_COLOUR("DropdownHoverColour");
+    wxColour hoverTextColour = CFG_COLOUR("SystemButtonHoverTextColour");
     // Use parent's background for normal state to blend in
-    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
+    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour");
 
     if (isClose) {
-        dc.SetBrush(hover ? wxColour(232, 17, 35) : normalBgColour);
-        dc.SetTextForeground(hover ? *wxWHITE : btnTextColour);
+        dc.SetBrush(hover ? CFG_COLOUR("SystemButtonCloseHoverColour") : normalBgColour);
+        dc.SetTextForeground(hover ? CFG_COLOUR("SystemButtonHoverTextColour") : btnTextColour);
     } else {
         dc.SetBrush(hover ? hoverBgColour : normalBgColour);
         dc.SetTextForeground(hover ? hoverTextColour : btnTextColour);
@@ -128,7 +124,7 @@ void FlatUISystemButtons::PaintButton(wxDC& dc, const wxRect& rect, const wxStri
 void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR));
+    dc.SetBackground(GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour"));
     dc.Clear();
     
     wxSize size = GetClientSize();
@@ -171,11 +167,11 @@ void FlatUISystemButtons::OnPaint(wxPaintEvent& evt)
 
 void FlatUISystemButtons::PaintSvgButton(wxDC& dc, const wxRect& rect, const wxString& iconName, bool hover, bool isClose)
 {
-    wxColour hoverBgColour = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
-    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
+    wxColour hoverBgColour = CFG_COLOUR("DropdownHoverColour");
+    wxColour normalBgColour = GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour");
 
     if (isClose) {
-        dc.SetBrush(hover ? wxColour(232, 17, 35) : normalBgColour);
+        dc.SetBrush(hover ? CFG_COLOUR("SystemButtonCloseHoverColour") : normalBgColour);
     }
     else {
         dc.SetBrush(hover ? hoverBgColour : normalBgColour);

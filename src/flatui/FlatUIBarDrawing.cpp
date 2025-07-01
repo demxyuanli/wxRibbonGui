@@ -5,11 +5,10 @@
 #include <wx/dcclient.h>
 #include <string>
 #include "logger/Logger.h"
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
+#include "config/ThemeManager.h"
 
-void FlatUIBar::DrawBackground(wxDC& dc)
+
+void FlatUIBar::DrawBackground(wxDC& dc) 
 {
     wxSize clientSize = GetClientSize();
     int padding = (CFG_INT("BarPadding"));
@@ -20,7 +19,7 @@ void FlatUIBar::DrawBackground(wxDC& dc)
 
     if (!IsBarPinned() && m_temporarilyShownPage == nullptr) {
         int unpinnedIndicatorHeight = 5;
-        dc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        dc.SetBrush(wxBrush(CFG_COLOUR("SecondaryBackgroundColour")));
         dc.SetPen(*wxTRANSPARENT_PEN);
         dc.DrawRectangle(0, barH, clientSize.GetWidth(), unpinnedIndicatorHeight);
     }
@@ -85,7 +84,7 @@ void FlatUIBar::DrawBackgroundOptimized(wxGraphicsContext& gc)
     if (!IsBarPinned() && m_temporarilyShownPage == nullptr) {
         int unpinnedIndicatorHeight = m_performanceManager ? 
             m_performanceManager->GetDPIAwareValue("UnpinnedIndicatorHeight", 5) : 5;
-        gc.SetBrush(wxBrush(wxColour(255, 255, 255)));
+        gc.SetBrush(wxBrush(CFG_COLOUR("SecondaryBackgroundColour")));
         gc.SetPen(*wxTRANSPARENT_PEN);
         gc.DrawRectangle(0, barH, clientSize.GetWidth(), unpinnedIndicatorHeight);
     }

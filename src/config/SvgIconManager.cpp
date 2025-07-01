@@ -1,7 +1,9 @@
 #include "config/SvgIconManager.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
+#include <wx/file.h>
 
 // Static member definitions
 std::unique_ptr<SvgIconManager> SvgIconManager::instance = nullptr;
@@ -76,16 +78,38 @@ wxBitmapBundle SvgIconManager::GetBitmapBundle(const wxString& name)
     auto it = iconMap.find(name);
     if (it != iconMap.end()) {
         try {
-            // Create bitmap bundle from SVG file
-            wxBitmapBundle bundle = wxBitmapBundle::FromSVGFile(it->second, wxSize(16, 16));
-            if (bundle.IsOk()) {
-                // Cache the bundle
-                bundleCache[name] = bundle;
-                return bundle;
+            // Get themed SVG content
+            wxString themedSvgContent = GetThemedSvgContent(name);
+            
+            if (!themedSvgContent.IsEmpty()) {
+                // Create bitmap bundle from themed SVG content
+                wxBitmapBundle bundle = wxBitmapBundle::FromSVG(themedSvgContent.ToUTF8().data(), wxSize(16, 16));
+                
+                if (bundle.IsOk()) {
+                    // Cache the bundle
+                    bundleCache[name] = bundle;
+                    return bundle;
+                } else {
+                    LOG_WRN(wxString::Format("SvgIconManager: Failed to create bundle from themed SVG for '%s', trying original file.", name.ToStdString()), "SvgIconManager");
+                    // Fallback to original file
+                    bundle = wxBitmapBundle::FromSVGFile(it->second, wxSize(16, 16));
+                    if (bundle.IsOk()) {
+                        bundleCache[name] = bundle;
+                        return bundle;
+                    }
+                }
             } else {
-                LOG_ERR(wxString::Format("SvgIconManager: Failed to create bitmap bundle for icon '%s' from path '%s'.",
-                       name.ToStdString(), it->second.ToStdString()), "SvgIconManager");
+                // Fallback to original SVG file if theming failed
+                wxBitmapBundle bundle = wxBitmapBundle::FromSVGFile(it->second, wxSize(16, 16));
+                if (bundle.IsOk()) {
+                    bundleCache[name] = bundle;
+                    return bundle;
+                }
             }
+            
+            LOG_ERR(wxString::Format("SvgIconManager: Failed to create bitmap bundle for icon '%s' from path '%s'.",
+                   name.ToStdString(), it->second.ToStdString()), "SvgIconManager");
+                   
         } catch (const std::exception& e) {
             LOG_ERR(wxString::Format("SvgIconManager: Exception while loading SVG icon '%s': %s",
                    name.ToStdString(), e.what()), "SvgIconManager");
@@ -165,7 +189,166 @@ void SvgIconManager::ClearCache()
 {
     iconCache.clear();
     bundleCache.clear();
-    LOG_DBG("SvgIconManager: Icon cache cleared", "SvgIconManager");
+    themedSvgCache.clear();
+    LOG_DBG("SvgIconManager: All caches cleared", "SvgIconManager");
+}
+
+void SvgIconManager::ClearThemeCache()
+{
+    themedSvgCache.clear();
+    // Also clear the rendered caches since they depend on themed SVG
+    iconCache.clear();
+    bundleCache.clear();
+    LOG_DBG("SvgIconManager: Theme cache cleared", "SvgIconManager");
+}
+
+wxString SvgIconManager::ReadSvgFile(const wxString& filePath)
+{
+    if (!wxFile::Exists(filePath)) {
+        LOG_WRN(wxString::Format("SvgIconManager: SVG file '%s' does not exist.", filePath.ToStdString()), "SvgIconManager");
+        return wxEmptyString;
+    }
+
+    wxFile file(filePath, wxFile::read);
+    if (!file.IsOpened()) {
+        LOG_ERR(wxString::Format("SvgIconManager: Could not open SVG file '%s'.", filePath.ToStdString()), "SvgIconManager");
+        return wxEmptyString;
+    }
+
+    wxString content;
+    if (!file.ReadAll(&content)) {
+        LOG_ERR(wxString::Format("SvgIconManager: Failed to read SVG file '%s'.", filePath.ToStdString()), "SvgIconManager");
+        return wxEmptyString;
+    }
+
+    return content;
+}
+
+wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
+{
+    if (svgContent.IsEmpty()) {
+        return wxEmptyString;
+    }
+
+    wxString themedContent = svgContent;
+    
+    try {
+        // Check if SVG theming is enabled
+        bool svgThemeEnabled = CFG_INT("SvgThemeEnabled") != 0;
+        if (!svgThemeEnabled) {
+            LOG_DBG("SvgIconManager: SVG theming is disabled", "SvgIconManager");
+            return svgContent; // Return original content if theming is disabled
+        }
+
+        // Get theme colors
+        wxColour primaryIconColor = CFG_COLOUR("SvgPrimaryIconColour");
+        wxColour secondaryIconColor = CFG_COLOUR("SvgSecondaryIconColour");
+        wxColour disabledIconColor = CFG_COLOUR("SvgDisabledIconColour");
+        wxColour highlightIconColor = CFG_COLOUR("SvgHighlightIconColour");
+        wxColour primaryBgColor = CFG_COLOUR("PrimaryContentBgColour");
+        wxColour secondaryBgColor = CFG_COLOUR("SecondaryBackgroundColour");
+        
+        // Convert wxColour to hex strings
+        wxString primaryIconHex = wxString::Format("#%02x%02x%02x", 
+            primaryIconColor.Red(), primaryIconColor.Green(), primaryIconColor.Blue());
+        wxString secondaryIconHex = wxString::Format("#%02x%02x%02x", 
+            secondaryIconColor.Red(), secondaryIconColor.Green(), secondaryIconColor.Blue());
+        wxString disabledIconHex = wxString::Format("#%02x%02x%02x", 
+            disabledIconColor.Red(), disabledIconColor.Green(), disabledIconColor.Blue());
+        wxString highlightIconHex = wxString::Format("#%02x%02x%02x", 
+            highlightIconColor.Red(), highlightIconColor.Green(), highlightIconColor.Blue());
+        wxString primaryBgHex = wxString::Format("#%02x%02x%02x", 
+            primaryBgColor.Red(), primaryBgColor.Green(), primaryBgColor.Blue());
+        wxString secondaryBgHex = wxString::Format("#%02x%02x%02x", 
+            secondaryBgColor.Red(), secondaryBgColor.Green(), secondaryBgColor.Blue());
+
+        // Replace common SVG color values with theme colors
+        // Replace black colors with primary icon color
+        themedContent.Replace("fill=\"#000000\"", wxString::Format("fill=\"%s\"", primaryIconHex));
+        themedContent.Replace("fill=\"#000\"", wxString::Format("fill=\"%s\"", primaryIconHex));
+        themedContent.Replace("fill=\"black\"", wxString::Format("fill=\"%s\"", primaryIconHex));
+        themedContent.Replace("stroke=\"#000000\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        themedContent.Replace("stroke=\"#000\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        themedContent.Replace("stroke=\"black\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        
+        // Replace dark gray colors with secondary icon color
+        themedContent.Replace("fill=\"#333333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
+        themedContent.Replace("fill=\"#333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
+        themedContent.Replace("fill=\"#555555\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
+        themedContent.Replace("fill=\"#555\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
+        themedContent.Replace("stroke=\"#333333\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
+        themedContent.Replace("stroke=\"#333\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
+        themedContent.Replace("stroke=\"#555555\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
+        themedContent.Replace("stroke=\"#555\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
+
+        // Replace medium gray colors with disabled icon color
+        themedContent.Replace("fill=\"#808080\"", wxString::Format("fill=\"%s\"", disabledIconHex));
+        themedContent.Replace("fill=\"#888888\"", wxString::Format("fill=\"%s\"", disabledIconHex));
+        themedContent.Replace("fill=\"#999999\"", wxString::Format("fill=\"%s\"", disabledIconHex));
+        themedContent.Replace("stroke=\"#808080\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
+        themedContent.Replace("stroke=\"#888888\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
+        themedContent.Replace("stroke=\"#999999\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
+
+        // Replace blue/highlight colors with theme highlight color
+        themedContent.Replace("fill=\"#0078d4\"", wxString::Format("fill=\"%s\"", highlightIconHex));
+        themedContent.Replace("fill=\"#0066cc\"", wxString::Format("fill=\"%s\"", highlightIconHex));
+        themedContent.Replace("fill=\"#007acc\"", wxString::Format("fill=\"%s\"", highlightIconHex));
+        themedContent.Replace("stroke=\"#0078d4\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
+        themedContent.Replace("stroke=\"#0066cc\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
+        themedContent.Replace("stroke=\"#007acc\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
+
+        // Replace white/light backgrounds with theme background colors
+        themedContent.Replace("fill=\"#ffffff\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
+        themedContent.Replace("fill=\"#fff\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
+        themedContent.Replace("fill=\"white\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
+        
+        // Replace light gray backgrounds
+        themedContent.Replace("fill=\"#f0f0f0\"", wxString::Format("fill=\"%s\"", primaryBgHex));
+        themedContent.Replace("fill=\"#eeeeee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
+        themedContent.Replace("fill=\"#eee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
+
+        LOG_DBG("SvgIconManager: Applied theme colors to SVG content", "SvgIconManager");
+        
+    } catch (const std::exception& e) {
+        LOG_ERR(wxString::Format("SvgIconManager: Exception while applying theme to SVG: %s", e.what()), "SvgIconManager");
+        return svgContent; // Return original content on error
+    } catch (...) {
+        LOG_ERR("SvgIconManager: Unknown exception while applying theme to SVG", "SvgIconManager");
+        return svgContent; // Return original content on error
+    }
+
+    return themedContent;
+}
+
+wxString SvgIconManager::GetThemedSvgContent(const wxString& name)
+{
+    // Check themed SVG cache first
+    auto cacheIt = themedSvgCache.find(name);
+    if (cacheIt != themedSvgCache.end()) {
+        return cacheIt->second;
+    }
+
+    auto it = iconMap.find(name);
+    if (it != iconMap.end()) {
+        // Read original SVG content
+        wxString originalContent = ReadSvgFile(it->second);
+        if (!originalContent.IsEmpty()) {
+            // Apply theme colors
+            wxString themedContent = ApplyThemeToSvg(originalContent);
+            
+            // Cache the themed content
+            themedSvgCache[name] = themedContent;
+            
+            LOG_DBG(wxString::Format("SvgIconManager: Generated themed SVG for icon '%s'", name.ToStdString()), "SvgIconManager");
+            return themedContent;
+        } else {
+            LOG_WRN(wxString::Format("SvgIconManager: Failed to read SVG file for icon '%s'", name.ToStdString()), "SvgIconManager");
+        }
+    } else {
+        LOG_WRN(wxString::Format("SvgIconManager: Icon '%s' not found in icon map.", name.ToStdString()), "SvgIconManager");
+    }
+
+    return wxEmptyString;
 }
 
 void SvgIconManager::PreloadCommonIcons(const wxSize& size)

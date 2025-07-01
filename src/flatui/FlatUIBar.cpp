@@ -17,7 +17,7 @@
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
 #include <logger/Logger.h>
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "flatui/FlatUIUnpinButton.h"
 // FlatUIPinButton is now handled by FlatUIFloatPanel
 #include <memory> // Required for std::unique_ptr and std::move
@@ -26,10 +26,8 @@
 // Define the backward compatibility event
 wxDEFINE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+
+
 
 int FlatUIBar::GetBarHeight()
 {
@@ -78,7 +76,7 @@ FlatUIBar::FlatUIBar(wxWindow* parent, wxWindowID id, const wxPoint& pos, const 
     m_eventDispatcher->Initialize(m_stateManager.get(), m_pageManager.get(), m_layoutManager.get());
     
     // Initialize visual configuration
-    auto& cfg = ConstantsConfig::getInstance();
+    // Initialize theme-based configuration values
     m_tabBorderColour = CFG_COLOUR("BarTabBorderColour");
     m_tabBorderTopColour = CFG_COLOUR("BarActiveTabTopBorderColour");
     m_tabBorderBottomColour = CFG_COLOUR("BarTabBorderColour");

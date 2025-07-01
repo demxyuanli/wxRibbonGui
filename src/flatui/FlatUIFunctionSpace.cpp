@@ -1,7 +1,7 @@
 #include "flatui/FlatUIFunctionSpace.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 FlatUIFunctionSpace::FlatUIFunctionSpace(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
       m_childControl(nullptr),

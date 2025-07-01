@@ -7,12 +7,11 @@
 #include "flatui/FlatUIProfileSpace.h"
 #include "flatui/FlatUITabDropdown.h"
 #include "flatui/FlatUIBarStateManager.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 wxBEGIN_EVENT_TABLE(FlatBarSpaceContainer, wxControl)
     EVT_PAINT(FlatBarSpaceContainer::OnPaint)

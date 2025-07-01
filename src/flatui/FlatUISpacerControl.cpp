@@ -1,9 +1,8 @@
 #include "flatui/FlatUISpacerControl.h"
 #include <wx/dcbuffer.h>
 #include "logger/Logger.h"
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#include "config/ThemeManager.h"
+
 
 FlatUISpacerControl::FlatUISpacerControl(wxWindow* parent, int width, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
@@ -75,7 +74,7 @@ void FlatUISpacerControl::OnPaint(wxPaintEvent& evt)
 {
     wxAutoBufferedPaintDC dc(this);
     wxSize size = GetSize();
-    wxColour bgColor = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
+    wxColour bgColor = GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour");
     dc.SetBackground(bgColor);
     dc.Clear();
     

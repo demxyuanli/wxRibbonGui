@@ -8,11 +8,9 @@
 #include <wx/settings.h>
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
 #include "config/SvgIconManager.h"
-#include "config/ConstantsConfig.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+#include "config/ThemeManager.h"
+
+
 
 wxBEGIN_EVENT_TABLE(FlatUIHomeMenu, wxPopupTransientWindow)
 EVT_MOTION(FlatUIHomeMenu::OnMouseMotion)
@@ -80,7 +78,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
             }
             wxStaticText* st = new wxStaticText(itemPanel, itemInfo.id, itemInfo.text);
             st->SetFont(CFG_DEFAULTFONT());
-            st->SetForegroundColour(*wxBLACK);
+            st->SetForegroundColour(CFG_COLOUR("MenuTextColour"));
             hsizer->Add(st, 1, wxLEFT | wxEXPAND, 5);
             itemPanel->SetSizer(hsizer);
 
@@ -134,7 +132,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
         }
         wxStaticText* st = new wxStaticText(itemPanel, id, text);
         st->SetFont(CFG_DEFAULTFONT());
-        st->SetForegroundColour(*wxBLACK);
+        st->SetForegroundColour(CFG_COLOUR("MenuTextColour"));
         hsizer->Add(st, 1, wxLEFT | wxEXPAND, 5);
         itemPanel->SetSizer(hsizer);
 

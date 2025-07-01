@@ -3,13 +3,11 @@
 #include "flatui/FlatUIBarStateManager.h"
 #include <wx/dcbuffer.h>
 #include <string>
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 
-#define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+
+
 
 // Tab painting and click handling are now managed by FlatBarSpaceContainer
 // These methods are kept for backward compatibility but are no longer used

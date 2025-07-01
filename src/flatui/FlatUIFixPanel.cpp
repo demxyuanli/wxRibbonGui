@@ -2,11 +2,10 @@
 #include "flatui/FlatUIPage.h"
 #include "flatui/FlatUIUnpinButton.h"
 #include "logger/Logger.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include <wx/dcbuffer.h>
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 wxBEGIN_EVENT_TABLE(FlatUIFixPanel, wxPanel)
     EVT_SIZE(FlatUIFixPanel::OnSize)
@@ -31,7 +30,7 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     SetName("FlatUIFixPanel");
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
-    SetBackgroundColour(*wxBLACK);
+    SetBackgroundColour(CFG_COLOUR("BarBackgroundColour"));
 
 #ifdef __WXMSW__
     HWND hwnd = (HWND)GetHandle();
@@ -48,7 +47,7 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     // Create scroll container with clipping enabled
     m_scrollContainer = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN | wxBORDER_NONE);
     m_scrollContainer->SetName("FixPanelScrollContainer");
-    m_scrollContainer->SetBackgroundColour(*wxWHITE);
+    m_scrollContainer->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     m_scrollContainer->SetCanFocus(false);
     
     // Create scroll sizer for content
@@ -308,7 +307,7 @@ void FlatUIFixPanel::OnPaint(wxPaintEvent& event)
     wxSize size = GetSize();
 
     // Fill background with white
-    dc.SetBackground(wxBrush(*wxWHITE));
+    dc.SetBackground(wxBrush(CFG_COLOUR("ScrolledWindowBgColour")));
     dc.Clear();
 
     // Draw border around the entire panel
@@ -576,14 +575,14 @@ void FlatUIFixPanel::CreateScrollControls()
     m_leftScrollButton = new wxButton(this, wxID_BACKWARD, "<", 
                                       wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_leftScrollButton->SetName("LeftScrollButton");
-    m_leftScrollButton->SetBackgroundColour(*wxWHITE);
+    m_leftScrollButton->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     m_leftScrollButton->Hide();
     
     // Create right scroll button with custom border
     m_rightScrollButton = new wxButton(this, wxID_FORWARD, ">", 
                                        wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_rightScrollButton->SetName("RightScrollButton");
-    m_rightScrollButton->SetBackgroundColour(*wxWHITE);
+    m_rightScrollButton->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     m_rightScrollButton->Hide();
     
     // Bind paint events for custom border drawing
@@ -596,7 +595,7 @@ void FlatUIFixPanel::CreateScrollControls()
         dc.Clear();
         
         // Draw button text
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(CFG_COLOUR("DefaultTextColour"));
         wxString text = "<";
         wxSize textSize = dc.GetTextExtent(text);
         int x = (size.GetWidth() - textSize.GetWidth()) / 2;
@@ -617,7 +616,7 @@ void FlatUIFixPanel::CreateScrollControls()
         dc.Clear();
         
         // Draw button text
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(CFG_COLOUR("DefaultTextColour"));
         wxString text = ">";
         wxSize textSize = dc.GetTextExtent(text);
         int x = (size.GetWidth() - textSize.GetWidth()) / 2;

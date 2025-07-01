@@ -1,9 +1,8 @@
 #include "flatui/FlatUIBar.h"
 #include <wx/dcbuffer.h>
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 void FlatUIBar::SetHomeButtonMenu(wxMenu* menu)
 {

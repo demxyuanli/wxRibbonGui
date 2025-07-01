@@ -18,6 +18,7 @@ private:
     std::map<wxString, wxString> iconMap; // Maps icon names to file paths
     std::map<wxString, wxBitmap> iconCache; // Cache for rendered bitmaps
     std::map<wxString, wxBitmapBundle> bundleCache; // Cache for bitmap bundles
+    std::map<wxString, wxString> themedSvgCache; // Cache for theme-processed SVG content
     wxString iconDir; // Directory containing SVG files
     static std::unique_ptr<SvgIconManager> instance;
     static wxString defaultIconDir;
@@ -36,6 +37,27 @@ private:
      * @brief Gets or creates a bitmap bundle for the specified icon.
      */
     wxBitmapBundle GetBitmapBundle(const wxString& name);
+
+    /**
+     * @brief Applies theme colors to SVG content.
+     * @param svgContent The original SVG content string.
+     * @return Theme-processed SVG content string.
+     */
+    wxString ApplyThemeToSvg(const wxString& svgContent);
+
+    /**
+     * @brief Reads SVG file content as string.
+     * @param filePath Path to the SVG file.
+     * @return SVG content as string, or empty string if failed.
+     */
+    wxString ReadSvgFile(const wxString& filePath);
+
+    /**
+     * @brief Gets theme-processed SVG content.
+     * @param name Icon name.
+     * @return Theme-processed SVG content, or empty string if failed.
+     */
+    wxString GetThemedSvgContent(const wxString& name);
 
 public:
     /**
@@ -93,9 +115,14 @@ public:
     wxArrayString GetAvailableIcons() const;
 
     /**
-     * @brief Clears the bitmap cache.
+     * @brief Clears all caches (bitmap, bundle, and themed SVG).
      */
     void ClearCache();
+
+    /**
+     * @brief Clears only the themed SVG cache (useful when theme changes).
+     */
+    void ClearThemeCache();
 
     /**
      * @brief Preloads commonly used icons into cache.
@@ -107,5 +134,6 @@ public:
 #define SVG_ICON(name, size) SvgIconManager::GetInstance().GetIconBitmap(name, size)
 #define SVG_ICON_FALLBACK(name, size, fallback) SvgIconManager::GetInstance().GetIconBitmapWithFallback(name, size, fallback)
 #define SVG_BUNDLE(name) SvgIconManager::GetInstance().GetIconBundle(name)
+#define SVG_THEMED_ICON(name, size) SvgIconManager::GetInstance().GetIconBitmap(name, size, true) // Always use cache for themed icons
 
 #endif // SVG_ICON_MANAGER_H

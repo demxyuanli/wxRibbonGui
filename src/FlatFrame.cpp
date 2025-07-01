@@ -11,7 +11,7 @@
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUICustomControl.h"
 #include "flatui/UIHierarchyDebugger.h"
-#include "config/ConstantsConfig.h"  
+#include "config/ThemeManager.h"  
 #include "config/SvgIconManager.h"
 #include <wx/display.h>
 #include "logger/Logger.h"
@@ -28,10 +28,8 @@
 #include <windows.h>
 #endif
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+
+
 
 // These are now defined in FlatFrame.h as enum members.
 
@@ -117,7 +115,7 @@ FlatFrame::~FlatFrame()
 
 void FlatFrame::InitializeUI(const wxSize& size)
 {
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_APPWORKSPACE));
+    SetBackgroundColour(CFG_COLOUR("FrameAppWorkspaceColour"));
 
     int barHeight = FlatUIBar::GetBarHeight();
     m_ribbon = new FlatUIBar(this, wxID_ANY, wxDefaultPosition, wxSize(-1, barHeight * 3));
@@ -275,7 +273,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     // Create SVG display panel (left side)
     wxPanel* svgPanel = new wxPanel(splitter, wxID_ANY);
-    svgPanel->SetBackgroundColour(wxColour(245, 245, 245));
+    svgPanel->SetBackgroundColour(CFG_COLOUR("SvgPanelBgColour"));
     wxBoxSizer* svgSizer = new wxBoxSizer(wxVERTICAL);
     
     // Add title for SVG area
@@ -286,7 +284,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     // Create scrolled window for SVG icons
     wxScrolledWindow* svgScrolled = new wxScrolledWindow(svgPanel, wxID_ANY);
     svgScrolled->SetScrollRate(5, 5);
-    svgScrolled->SetBackgroundColour(*wxWHITE);
+    svgScrolled->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     
     // Create sizer for SVG icons (grid layout)
     wxFlexGridSizer* svgGridSizer = new wxFlexGridSizer(0, 3, 10, 10); // 3 columns
@@ -354,7 +352,7 @@ void FlatFrame::LoadSVGIcons(wxWindow* parent, wxSizer* sizer)
 
         // Create a panel for each SVG icon
         wxPanel* iconPanel = new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(80, 100));
-        iconPanel->SetBackgroundColour(*wxWHITE);
+        iconPanel->SetBackgroundColour(CFG_COLOUR("IconPanelBgColour"));
         wxBoxSizer* iconSizer = new wxBoxSizer(wxVERTICAL);
 
         // Try to load SVG file
@@ -375,7 +373,7 @@ void FlatFrame::LoadSVGIcons(wxWindow* parent, wxSizer* sizer)
             {
                 // Create error placeholder
                 wxStaticText* errorText = new wxStaticText(iconPanel, wxID_ANY, "Error\nLoading\nSVG");
-                errorText->SetForegroundColour(*wxRED);
+                errorText->SetForegroundColour(CFG_COLOUR("ErrorTextColour"));
                 iconSizer->Add(errorText, 1, wxALIGN_CENTER | wxALL, 5); 
 
                 wxLogError("Failed to load SVG: %s - %s", fullPath, e.what());
@@ -385,13 +383,13 @@ void FlatFrame::LoadSVGIcons(wxWindow* parent, wxSizer* sizer)
         {
             // Create placeholder for missing file
             wxStaticText* missingText = new wxStaticText(iconPanel, wxID_ANY, "SVG\nNot\nFound");
-            missingText->SetForegroundColour(wxColour(128, 128, 128));
+            missingText->SetForegroundColour(CFG_COLOUR("PlaceholderTextColour"));
             iconSizer->Add(missingText, 1, wxALIGN_CENTER | wxALL, 5);
 
             wxFileName fn(fullPath);
             wxStaticText* label = new wxStaticText(iconPanel, wxID_ANY, fn.GetName());
             label->SetFont(wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-            label->SetForegroundColour(wxColour(128, 128, 128));
+            label->SetForegroundColour(CFG_COLOUR("PlaceholderTextColour"));
             iconSizer->Add(label, 0, wxALIGN_CENTER | wxALL, 2);
         }
 
@@ -572,7 +570,7 @@ void FlatFrame::OnGlobalPinStateChanged(wxCommandEvent& event)
         m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
     } else {
         // Set collapsed min height for ribbon
-        int unpinnedHeight = ConstantsConfig::getInstance().getIntValue("BarUnpinnedHeight");
+        int unpinnedHeight = CFG_INT("BarUnpinnedHeight");
         m_ribbon->SetMinSize(wxSize(-1, unpinnedHeight));
     }
 

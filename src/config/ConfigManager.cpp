@@ -2,6 +2,7 @@
 #include "logger/Logger.h"
 #include "config/LoggerConfig.h"
 #include "config/Coin3DConfig.h"
+#include "config/ThemeManager.h"
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
 #include <wx/ffile.h>
@@ -83,6 +84,10 @@ bool ConfigManager::initialize(const std::string& configFilePath) {
 
     // Initialize Coin3D configuration
     Coin3DConfig::getInstance().initialize(*this);
+
+    // Initialize Theme manager - this should be done last
+    // as it depends on other configurations being loaded first
+    ThemeManager::getInstance().initialize(*this);
 
     return true;
 }

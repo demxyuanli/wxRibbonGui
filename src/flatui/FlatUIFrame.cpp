@@ -1,6 +1,7 @@
 #include "flatui/FlatUIFrame.h"
 #include <wx/dcbuffer.h> // For wxScreenDC
 #include <wx/display.h>  // For wxDisplay
+#include "config/ThemeManager.h"
 
 #ifdef __WXMSW__
 #include <windows.h>     // For Windows specific GDI calls for rubber band
@@ -15,7 +16,7 @@ FlatUIFrame::FlatUIFrame(wxWindow* parent, wxWindowID id, const wxString& title,
       m_isPseudoMaximized(false)
       // m_dragging, m_resizing, m_resizeMode, m_rubberBandVisible, m_borderThreshold are initialized by BorderlessFrameLogic
 {
-    InitFrameStyle(); // Specific styling for FlatUIFrame
+    InitFrameStyle(); // Specific styling for FlatUIFrame 
 }
 
 FlatUIFrame::~FlatUIFrame()
@@ -28,7 +29,7 @@ void FlatUIFrame::InitFrameStyle()
 {
     // Set specific FlatUIFrame styles (e.g., background, etc.)
     // BorderlessFrameLogic constructor already sets DoubleBuffered.
-    SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_APPWORKSPACE));
+    SetBackgroundColour(CFG_COLOUR("FrameAppWorkspaceColour"));
     // m_borderThreshold is set in BorderlessFrameLogic constructor, can be overridden here if needed for FlatUIFrame
     // e.g., this->m_borderThreshold = 10; // If FlatUIFrame needs a different threshold
 }

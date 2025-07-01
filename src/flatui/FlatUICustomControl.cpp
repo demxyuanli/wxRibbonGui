@@ -1,10 +1,11 @@
 #include "flatui/FlatUICustomControl.h"
+#include "config/ThemeManager.h"
 #include "flatui/FlatUIEventManager.h"
 #include <wx/dcbuffer.h>
 
 FlatUICustomControl::FlatUICustomControl(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),
-      m_backgroundColor(wxColour(200, 200, 200)),
+      m_backgroundColor(CFG_COLOUR("CustomControlBgColour")),
       m_hover(false)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -67,7 +68,7 @@ void FlatUICustomControl::OnPaint(wxPaintEvent& evt)
     dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
     
     // Draw text
-    dc.SetTextForeground(*wxBLACK);
+    dc.SetTextForeground(CFG_COLOUR("DefaultTextColour"));
     wxString text = "Custom Control";
     wxSize textSize = dc.GetTextExtent(text);
     int x = (size.GetWidth() - textSize.GetWidth()) / 2;

@@ -2,12 +2,11 @@
 #include "flatui/FlatUIBar.h"
 #include "flatui/FlatUIPage.h"
 #include "flatui/FlatUIBarStateManager.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 #include <wx/sizer.h>
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 wxBEGIN_EVENT_TABLE(FlatUITabDropdown, wxPanel)
     EVT_COMMAND(wxID_ANY, wxEVT_CUSTOM_DROPDOWN_SELECTION, FlatUITabDropdown::OnDropdownSelection)

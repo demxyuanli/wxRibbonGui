@@ -5,12 +5,10 @@
 #include <wx/graphics.h>
 #include <wx/display.h>
 #include <algorithm> // For std::min
-#include "config/ConstantsConfig.h"  
+#include "config/ThemeManager.h"  
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+
+
 
 int targetH = -1;
 
@@ -239,7 +237,7 @@ void FlatUIButtonBar::OnPaint(wxPaintEvent& evt)
     dc.Clear();
 
     if (m_buttons.empty() && IsShown()) {
-        dc.SetTextForeground(wxColour(120, 120, 120));
+        dc.SetTextForeground(CFG_COLOUR("ButtonTextPlaceholderColour"));
         wxString text = "BtnBar";
         wxSize textSize = dc.GetTextExtent(text);
         dc.DrawText(text, (GetSize().GetWidth() - textSize.GetWidth()) / 2,

@@ -1,6 +1,6 @@
 #include "flatui/FlatUIProfileSpace.h"
-#include "config/ConstantsConfig.h"
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#include "config/ThemeManager.h"
+
 
 FlatUIProfileSpace::FlatUIProfileSpace(wxWindow* parent, wxWindowID id)
     : wxControl(parent, id, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxBORDER_NONE | wxFULL_REPAINT_ON_RESIZE),

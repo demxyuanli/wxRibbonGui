@@ -1,5 +1,6 @@
 #include "flatui/CustomDropDown.h"
 #include "config/SvgIconManager.h"
+#include "config/ThemeManager.h"
 #include <wx/dcbuffer.h>
 #include <wx/settings.h>
 
@@ -22,13 +23,13 @@ CustomDropDown::CustomDropDown(wxWindow* parent, wxWindowID id, const wxString& 
     : wxControl(parent, id, pos, size, style | wxBORDER_NONE),
       m_selection(wxNOT_FOUND),
       m_value(value),
-      m_borderColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)),
-      m_dropDownButtonColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNFACE)),
-      m_dropDownButtonHoverColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNHIGHLIGHT)),
-      m_popupBackgroundColour(*wxWHITE),
-      m_popupBorderColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)),
-      m_selectionBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)),
-      m_selectionForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT)),
+      m_borderColour(CFG_COLOUR("DropdownBorderColour")),
+      m_dropDownButtonColour(CFG_COLOUR("DropdownBackgroundColour")),
+      m_dropDownButtonHoverColour(CFG_COLOUR("DropdownHoverColour")),
+      m_popupBackgroundColour(CFG_COLOUR("DropdownBackgroundColour")),
+      m_popupBorderColour(CFG_COLOUR("DropdownBorderColour")),
+      m_selectionBackgroundColour(CFG_COLOUR("DropdownSelectionBgColour")),
+      m_selectionForegroundColour(CFG_COLOUR("DropdownSelectionTextColour")),
       m_borderWidth(DEFAULT_BORDER_WIDTH),
       m_style(CustomDropDownStyle::Text_Dropdown),
       m_leftIconName(""),
@@ -718,9 +719,9 @@ CustomDropDownPopup::CustomDropDownPopup(CustomDropDown* parent)
       m_selection(wxNOT_FOUND),
       m_hoverItem(wxNOT_FOUND),
       m_backgroundColour(*wxWHITE),
-      m_borderColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW)),
-      m_selectionBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)),
-      m_selectionForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT)),
+          m_borderColour(CFG_COLOUR("DropdownBorderColour")),
+    m_selectionBackgroundColour(CFG_COLOUR("DropdownSelectionBgColour")),
+    m_selectionForegroundColour(CFG_COLOUR("DropdownSelectionTextColour")),
       m_itemHeight(20)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);

@@ -58,6 +58,7 @@ public:
     
     // Resource caching for DPI-aware resources
     wxBitmap GetDPIAwareBitmap(const wxString& key, const wxBitmap& originalBitmap);
+    wxFont GetCachedFont() const;
     wxFont GetCachedFont(const wxString& key, const wxFont& originalFont) const;
     int GetDPIAwareValue(const wxString& key, int originalValue);
     void ClearResourceCache();

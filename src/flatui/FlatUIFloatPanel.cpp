@@ -2,10 +2,7 @@
 #include "flatui/FlatUIPage.h"
 #include "flatui/FlatUIPinButton.h"
 #include "logger/Logger.h"
-#include "config/ConstantsConfig.h"
-
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#include "config/ThemeManager.h"
 // Define the custom event
 wxDEFINE_EVENT(wxEVT_FLOAT_PANEL_DISMISSED, wxCommandEvent);
 
@@ -54,7 +51,7 @@ FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
     // Create scroll container
     m_scrollContainer = new wxPanel(m_contentPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN);
     m_scrollContainer->SetName("FloatPanelScrollContainer");
-    m_scrollContainer->SetBackgroundColour(*wxWHITE);
+    m_scrollContainer->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     // Enable clipping to ensure content outside the container is not visible
     m_scrollContainer->SetCanFocus(false);
     
@@ -114,13 +111,13 @@ void FlatUIFloatPanel::SetupAppearance()
 {
     // Set colors based on configuration or defaults
     m_borderColour = CFG_COLOUR("BarBorderColour");
-    m_backgroundColour = wxColour(*wxWHITE);
-    m_shadowColour = wxColour(255, 255, 255, 100);
+    m_backgroundColour = CFG_COLOUR("ScrolledWindowBgColour");
+    m_shadowColour = CFG_COLOUR("FloatPanelShadowColour");
     m_borderWidth = 1; // Ensure border width is set
 
     // Always use white background
-    SetBackgroundColour(*wxWHITE);
-    m_contentPanel->SetBackgroundColour(*wxWHITE);
+    SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
+    m_contentPanel->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
 }
 
 void FlatUIFloatPanel::SetupEventHandlers()
@@ -416,7 +413,7 @@ void FlatUIFloatPanel::OnPaint(wxPaintEvent& event)
     wxSize size = GetSize();
 
     // Fill background with white
-    dc.SetBackground(wxBrush(*wxWHITE));
+    dc.SetBackground(wxBrush(CFG_COLOUR("ScrolledWindowBgColour")));
     dc.Clear();
 
     // Draw shadow first (behind the panel)
@@ -716,14 +713,14 @@ void FlatUIFloatPanel::CreateScrollControls()
     m_leftScrollButton = new wxButton(m_contentPanel, wxID_BACKWARD, "<", 
                                       wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_leftScrollButton->SetName("LeftScrollButton");
-    m_leftScrollButton->SetBackgroundColour(*wxWHITE);
+    m_leftScrollButton->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     m_leftScrollButton->Hide();
     
     // Create right scroll button with custom border
     m_rightScrollButton = new wxButton(m_contentPanel, wxID_FORWARD, ">", 
                                        wxDefaultPosition, wxSize(16, -1), wxBORDER_NONE);
     m_rightScrollButton->SetName("RightScrollButton");
-    m_rightScrollButton->SetBackgroundColour(*wxWHITE);
+    m_rightScrollButton->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
     m_rightScrollButton->Hide();
     
     // Bind paint events for custom border drawing
@@ -736,7 +733,7 @@ void FlatUIFloatPanel::CreateScrollControls()
         dc.Clear();
         
         // Draw button text
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(CFG_COLOUR("DefaultTextColour"));
         wxString text = "<";
         wxSize textSize = dc.GetTextExtent(text);
         int x = (size.GetWidth() - textSize.GetWidth()) / 2;
@@ -757,7 +754,7 @@ void FlatUIFloatPanel::CreateScrollControls()
         dc.Clear();
         
         // Draw button text
-        dc.SetTextForeground(*wxBLACK);
+        dc.SetTextForeground(CFG_COLOUR("DefaultTextColour"));
         wxString text = ">";
         wxSize textSize = dc.GetTextExtent(text);
         int x = (size.GetWidth() - textSize.GetWidth()) / 2;

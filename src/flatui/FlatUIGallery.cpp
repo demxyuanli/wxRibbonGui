@@ -4,19 +4,17 @@
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
-#include "config/ConstantsConfig.h"  
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+#include "config/ThemeManager.h"
 
 FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     : wxControl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_NONE),
     m_itemStyle(ItemStyle::DEFAULT),
     m_itemBorderStyle(ItemBorderStyle::SOLID),
     m_layoutStyle(LayoutStyle::HORIZONTAL),
-    m_itemBgColour(wxColour(250, 250, 250)),
-    m_itemHoverBgColour(wxColour(240, 240, 240)),
-    m_itemSelectedBgColour(wxColour(230, 230, 230)),
-    m_itemBorderColour(wxColour(200, 200, 200)),
+    m_itemBgColour(CFG_COLOUR("GalleryItemBgColour")),
+    m_itemHoverBgColour(CFG_COLOUR("GalleryItemHoverBgColour")),
+    m_itemSelectedBgColour(CFG_COLOUR("GalleryItemSelectedBgColour")),
+    m_itemBorderColour(CFG_COLOUR("GalleryItemBorderColour")),
     m_itemBorderWidth(0),
     m_itemCornerRadius(0),
     m_galleryBorderWidth(0),
@@ -30,7 +28,6 @@ FlatUIGallery::FlatUIGallery(FlatUIPanel* parent)
     SetDoubleBuffered(true);
     SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-    auto& cfg = ConstantsConfig::getInstance();
     m_galleryBgColour     = CFG_COLOUR("ActBarBackgroundColour");
     m_galleryBorderColour = CFG_COLOUR("ActBarBackgroundColour");
     m_itemSpacing         = CFG_INT("GalleryItemSpacing");
@@ -145,7 +142,7 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
 
     if (m_items.empty()) {
         // Draw placeholder text
-        dc.SetTextForeground(wxColour(120, 120, 120));
+        dc.SetTextForeground(CFG_COLOUR("GalleryTextColour"));
         wxString text = "Gallery";
         wxSize textSize = dc.GetTextExtent(text);
         int x = (size.GetWidth() - textSize.GetWidth()) / 2;

@@ -1,13 +1,12 @@
 #include "flatui/FlatUIBarLayoutManager.h"
 #include "flatui/FlatUIBar.h"
 #include "flatui/FlatUIBarConfig.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 #include <wx/dcmemory.h>
 #include <wx/button.h>
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 FlatUIBarLayoutManager::FlatUIBarLayoutManager(FlatUIBar* bar)
     : m_bar(bar),

@@ -4,11 +4,10 @@
 #include "flatui/FlatUIHomeMenu.h" // For the custom menu
 #include "flatui/FlatUIFrame.h"       // To get parent FlatFrame and content height
 #include "flatui/FlatUIBar.h"         // To get FlatUIBar height
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "config/SvgIconManager.h"
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
+
 
 // Known menu item IDs from FlatFrame (or define them in a shared constants header)
 // These should match the IDs used in FlatFrame's event handlers
@@ -52,7 +51,7 @@ void FlatUIHomeSpace::OnPaint(wxPaintEvent& evt)
 
     CalculateButtonRect(GetClientSize());
 
-    wxColour parentBgColor = GetParent() ? GetParent()->GetBackgroundColour() : wxSystemSettings::GetColour(wxSYS_COLOUR_MENUBAR);
+    wxColour parentBgColor = GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour");
     wxColour finalBgColorToDraw;
 
     if (m_hover) { // m_menu check removed as it's no longer relevant for hover indication
@@ -92,7 +91,7 @@ void FlatUIHomeSpace::OnPaint(wxPaintEvent& evt)
             int lineThickness = 2;
             int lineSpacing = (m_buttonRect.GetHeight() - 2 * VMargin - lineCount * lineThickness) / wxMax(1, lineCount - 1);
 
-            dc.SetPen(wxPen(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNTEXT), lineThickness));
+            dc.SetPen(wxPen(CFG_COLOUR("SystemButtonTextColour"), lineThickness));
             for (int i = 0; i < lineCount; ++i) {
                 int yPos = VMargin + i * (lineThickness + lineSpacing);
                 dc.DrawLine(m_buttonRect.GetLeft() + HMargin,

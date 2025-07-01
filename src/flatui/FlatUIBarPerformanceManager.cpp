@@ -1,6 +1,6 @@
 #include "flatui/FlatUIBarPerformanceManager.h"
 #include "flatui/FlatUIBar.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 #include <wx/dcbuffer.h>
 #include <wx/dcmemory.h>
@@ -14,8 +14,7 @@
 #pragma comment(lib, "dwmapi.lib")
 #endif
 
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key) ConstantsConfig::getInstance().getIntValue(key)
+
 
 FlatUIBarPerformanceManager::FlatUIBarPerformanceManager(FlatUIBar* bar)
     : m_bar(bar)
@@ -91,10 +90,10 @@ int FlatUIBarPerformanceManager::FromDIP(int value) const
 wxFont FlatUIBarPerformanceManager::GetDPIAwareFont(const wxString& fontKey) const
 {
     if (!IsOptimizationEnabled(PerformanceOptimization::DPI_OPTIMIZATION)) {
-        return ConstantsConfig::getInstance().getDefaultFont();
+        return CFG_DEFAULTFONT();
     }
     
-    return GetCachedFont(fontKey, ConstantsConfig::getInstance().getDefaultFont());
+    return GetCachedFont(fontKey, CFG_DEFAULTFONT());
 }
 
 wxBitmap FlatUIBarPerformanceManager::GetDPIAwareBitmap(const wxString& key, const wxBitmap& originalBitmap)
@@ -122,6 +121,11 @@ wxBitmap FlatUIBarPerformanceManager::GetDPIAwareBitmap(const wxString& key, con
             " at scale: " + std::to_string(m_currentDPIScale), "PerformanceManager");
     
     return scaledBitmap;
+}
+
+wxFont FlatUIBarPerformanceManager::GetCachedFont() const
+{
+    return CFG_DEFAULTFONT();
 }
 
 wxFont FlatUIBarPerformanceManager::GetCachedFont(const wxString& key, const wxFont& originalFont) const
@@ -433,7 +437,7 @@ void FlatUIBarPerformanceManager::PreloadResources()
     }
     
     // Preload common resources
-    wxFont defaultFont = ConstantsConfig::getInstance().getDefaultFont();
+    wxFont defaultFont = CFG_DEFAULTFONT();
     GetCachedFont("DefaultFont", defaultFont);
     
     // Preload common DPI values

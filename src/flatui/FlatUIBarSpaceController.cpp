@@ -5,10 +5,10 @@
 #include "flatui/FlatUIProfileSpace.h"
 #include "flatui/FlatUISystemButtons.h"
 #include "flatui/FlatUIConstants.h"
-#include "config/ConstantsConfig.h"
+#include "config/ThemeManager.h"
 #include "logger/Logger.h"
 
-#define CFG_INT(key, def)    ConstantsConfig::getInstance().getIntValue(key, def)
+
 
 FlatUIBarSpaceController::FlatUIBarSpaceController(FlatUIBar* bar)
     : m_bar(bar) {}

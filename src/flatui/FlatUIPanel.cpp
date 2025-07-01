@@ -7,11 +7,9 @@
 #include <wx/dcbuffer.h>
 #include <wx/graphics.h>
 #include <wx/event.h>
-#include "config/ConstantsConfig.h"  
-#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
-#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
-#define CFG_FONTNAME() ConstantsConfig::getInstance().getDefaultFontFaceName()
-#define CFG_DEFAULTFONT() ConstantsConfig::getInstance().getDefaultFont()
+#include "config/ThemeManager.h"  
+
+
 enum {
     TIMER_RESIZE = wxID_HIGHEST + 1000,
     TIMER_ADD_CONTROL = wxID_HIGHEST + 1001
@@ -31,7 +29,7 @@ FlatUIPanel::FlatUIPanel(FlatUIPage* parent, const wxString& label, int orientat
     SetFont(CFG_DEFAULTFONT());
     SetDoubleBuffered(true);
 
-    auto& cfg = ConstantsConfig::getInstance();
+    // Initialize theme-based configuration values
     m_bgColour = CFG_COLOUR("ActBarBackgroundColour");
     m_borderColour = CFG_COLOUR("PanelBorderColour");
     m_headerColour = CFG_COLOUR("PanelHeaderColour");
