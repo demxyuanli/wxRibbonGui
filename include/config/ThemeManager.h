@@ -62,6 +62,9 @@ private:
     void notifyThemeChange();
     wxColour parseColour(const std::string& value) const;
     ThemeProfile loadThemeFromConfig(const std::string& themeName);
+    std::vector<std::string> splitString(const std::string& str, char delimiter);
+    void loadSizeConfigurations(ThemeProfile& theme);
+    wxFont loadFont();
     
     ConfigManager* m_configManager;
     std::string m_currentTheme;

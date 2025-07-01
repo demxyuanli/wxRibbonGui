@@ -39,142 +39,135 @@ void ThemeManager::initialize(ConfigManager& config) {
 }
 
 void ThemeManager::loadBuiltinThemes() {
-    // Default theme - based on current FlatUIConstants
-    ThemeProfile defaultTheme;
-    defaultTheme.name = "default";
-    defaultTheme.displayName = "Default Light";
-    
-    // Load colors from existing config structure
+    // Load theme configurations from new format
     if (m_configManager) {
-        auto keys = m_configManager->getKeys("FlatUIConstants");
-        for (const auto& key : keys) {
-            std::string value = m_configManager->getString("FlatUIConstants", key, "");
+        // Load theme colors from ThemeColors section
+        auto colorKeys = m_configManager->getKeys("ThemeColors");
+        
+        // Initialize three themes
+        ThemeProfile defaultTheme, darkTheme, blueTheme;
+        
+        defaultTheme.name = "default";
+        defaultTheme.displayName = "Default Light";
+        darkTheme.name = "dark"; 
+        darkTheme.displayName = "Dark";
+        blueTheme.name = "blue";
+        blueTheme.displayName = "Modern Blue";
+        
+        // Parse theme colors in new format: default_value;dark_value;blue_value
+        for (const auto& key : colorKeys) {
+            std::string value = m_configManager->getString("ThemeColors", key, "");
             if (!value.empty()) {
-                // Try to parse as color first
-                wxColour color = parseColour(value);
-                if (color.IsOk()) {
-                    defaultTheme.colours[key] = color;
-                } else {
-                    // Try to parse as integer
-                    try {
-                        int intValue = std::stoi(value);
-                        defaultTheme.integers[key] = intValue;
-                    } catch (...) {
-                        // Store as string
-                        defaultTheme.strings[key] = value;
+                // Split by semicolon to get three theme values
+                std::vector<std::string> themeValues = splitString(value, ';');
+                
+                if (themeValues.size() >= 3) {
+                    // Parse each theme's color value
+                    wxColour defaultColor = parseColour(themeValues[0]);
+                    wxColour darkColor = parseColour(themeValues[1]);
+                    wxColour blueColor = parseColour(themeValues[2]);
+                    
+                    if (defaultColor.IsOk()) defaultTheme.colours[key] = defaultColor;
+                    if (darkColor.IsOk()) darkTheme.colours[key] = darkColor;
+                    if (blueColor.IsOk()) blueTheme.colours[key] = blueColor;
+                }
+            }
+        }
+        
+        // Load SVG theme colors
+        auto svgKeys = m_configManager->getKeys("SvgTheme");
+        for (const auto& key : svgKeys) {
+            if (key == "SvgThemeEnabled") {
+                int enabled = m_configManager->getInt("SvgTheme", key, 1);
+                defaultTheme.integers[key] = enabled;
+                darkTheme.integers[key] = enabled;
+                blueTheme.integers[key] = enabled;
+            } else {
+                std::string value = m_configManager->getString("SvgTheme", key, "");
+                if (!value.empty()) {
+                    std::vector<std::string> themeValues = splitString(value, ';');
+                    if (themeValues.size() >= 3) {
+                        wxColour defaultColor = parseColour(themeValues[0]);
+                        wxColour darkColor = parseColour(themeValues[1]);
+                        wxColour blueColor = parseColour(themeValues[2]);
+                        
+                        if (defaultColor.IsOk()) defaultTheme.colours[key] = defaultColor;
+                        if (darkColor.IsOk()) darkTheme.colours[key] = darkColor;
+                        if (blueColor.IsOk()) blueTheme.colours[key] = blueColor;
                     }
                 }
             }
         }
+        
+        // Load size configurations (same for all themes)
+        loadSizeConfigurations(defaultTheme);
+        loadSizeConfigurations(darkTheme);
+        loadSizeConfigurations(blueTheme);
+        
+        // Set default fonts
+        defaultTheme.defaultFont = loadFont();
+        darkTheme.defaultFont = loadFont();
+        blueTheme.defaultFont = loadFont();
+        
+        m_themes["default"] = defaultTheme;
+        m_themes["dark"] = darkTheme;
+        m_themes["blue"] = blueTheme;
+        
+        LOG_INF("Loaded themes with new configuration format", "ThemeManager");
+    } else {
+        LOG_ERR("ConfigManager not available for loading themes", "ThemeManager");
+    }
+}
+
+std::vector<std::string> ThemeManager::splitString(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    
+    while (std::getline(tokenStream, token, delimiter)) {
+        // Trim whitespace
+        token.erase(0, token.find_first_not_of(" \t"));
+        token.erase(token.find_last_not_of(" \t") + 1);
+        tokens.push_back(token);
     }
     
-    // Set default font
-    defaultTheme.defaultFont = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
-    defaultTheme.defaultFont.SetPointSize(8);
-    defaultTheme.defaultFont.SetFaceName("Consolas");
+    return tokens;
+}
+
+void ThemeManager::loadSizeConfigurations(ThemeProfile& theme) {
+    if (!m_configManager) return;
     
-    // Add SVG theme settings to default theme
-    defaultTheme.colours["SvgPrimaryIconColour"] = wxColour(100, 100, 100);
-    defaultTheme.colours["SvgSecondaryIconColour"] = wxColour(70, 70, 70);
-    defaultTheme.colours["SvgDisabledIconColour"] = wxColour(180, 180, 180);
-    defaultTheme.colours["SvgHighlightIconColour"] = wxColour(0, 120, 215);
-    defaultTheme.integers["SvgThemeEnabled"] = 1;
+    // Load size configurations from various sections
+    std::vector<std::string> sizeSections = {
+        "BarSizes", "ButtonBarSizes", "Separators", "Icons", 
+        "GallerySizes", "PanelSizes", "HomeSpace", "HomeMenu"
+    };
     
-    // Dark theme
-    ThemeProfile darkTheme = defaultTheme;
-    darkTheme.name = "dark";
-    darkTheme.displayName = "Dark";
+    for (const auto& section : sizeSections) {
+        auto keys = m_configManager->getKeys(section);
+        for (const auto& key : keys) {
+            int value = m_configManager->getInt(section, key, 0);
+            if (value != 0) {
+                theme.integers[key] = value;
+            }
+        }
+    }
+}
+
+wxFont ThemeManager::loadFont() {
+    if (!m_configManager) {
+        return wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+    }
     
-    // Override colors for dark theme
-    darkTheme.colours["WindowMotionColor"] = wxColour(60, 60, 60);
-    darkTheme.colours["FrameBorderColor"] = wxColour(80, 80, 80);
-    darkTheme.colours["PrimaryFrameBorderColour"] = wxColour(100, 100, 100);
-    darkTheme.colours["PrimaryContentBgColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["DefaultBgColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["DefaultBorderColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["DefaultTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["HighlightColour"] = wxColour(0, 122, 204);
+    wxFont font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
     
-    // Bar colors for dark theme
-    darkTheme.colours["BarBackgroundColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["BarBorderColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["ActBarBackgroundColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["BarTabBorderColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["BarActiveTabTopBorderColour"] = wxColour(100, 100, 100);
-    darkTheme.colours["BarActiveTabBgColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["BarTabBorderTopColour"] = wxColour(0, 122, 204);
-    darkTheme.colours["BarActiveTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["BarInactiveTextColour"] = wxColour(170, 170, 170);
+    int fontSize = m_configManager->getInt("Font", "DefaultFontSize", 8);
+    std::string fontName = m_configManager->getString("Font", "DefaultFontFaceName", "Consolas");
     
-    // Panel colors for dark theme
-    darkTheme.colours["PanelBorderColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["PanelHeaderColour"] = wxColour(55, 55, 58);
-    darkTheme.colours["PanelHeaderTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["PanelSepatatorColor"] = wxColour(85, 85, 85);
+    font.SetPointSize(fontSize);
+    font.SetFaceName(fontName);
     
-    // Button colors for dark theme
-    darkTheme.colours["ButtonbarDefaultBgColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["ButtonbarDefaultHoverBgColour"] = wxColour(62, 62, 64);
-    darkTheme.colours["ButtonbarDefaultPressedBgColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["ButtonbarDefaultTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["ButtonbarDefaultBorderColour"] = wxColour(85, 85, 85);
-    
-    // Home space colors for dark theme
-    darkTheme.colours["HomespaceHoverBgColour"] = wxColour(62, 62, 64);
-    
-    // SVG icon colors for dark theme
-    darkTheme.colours["SvgPrimaryIconColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["SvgSecondaryIconColour"] = wxColour(170, 170, 170);
-    darkTheme.colours["SvgDisabledIconColour"] = wxColour(120, 120, 120);
-    darkTheme.colours["SvgHighlightIconColour"] = wxColour(0, 122, 204);
-    darkTheme.integers["SvgThemeEnabled"] = 1;
-    
-    // Text colors for dark theme
-    darkTheme.colours["MenuTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["ErrorTextColour"] = wxColour(244, 71, 71);
-    darkTheme.colours["PlaceholderTextColour"] = wxColour(140, 140, 140);
-    
-    // Background colors for dark theme
-    darkTheme.colours["MainBackgroundColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["SecondaryBackgroundColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["ScrolledWindowBgColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["IconPanelBgColour"] = wxColour(37, 37, 38);
-    darkTheme.colours["SvgPanelBgColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["FrameAppWorkspaceColour"] = wxColour(30, 30, 30);
-    
-    // System button colors for dark theme
-    darkTheme.colours["SystemButtonTextColour"] = wxColour(220, 220, 220);
-    darkTheme.colours["SystemButtonHoverTextColour"] = wxColour(255, 255, 255);
-    darkTheme.colours["SystemButtonBgColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["SystemButtonCloseHoverColour"] = wxColour(196, 43, 28);
-    
-    // Dropdown colors for dark theme
-    darkTheme.colours["DropdownBackgroundColour"] = wxColour(45, 45, 48);
-    darkTheme.colours["DropdownBorderColour"] = wxColour(85, 85, 85);
-    darkTheme.colours["DropdownHoverColour"] = wxColour(62, 62, 64);
-    darkTheme.colours["DropdownSelectionBgColour"] = wxColour(0, 122, 204);
-    darkTheme.colours["DropdownSelectionTextColour"] = wxColour(255, 255, 255);
-    
-    // Blue theme - modern blue accent
-    ThemeProfile blueTheme = defaultTheme;
-    blueTheme.name = "blue";
-    blueTheme.displayName = "Modern Blue";
-    
-    blueTheme.colours["HighlightColour"] = wxColour(0, 120, 215);
-    blueTheme.colours["BarTabBorderTopColour"] = wxColour(0, 120, 215);
-    blueTheme.colours["PrimaryFrameBorderColour"] = wxColour(0, 120, 215);
-    blueTheme.colours["FrameBorderColor"] = wxColour(0, 120, 215);
-    
-    // SVG icon colors for blue theme (same as default but with blue highlights)
-    blueTheme.colours["SvgPrimaryIconColour"] = wxColour(100, 100, 100);
-    blueTheme.colours["SvgSecondaryIconColour"] = wxColour(70, 70, 70);
-    blueTheme.colours["SvgDisabledIconColour"] = wxColour(180, 180, 180);
-    blueTheme.colours["SvgHighlightIconColour"] = wxColour(0, 120, 215);
-    blueTheme.integers["SvgThemeEnabled"] = 1;
-    
-    m_themes["default"] = defaultTheme;
-    m_themes["dark"] = darkTheme;
-    m_themes["blue"] = blueTheme;
+    return font;
 }
 
 wxColour ThemeManager::parseColour(const std::string& value) const {
@@ -218,7 +211,7 @@ bool ThemeManager::setCurrentTheme(const std::string& themeName) {
 std::vector<std::string> ThemeManager::getAvailableThemes() const {
     std::vector<std::string> themes;
     for (const auto& pair : m_themes) {
-        themes.push_back(pair.second.displayName);
+        themes.push_back(pair.first); // Return theme name, not display name
     }
     return themes;
 }

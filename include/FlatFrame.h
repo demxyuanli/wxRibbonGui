@@ -5,6 +5,7 @@
 #include <wx/srchctrl.h>  
 #include "flatui/FlatUIBar.h" 
 #include "flatui/FlatUIHomeMenu.h"
+// Note: Theme change events are now handled in FlatUIFrame
 
 // IDs for specific FlatFrame controls/menu items remain here
 // Any generic IDs could be moved to PlatUIFrame or a common constants file if needed
@@ -52,6 +53,10 @@ public:
     void OnShowUIHierarchy(wxCommandEvent& event);
 
     void OnStartupTimer(wxTimerEvent& event);
+    
+    // Note: Theme change handling is now in FlatUIFrame base class
+    // But we override it to add custom behavior (like logging to message output)
+    virtual void OnThemeChanged(wxCommandEvent& event) override;
 
     // Method to show UI hierarchy using UIHierarchyDebugger
     void ShowUIHierarchy();
@@ -69,7 +74,7 @@ protected:
     // Override to provide control access
     virtual wxWindow* GetFunctionSpaceControl() const override;
     virtual wxWindow* GetProfileSpaceControl() const override;
-    void OnGlobalPinStateChanged(wxCommandEvent& event);
+    // Note: OnGlobalPinStateChanged is now handled in FlatUIFrame base class
 
 private:
     // Store references to controls for adaptive visibility

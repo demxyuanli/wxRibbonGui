@@ -1,15 +1,26 @@
 #include "flatui/FlatUIFrame.h"
+#include "flatui/FlatUIPage.h" // For FlatUIPage in RefreshAllUI
 #include <wx/dcbuffer.h> // For wxScreenDC
 #include <wx/display.h>  // For wxDisplay
+#include <functional>   // For std::function
 #include "config/ThemeManager.h"
 
 #ifdef __WXMSW__
 #include <windows.h>     // For Windows specific GDI calls for rubber band
 #endif
 
-// FlatUIFrame does not need its own event table for mouse events if it's overriding
-// BorderlessFrameLogic's virtual handlers. If it had its own, distinct events,
-// it would have its own wxBEGIN_EVENT_TABLE/wxEND_EVENT_TABLE block.
+// Define custom events
+wxDEFINE_EVENT(wxEVT_THEME_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
+
+// Event table for FlatUIFrame global events
+wxBEGIN_EVENT_TABLE(FlatUIFrame, BorderlessFrameLogic)
+    EVT_COMMAND(wxID_ANY, wxEVT_THEME_CHANGED, FlatUIFrame::OnThemeChanged)
+    EVT_COMMAND(wxID_ANY, wxEVT_PIN_STATE_CHANGED, FlatUIFrame::OnGlobalPinStateChanged)
+wxEND_EVENT_TABLE()
+
+// FlatUIFrame now has its own event table for global events (theme changes, pin state changes)
+// Mouse events are handled by overriding BorderlessFrameLogic's virtual handlers
 
 FlatUIFrame::FlatUIFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
     : BorderlessFrameLogic(parent, id, title, pos, size, style), // Call new base class constructor
@@ -22,7 +33,7 @@ FlatUIFrame::FlatUIFrame(wxWindow* parent, wxWindowID id, const wxString& title,
 FlatUIFrame::~FlatUIFrame()
 {
     wxLogDebug("FlatUIFrame destruction started.");
-    wxLogDebug("FlatUIFrame destruction completed.");
+    wxLogDebug("FlatUIFrame destruction completed."); 
 }
 
 void FlatUIFrame::InitFrameStyle()
@@ -244,4 +255,114 @@ void FlatUIFrame::ShowFunctionProfileSpacer(bool show)
     if (ribbon && ribbon->GetFunctionProfileSpacer()) {
         ribbon->GetFunctionProfileSpacer()->Show(show);
     }
+}
+
+void FlatUIFrame::OnThemeChanged(wxCommandEvent& event)
+{
+    wxString themeName = event.GetString();
+    
+    // Update config file
+    auto& themeManager = ThemeManager::getInstance();
+    themeManager.saveCurrentTheme();
+    
+    // Perform comprehensive UI refresh
+    RefreshAllUI();
+    
+    event.Skip();
+}
+
+void FlatUIFrame::OnGlobalPinStateChanged(wxCommandEvent& event)
+{
+    FlatUIBar* ribbon = GetUIBar();
+    if (!ribbon) {
+        event.Skip();
+        return;
+    }
+
+    bool isPinned = event.GetInt() != 0;
+
+    if (isPinned) {
+        // Restore original min height for ribbon
+        int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
+        ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
+    } else {
+        // Set collapsed min height for ribbon
+        int unpinnedHeight = CFG_INT("BarUnpinnedHeight");
+        ribbon->SetMinSize(wxSize(-1, unpinnedHeight));
+    }
+
+    if (GetSizer()) {
+        GetSizer()->Layout();
+    }
+    Refresh();
+    event.Skip();
+}
+
+void FlatUIFrame::RefreshAllUI()
+{
+    // Recursive function to refresh all child controls
+    std::function<void(wxWindow*)> refreshRecursive = [&](wxWindow* window) {
+        if (!window) return;
+        
+        // Update background colors
+        if (window != this) { // Don't update the main frame background here
+            // Let each control use its theme-specific background color
+            window->SetBackgroundColour(wxNullColour); // Reset to default, will pick up theme color
+        }
+        
+        // Force refresh
+        window->Refresh(true);
+        window->Update();
+        
+        // Recursively refresh all children
+        wxWindowList& children = window->GetChildren();
+        for (wxWindow* child : children) {
+            refreshRecursive(child);
+        }
+    };
+    
+    // Start with this frame
+    SetBackgroundColour(CFG_COLOUR("FrameAppWorkspaceColour"));
+    
+    // Refresh ribbon with theme colors
+    FlatUIBar* ribbon = GetUIBar();
+    if (ribbon) {
+        ribbon->SetTabBorderColour(CFG_COLOUR("BarTabBorderColour"));
+        ribbon->SetActiveTabBackgroundColour(CFG_COLOUR("BarActiveTabBgColour"));
+        ribbon->SetActiveTabTextColour(CFG_COLOUR("BarActiveTextColour"));
+        ribbon->SetInactiveTabTextColour(CFG_COLOUR("BarInactiveTextColour"));
+        ribbon->SetTabBorderTopColour(CFG_COLOUR("BarTabBorderTopColour"));
+        
+        // Refresh all ribbon pages and panels
+        for (size_t i = 0; i < ribbon->GetPageCount(); ++i) {
+            FlatUIPage* page = ribbon->GetPage(i);
+            if (page) {
+                refreshRecursive(page);
+            }
+        }
+    }
+    
+    // Refresh function and profile space controls
+    wxWindow* functionSpaceControl = GetFunctionSpaceControl();
+    if (functionSpaceControl) {
+        refreshRecursive(functionSpaceControl);
+    }
+    
+    wxWindow* profileSpaceControl = GetProfileSpaceControl();
+    if (profileSpaceControl) {
+        refreshRecursive(profileSpaceControl);
+    }
+    
+    // Refresh all other children recursively
+    refreshRecursive(this);
+    
+    // Force complete relayout
+    if (GetSizer()) {
+        GetSizer()->Layout();
+    }
+    Layout();
+    
+    // Final refresh
+    Refresh(true);
+    Update();
 }

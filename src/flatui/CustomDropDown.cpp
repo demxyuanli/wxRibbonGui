@@ -718,8 +718,8 @@ CustomDropDownPopup::CustomDropDownPopup(CustomDropDown* parent)
       m_parent(parent),
       m_selection(wxNOT_FOUND),
       m_hoverItem(wxNOT_FOUND),
-      m_backgroundColour(*wxWHITE),
-          m_borderColour(CFG_COLOUR("DropdownBorderColour")),
+      m_backgroundColour(CFG_COLOUR("ThemeWhiteColour")),
+      m_borderColour(CFG_COLOUR("DropdownBorderColour")),
     m_selectionBackgroundColour(CFG_COLOUR("DropdownSelectionBgColour")),
     m_selectionForegroundColour(CFG_COLOUR("DropdownSelectionTextColour")),
       m_itemHeight(20)

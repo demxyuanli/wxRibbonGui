@@ -1,5 +1,5 @@
 #include "flatui/FlatUIHomeMenu.h"
-#include "flatui/FlatUIFrame.h" // For m_parentFrame
+#include "flatui/FlatUIFrame.h" // For m_parentFrame and wxEVT_THEME_CHANGED event type
 #include "flatui/FlatUIHomeSpace.h" // Needed for dynamic_cast and OnHomeMenuClosed call
 #include <wx/stattext.h>
 #include <wx/bmpbuttn.h>
@@ -7,6 +7,7 @@
 #include <wx/sizer.h>
 #include <wx/settings.h>
 #include <wx/dcbuffer.h> // For wxAutoBufferedPaintDC
+#include <wx/menu.h> // For wxMenu
 #include "config/SvgIconManager.h"
 #include "config/ThemeManager.h"
 
@@ -139,15 +140,23 @@ void FlatUIHomeMenu::BuildMenuLayout()
         m_itemSizer->Add(itemPanel, 0, wxEXPAND | wxALL, 2);
         itemPanel->SetMinSize(wxSize(CFG_INT("HomeMenuWidth"), CFG_INT("HomeMenuHeight")));
 
-        itemPanel->Bind(wxEVT_LEFT_DOWN, [this, item_id = id](wxMouseEvent& event) {
-            SendItemCommand(item_id);
-            Close();
+        itemPanel->Bind(wxEVT_LEFT_DOWN, [this, item_id = id, itemPanel](wxMouseEvent& event) {
+            if (item_id == ID_THEME_MENU) {
+                ShowThemeSubmenu(itemPanel);
+            } else {
+                SendItemCommand(item_id);
+                Close();
+            }
             event.SetId(item_id);
             event.Skip();
             });
-        st->Bind(wxEVT_LEFT_DOWN, [this, item_id = id](wxMouseEvent& event) {
-            SendItemCommand(item_id);
-            Close();
+        st->Bind(wxEVT_LEFT_DOWN, [this, item_id = id, itemPanel](wxMouseEvent& event) {
+            if (item_id == ID_THEME_MENU) {
+                ShowThemeSubmenu(itemPanel);
+            } else {
+                SendItemCommand(item_id);
+                Close();
+            }
             event.SetId(item_id);
             event.Skip();
             });
@@ -160,6 +169,10 @@ void FlatUIHomeMenu::BuildMenuLayout()
         };
 
     // Add fixed bottom items
+    // Theme selection submenu
+    createAndAddFixedMenuItemPanel("Theme", ID_THEME_MENU, SVG_ICON("palette", wxSize(16, 16)));
+    addFixedSeparatorToSizer();
+    
     createAndAddFixedMenuItemPanel("Settings", wxID_PREFERENCES, SVG_ICON("settings", wxSize(16, 16)));
     addFixedSeparatorToSizer();
     createAndAddFixedMenuItemPanel("Person Profiles", wxID_PREFERENCES, SVG_ICON("person", wxSize(16, 16)));
@@ -177,7 +190,7 @@ void FlatUIHomeMenu::OnPaint(wxPaintEvent& event)
     wxAutoBufferedPaintDC dc(m_panel);
     int w, h;
     m_panel->GetSize(&w, &h);
-    dc.SetPen(wxPen(*wxGREEN, 1));
+    dc.SetPen(wxPen(CFG_COLOUR("HomeMenuBorderColour"), 1));
     dc.DrawRectangle(0, 0, w, h);
 }
 
@@ -281,4 +294,88 @@ void FlatUIHomeMenu::OnKillFocus(wxFocusEvent& event)
     }
 
     event.Skip(); // Important to allow default processing too
+}
+
+void FlatUIHomeMenu::ShowThemeSubmenu(wxWindow* parentItem)
+{
+    // Create a context menu for theme selection
+    wxMenu* themeMenu = new wxMenu();
+    
+    // Get available themes from ThemeManager
+    auto& themeManager = ThemeManager::getInstance();
+    std::vector<std::string> themes = themeManager.getAvailableThemes();
+    std::string currentTheme = themeManager.getCurrentTheme();
+    
+    // Add theme options to menu
+    for (const auto& themeName : themes) {
+        wxString displayName;
+        if (themeName == "default") {
+            displayName = "Light Theme";
+        } else if (themeName == "dark") {
+            displayName = "Dark Theme";
+        } else if (themeName == "blue") {
+            displayName = "Blue Theme";
+        } else {
+            displayName = wxString::FromUTF8(themeName);
+        }
+        
+        int menuId = ID_THEME_DEFAULT;
+        if (themeName == "dark") menuId = ID_THEME_DARK;
+        else if (themeName == "blue") menuId = ID_THEME_BLUE;
+        
+        wxMenuItem* item = themeMenu->AppendRadioItem(menuId, displayName);
+        if (themeName == currentTheme) {
+            item->Check(true);
+        }
+    }
+    
+    // Bind menu events
+    themeMenu->Bind(wxEVT_MENU, [this](wxCommandEvent& evt) {
+        std::string selectedTheme;
+        switch (evt.GetId()) {
+            case ID_THEME_DEFAULT:
+                selectedTheme = "default";
+                break;
+            case ID_THEME_DARK:
+                selectedTheme = "dark";
+                break;
+            case ID_THEME_BLUE:
+                selectedTheme = "blue";
+                break;
+            default:
+                return;
+        }
+        
+        // Apply theme change
+        auto& themeManager = ThemeManager::getInstance();
+        if (themeManager.setCurrentTheme(selectedTheme)) {
+            // Send theme change event to main frame
+            if (m_eventSinkFrame) {
+                wxCommandEvent themeChangeEvent(wxEVT_THEME_CHANGED, wxID_ANY);
+                themeChangeEvent.SetString(wxString::FromUTF8(selectedTheme));
+                themeChangeEvent.SetEventObject(this);
+                wxPostEvent(m_eventSinkFrame, themeChangeEvent);
+            }
+            
+            // Request UI refresh
+            if (GetParent()) {
+                GetParent()->Refresh(true);
+                GetParent()->Update();
+            }
+            if (m_eventSinkFrame) {
+                m_eventSinkFrame->Refresh(true);
+                m_eventSinkFrame->Update();
+            }
+        }
+        
+        // Close main menu
+        Close();
+    });
+    
+    // Show submenu next to the theme item
+    wxPoint menuPos = parentItem->ClientToScreen(wxPoint(parentItem->GetSize().GetWidth(), 0));
+    PopupMenu(themeMenu, ScreenToClient(menuPos));
+    
+    // Clean up menu after use
+    delete themeMenu;
 }

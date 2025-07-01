@@ -85,11 +85,11 @@ wxBitmapBundle SvgIconManager::GetBitmapBundle(const wxString& name)
                 // Create bitmap bundle from themed SVG content
                 wxBitmapBundle bundle = wxBitmapBundle::FromSVG(themedSvgContent.ToUTF8().data(), wxSize(16, 16));
                 
-                if (bundle.IsOk()) {
-                    // Cache the bundle
-                    bundleCache[name] = bundle;
-                    return bundle;
-                } else {
+            if (bundle.IsOk()) {
+                // Cache the bundle
+                bundleCache[name] = bundle;
+                return bundle;
+            } else {
                     LOG_WRN(wxString::Format("SvgIconManager: Failed to create bundle from themed SVG for '%s', trying original file.", name.ToStdString()), "SvgIconManager");
                     // Fallback to original file
                     bundle = wxBitmapBundle::FromSVGFile(it->second, wxSize(16, 16));

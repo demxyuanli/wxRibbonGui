@@ -5,6 +5,10 @@
 #include "flatui/FlatUIBar.h"
 #include <wx/log.h>
 
+// Custom events for FlatUIFrame
+wxDECLARE_EVENT(wxEVT_THEME_CHANGED, wxCommandEvent);
+wxDECLARE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
+
 class FlatUIFrame : public BorderlessFrameLogic
 {
 public:
@@ -36,6 +40,13 @@ public:
     virtual wxWindow* GetProfileSpaceControl() const { return nullptr; }
     void ShowTabFunctionSpacer(bool show);
     void ShowFunctionProfileSpacer(bool show);
+    
+    // Global event handlers (can be overridden by derived classes)
+    virtual void OnThemeChanged(wxCommandEvent& event);
+    virtual void OnGlobalPinStateChanged(wxCommandEvent& event);
+    
+    // Theme and UI refresh functionality
+    virtual void RefreshAllUI();
 
 protected:
     // Helper methods for minimum size calculation and adaptive UI
@@ -56,6 +67,9 @@ protected:
 
     // Note: Dragging, resizing, rubber band members and methods are now in BorderlessFrameLogic
     // Note: m_borderThreshold is in BorderlessFrameLogic
+
+private:
+    wxDECLARE_EVENT_TABLE();
 };
 
 #endif // FLATUIFRAME_H 

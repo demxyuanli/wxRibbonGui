@@ -208,7 +208,7 @@ void FlatUITabDropdown::ApplyCustomStyling()
     m_customDropdown->SetDropDownButtonHoverColour(hoverColour);
     
     // Set popup colors
-    m_customDropdown->SetPopupBackgroundColour(*wxWHITE);
+    m_customDropdown->SetPopupBackgroundColour(CFG_COLOUR("ThemeWhiteColour"));
     m_customDropdown->SetPopupBorderColour(borderColour);
     
     // Set selection colors to match system

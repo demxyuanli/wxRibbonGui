@@ -64,7 +64,7 @@ void FlatUICustomControl::OnPaint(wxPaintEvent& evt)
     }
     
     dc.SetBrush(bgColor);
-    dc.SetPen(*wxBLACK_PEN);
+    dc.SetPen(wxPen(CFG_COLOUR("ThemeBlackPenColour")));
     dc.DrawRectangle(0, 0, size.GetWidth(), size.GetHeight());
     
     // Draw text

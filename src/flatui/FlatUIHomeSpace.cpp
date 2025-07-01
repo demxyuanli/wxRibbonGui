@@ -121,7 +121,7 @@ void FlatUIHomeSpace::OnMouseDown(wxMouseEvent& evt)
                 return;
             }
             else {
-                wxPoint menuPos = ClientToScreen(wxPoint(0, m_buttonRect.GetBottom() + 3));
+                wxPoint menuPos = ClientToScreen(wxPoint(-2, m_buttonRect.GetBottom() + 1));
 
                 int menuContentHeight = 420; // Default height
                 FlatUIFrame* mainFrame = m_activeHomeMenu->GetEventSinkFrame();

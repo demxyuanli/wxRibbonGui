@@ -13,6 +13,14 @@
 class FlatUIFrame;
 class FlatUIHomeSpace; // Forward declare for OnHomeMenuClosed in derived class if needed by base
 
+// Theme menu IDs
+enum {
+    ID_THEME_MENU = wxID_HIGHEST + 1000,
+    ID_THEME_DEFAULT = wxID_HIGHEST + 1001,
+    ID_THEME_DARK = wxID_HIGHEST + 1002,
+    ID_THEME_BLUE = wxID_HIGHEST + 1003
+};
+
 // Structure for menu items
 struct FlatHomeMenuItemInfo {
     int id;
@@ -43,6 +51,9 @@ public:
     virtual bool Close(bool force = true); // Keep for consistency, will mostly call Hide()
 
     FlatUIFrame* GetEventSinkFrame() const { return m_eventSinkFrame; } // Getter for event sink frame
+    
+    // Theme submenu functionality
+    void ShowThemeSubmenu(wxWindow* parentItem);
 
 protected:
     void OnPaint(wxPaintEvent& event);

@@ -23,8 +23,7 @@
 #include <memory> // Required for std::unique_ptr and std::move
 #include <wx/button.h>
 #include <wx/menu.h>
-// Define the backward compatibility event
-wxDEFINE_EVENT(wxEVT_PIN_STATE_CHANGED, wxCommandEvent);
+// Note: wxEVT_PIN_STATE_CHANGED is now defined in FlatUIFrame for global event handling
 
 
 

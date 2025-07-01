@@ -27,19 +27,19 @@
 #ifdef __WXMSW__
 #include <windows.h>
 #endif
-
-
-
+// Note: Theme change events are now defined in FlatUIFrame
 
 // These are now defined in FlatFrame.h as enum members.
 
 // Event table for FlatFrame specific events
 wxBEGIN_EVENT_TABLE(FlatFrame, FlatUIFrame) // Changed base class in macro
-    EVT_COMMAND(wxID_ANY, wxEVT_PIN_STATE_CHANGED, FlatFrame::OnGlobalPinStateChanged)
-    // Keep FlatFrame specific event bindings here
-    // Mouse events (OnLeftDown, OnLeftUp, OnMotion) are handled by PlatUIFrame's table 
+    // Override theme change event to add custom logging behavior
+    EVT_COMMAND(wxID_ANY, wxEVT_THEME_CHANGED, FlatFrame::OnThemeChanged)
+    // Note: Pin state changes are handled in FlatUIFrame base class
+    // Keep only FlatFrame specific event bindings here
+    // Mouse events (OnLeftDown, OnLeftUp, OnMotion) are handled by FlatUIFrame's table 
     // unless explicitly overridden and bound here with a different handler.
-    // If FlatFrame::OnLeftDown (etc.) are meant to override, they are called virtually by PlatUIFrame's handler.
+    // If FlatFrame::OnLeftDown (etc.) are meant to override, they are called virtually by FlatUIFrame's handler.
     // If they are completely different handlers for FlatFrame only, then they would need new EVT_LEFT_DOWN(FlatFrame::SpecificHandler)
 wxEND_EVENT_TABLE()
 
@@ -185,7 +185,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetFont(CFG_DEFAULTFONT()); 
     panel1->SetPanelBorderWidths(0, 0, 0, 1);
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
-    panel1->SetHeaderColour(*wxWHITE);
+    panel1->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
     panel1->SetHeaderTextColour(wxColour(120, 120, 120));
     panel1->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
@@ -213,7 +213,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetFont(CFG_DEFAULTFONT());
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
-    panel2->SetHeaderColour(*wxWHITE);
+    panel2->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
     panel2->SetHeaderTextColour(wxColour(120, 120, 120));
     panel2->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
@@ -555,30 +555,19 @@ void FlatFrame::PrintUILayout(wxCommandEvent& event)
     }
 }
 
-void FlatFrame::OnGlobalPinStateChanged(wxCommandEvent& event)
+// Note: OnGlobalPinStateChanged, OnThemeChanged, and RefreshAllUI methods
+// have been moved to FlatUIFrame base class for reusability
+
+void FlatFrame::OnThemeChanged(wxCommandEvent& event)
 {
-    if (!m_ribbon) {
-        event.Skip();
-        return;
+    // Add custom behavior: log theme change to message output
+    wxString themeName = event.GetString();
+    if (m_messageOutput) {
+        m_messageOutput->AppendText(wxString::Format("Theme changed to: %s\n", themeName));
     }
-
-    bool isPinned = event.GetInt() != 0;
-
-    if (isPinned) {
-        // Restore original min height for ribbon
-        int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
-        m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
-    } else {
-        // Set collapsed min height for ribbon
-        int unpinnedHeight = CFG_INT("BarUnpinnedHeight");
-        m_ribbon->SetMinSize(wxSize(-1, unpinnedHeight));
-    }
-
-    if (GetSizer()) {
-        GetSizer()->Layout();
-    }
-    Refresh();
-    event.Skip();
+    
+    // Call base class implementation for actual theme change handling
+    FlatUIFrame::OnThemeChanged(event);
 }
 
 
