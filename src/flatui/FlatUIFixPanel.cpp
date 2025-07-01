@@ -46,7 +46,7 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     SetSizer(m_mainSizer);
 
     // Create scroll container with clipping enabled
-    m_scrollContainer = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN);
+    m_scrollContainer = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN | wxBORDER_NONE);
     m_scrollContainer->SetName("FixPanelScrollContainer");
     m_scrollContainer->SetBackgroundColour(*wxWHITE);
     m_scrollContainer->SetCanFocus(false);
@@ -55,8 +55,8 @@ FlatUIFixPanel::FlatUIFixPanel(wxWindow* parent, wxWindowID id)
     m_scrollSizer = new wxBoxSizer(wxHORIZONTAL);
     m_scrollContainer->SetSizer(m_scrollSizer);
     
-    // Add scroll container to main sizer (initially takes full space)
-    m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+    // Add scroll container to main sizer (leave 1 pixel at bottom for red border)
+    m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND | wxBOTTOM, 1);
 
     // Create unpin button
     m_unpinButton = new FlatUIUnpinButton(this, wxID_ANY);
@@ -371,18 +371,22 @@ void FlatUIFixPanel::PositionActivePage()
         
         // Adjust main sizer to make room for scroll buttons
         m_mainSizer->Clear();
-        m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND);
-        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
-        m_mainSizer->Add(m_rightScrollButton, 0, wxEXPAND | wxRIGHT, 12);
+        m_mainSizer->Add(m_leftScrollButton, 0, wxEXPAND | wxBOTTOM, 1);
+        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND | wxBOTTOM, 1);
+        // Right scroll button needs both right margin (6px) and bottom margin (1px)
+        // We need to use a sub-sizer to handle different margin values
+        wxBoxSizer* rightButtonSizer = new wxBoxSizer(wxHORIZONTAL);
+        rightButtonSizer->Add(m_rightScrollButton, 1, wxEXPAND | wxBOTTOM, 1);
+        m_mainSizer->Add(rightButtonSizer, 0, wxEXPAND | wxRIGHT, 16);
         
         // Force layout update to get correct container size
         Layout();
     } else {
         EnableScrolling(false);
         
-        // Use full space for scroll container
+        // Use full space for scroll container (leave 1 pixel at bottom for red border)
         m_mainSizer->Clear();
-        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND);
+        m_mainSizer->Add(m_scrollContainer, 1, wxEXPAND | wxBOTTOM, 1);
         
         // Force layout update
         Layout();
