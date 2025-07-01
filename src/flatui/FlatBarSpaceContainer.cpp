@@ -375,6 +375,7 @@ void FlatBarSpaceContainer::PaintTabs(wxDC& dc)
             wxColour activeTabBgColour = CFG_COLOUR("BarActiveTabBgColour");
             wxColour activeTabTextColour = CFG_COLOUR("BarActiveTextColour");
             wxColour tabBorderTopColour = CFG_COLOUR("BarTabBorderTopColour");
+            wxColour tabBorderColour = CFG_COLOUR("BarTabBorderColour");
             
             dc.SetBrush(wxBrush(activeTabBgColour));
             dc.SetTextForeground(activeTabTextColour);
@@ -395,12 +396,12 @@ void FlatBarSpaceContainer::PaintTabs(wxDC& dc)
                            tabRect.GetRight() + 1, tabRect.GetTop() + tabBorderTop / 2);
             }
             if (tabBorderLeft > 0) {
-                dc.SetPen(wxPen(tabBorderTopColour, tabBorderLeft));
+                dc.SetPen(wxPen(tabBorderColour, tabBorderLeft));
                 dc.DrawLine(tabRect.GetLeft(), tabRect.GetTop() + tabBorderTop,
                            tabRect.GetLeft(), tabRect.GetBottom());
             }
             if (tabBorderRight > 0) {
-                dc.SetPen(wxPen(tabBorderTopColour, tabBorderRight));
+                dc.SetPen(wxPen(tabBorderColour, tabBorderRight));
                 dc.DrawLine(tabRect.GetRight() + 1, tabRect.GetTop() + tabBorderTop,
                            tabRect.GetRight() + 1, tabRect.GetBottom());
             }

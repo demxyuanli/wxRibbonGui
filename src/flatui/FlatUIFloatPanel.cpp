@@ -4,20 +4,22 @@
 #include "logger/Logger.h"
 #include "config/ConstantsConfig.h"
 
+#define CFG_COLOUR(key) ConstantsConfig::getInstance().getColourValue(key)
+#define CFG_INT(key)    ConstantsConfig::getInstance().getIntValue(key)
 // Define the custom event
 wxDEFINE_EVENT(wxEVT_FLOAT_PANEL_DISMISSED, wxCommandEvent);
 
 wxBEGIN_EVENT_TABLE(FlatUIFloatPanel, wxFrame)
-EVT_PAINT(FlatUIFloatPanel::OnPaint)
-EVT_SIZE(FlatUIFloatPanel::OnSize)
-EVT_ENTER_WINDOW(FlatUIFloatPanel::OnMouseEnter)
-EVT_LEAVE_WINDOW(FlatUIFloatPanel::OnMouseLeave)
-EVT_ACTIVATE(FlatUIFloatPanel::OnActivate)
-EVT_KILL_FOCUS(FlatUIFloatPanel::OnKillFocus)
-EVT_TIMER(wxID_ANY, FlatUIFloatPanel::OnAutoHideTimer)
-EVT_COMMAND(wxID_ANY, wxEVT_PIN_BUTTON_CLICKED, FlatUIFloatPanel::OnPinButtonClicked)
-EVT_BUTTON(wxID_BACKWARD, FlatUIFloatPanel::OnScrollLeft)
-EVT_BUTTON(wxID_FORWARD, FlatUIFloatPanel::OnScrollRight)
+    EVT_PAINT(FlatUIFloatPanel::OnPaint)
+    EVT_SIZE(FlatUIFloatPanel::OnSize)
+    EVT_ENTER_WINDOW(FlatUIFloatPanel::OnMouseEnter)
+    EVT_LEAVE_WINDOW(FlatUIFloatPanel::OnMouseLeave)
+    EVT_ACTIVATE(FlatUIFloatPanel::OnActivate)
+    EVT_KILL_FOCUS(FlatUIFloatPanel::OnKillFocus)
+    EVT_TIMER(wxID_ANY, FlatUIFloatPanel::OnAutoHideTimer)
+    EVT_COMMAND(wxID_ANY, wxEVT_PIN_BUTTON_CLICKED, FlatUIFloatPanel::OnPinButtonClicked)
+    EVT_BUTTON(wxID_BACKWARD, FlatUIFloatPanel::OnScrollLeft)
+    EVT_BUTTON(wxID_FORWARD, FlatUIFloatPanel::OnScrollRight)
 wxEND_EVENT_TABLE()
 
 FlatUIFloatPanel::FlatUIFloatPanel(wxWindow* parent)
@@ -111,7 +113,7 @@ FlatUIFloatPanel::~FlatUIFloatPanel()
 void FlatUIFloatPanel::SetupAppearance()
 {
     // Set colors based on configuration or defaults
-    m_borderColour = wxColour(*wxRED);
+    m_borderColour = CFG_COLOUR("BarBorderColour");
     m_backgroundColour = wxColour(*wxWHITE);
     m_shadowColour = wxColour(255, 255, 255, 100);
     m_borderWidth = 1; // Ensure border width is set

@@ -13,8 +13,8 @@ class CustomDropDownPopup;
 // Dropdown display styles
 enum class CustomDropDownStyle
 {
-    LeftIcon_Text_RightDropdown,    // Left icon + text + right dropdown arrow
-    Text_RightDropdown,             // Text + right dropdown arrow (default)
+    Icon_Text_Dropdown,    // Left icon + text + right dropdown arrow
+    Text_Dropdown,             // Text + right dropdown arrow (default)
     DropdownOnly                    // Only dropdown arrow button
 };
 

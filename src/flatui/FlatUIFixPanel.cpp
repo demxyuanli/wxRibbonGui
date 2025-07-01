@@ -312,7 +312,7 @@ void FlatUIFixPanel::OnPaint(wxPaintEvent& event)
     dc.Clear();
 
     // Draw border around the entire panel
-    dc.SetPen(wxPen(*wxRED, 1));
+    dc.SetPen(wxPen(CFG_COLOUR("BarBorderColour"), 1));
     dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.DrawLine(0, size.GetHeight()-1, size.GetWidth(), size.GetHeight()-1);
 

@@ -30,7 +30,7 @@ CustomDropDown::CustomDropDown(wxWindow* parent, wxWindowID id, const wxString& 
       m_selectionBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT)),
       m_selectionForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHTTEXT)),
       m_borderWidth(DEFAULT_BORDER_WIDTH),
-      m_style(CustomDropDownStyle::Text_RightDropdown),
+      m_style(CustomDropDownStyle::Text_Dropdown),
       m_leftIconName(""),
       m_leftIconSize(16, 16),
       m_isDropDownShown(false),
@@ -288,7 +288,7 @@ wxSize CustomDropDown::DoGetBestSize() const
             height = m_borderWidth * 2 + 20;
             break;
             
-        case CustomDropDownStyle::Text_RightDropdown:
+        case CustomDropDownStyle::Text_Dropdown:
             {
                 wxSize textSize = dc.GetTextExtent(m_value.IsEmpty() ? "Wg" : m_value);
                 width = textSize.GetWidth() + DEFAULT_TEXT_MARGIN * 2 + DEFAULT_BUTTON_WIDTH + m_borderWidth * 2; // No separator in flat design
@@ -296,7 +296,7 @@ wxSize CustomDropDown::DoGetBestSize() const
             }
             break;
             
-        case CustomDropDownStyle::LeftIcon_Text_RightDropdown:
+        case CustomDropDownStyle::Icon_Text_Dropdown:
             {
                 wxSize textSize = dc.GetTextExtent(m_value.IsEmpty() ? "Wg" : m_value);
                 width = m_leftIconSize.GetWidth() + DEFAULT_TEXT_MARGIN * 3 + textSize.GetWidth() + DEFAULT_BUTTON_WIDTH + m_borderWidth * 2; // No separators in flat design
@@ -360,13 +360,13 @@ void CustomDropDown::OnPaint(wxPaintEvent& event)
     
     // Draw content based on style
     switch (m_style) {
-        case CustomDropDownStyle::LeftIcon_Text_RightDropdown:
+        case CustomDropDownStyle::Icon_Text_Dropdown:
             DrawLeftIcon(dc);
             DrawText(dc);
             DrawDropDownButton(dc);
             break;
             
-        case CustomDropDownStyle::Text_RightDropdown:
+        case CustomDropDownStyle::Text_Dropdown:
             DrawText(dc);
             DrawDropDownButton(dc);
             break;
@@ -602,7 +602,7 @@ wxRect CustomDropDown::GetTextRect() const
     int leftMargin = m_borderWidth + DEFAULT_TEXT_MARGIN;
     int rightMargin = DEFAULT_BUTTON_WIDTH + m_borderWidth + DEFAULT_TEXT_MARGIN; // No separator in flat design
     
-    if (m_style == CustomDropDownStyle::LeftIcon_Text_RightDropdown && !m_leftIconName.IsEmpty()) {
+    if (m_style == CustomDropDownStyle::Icon_Text_Dropdown && !m_leftIconName.IsEmpty()) {
         // Make space for left icon
         leftMargin += m_leftIconSize.GetWidth() + DEFAULT_TEXT_MARGIN;
     }
@@ -615,7 +615,7 @@ wxRect CustomDropDown::GetTextRect() const
 
 wxRect CustomDropDown::GetLeftIconRect() const
 {
-    if (m_style != CustomDropDownStyle::LeftIcon_Text_RightDropdown || m_leftIconName.IsEmpty()) {
+    if (m_style != CustomDropDownStyle::Icon_Text_Dropdown || m_leftIconName.IsEmpty()) {
         return wxRect(0, 0, 0, 0);
     }
     
