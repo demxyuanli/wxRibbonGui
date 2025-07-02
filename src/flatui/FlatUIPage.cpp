@@ -85,10 +85,10 @@ void FlatUIPage::OnPaint(wxPaintEvent& evt)
     // dc.SetFont(wxFont(9, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
     // dc.DrawText(GetLabel(), 0, 0);
 
-    LOG_DBG("Page painted: " + GetLabel().ToStdString() +
-        ", Size: (" + std::to_string(size.GetWidth()) +
-        ", " + std::to_string(size.GetHeight()) + ")",
-        "FlatUIPage::OnPaint");
+    // LOG_DBG("Page painted: " + GetLabel().ToStdString() +
+    //     ", Size: (" + std::to_string(size.GetWidth()) +
+    //     ", " + std::to_string(size.GetHeight()) + ")",
+    //     "FlatUIPage::OnPaint");
 
     evt.Skip();
 }
@@ -97,10 +97,10 @@ void FlatUIPage::OnSize(wxSizeEvent& evt)
 {
     wxSize newSize = evt.GetSize();
 
-    LOG_DBG("Page resized: " + GetLabel().ToStdString() +
-        ", New Size: (" + std::to_string(newSize.GetWidth()) +
-        ", " + std::to_string(newSize.GetHeight()) + ")",
-        "FlatUIPage::OnSize");
+    // LOG_DBG("Page resized: " + GetLabel().ToStdString() +
+    //     ", New Size: (" + std::to_string(newSize.GetWidth()) +
+    //     ", " + std::to_string(newSize.GetHeight()) + ")",
+    //     "FlatUIPage::OnSize");
 
     if (m_sizer) {
         wxEventBlocker blocker(this, wxEVT_SIZE);

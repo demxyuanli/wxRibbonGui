@@ -322,9 +322,9 @@ void FlatBarSpaceContainer::PaintTabs(wxDC& dc)
     
     wxSize clientSize = GetClientSize();
     
-    LOG_DBG("PaintTabs: Drawing tabs in area (" + std::to_string(m_tabAreaRect.x) + 
-           "," + std::to_string(m_tabAreaRect.y) + "," + std::to_string(m_tabAreaRect.width) + 
-           "," + std::to_string(m_tabAreaRect.height) + ")", "BarSpaceContainer");
+    // LOG_DBG("PaintTabs: Drawing tabs in area (" + std::to_string(m_tabAreaRect.x) + 
+    //        "," + std::to_string(m_tabAreaRect.y) + "," + std::to_string(m_tabAreaRect.width) + 
+    //        "," + std::to_string(m_tabAreaRect.height) + ")", "BarSpaceContainer");
     
     // Set up drawing context
     dc.SetFont(wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
@@ -415,9 +415,9 @@ void FlatBarSpaceContainer::PaintTabs(wxDC& dc)
         int textX = currentX + tabPadding;
         int textY = tabY + (tabHeight - labelSize.GetHeight()) / 2;
         
-        LOG_DBG("Drawing tab " + std::to_string(tabIndex) + " '" + label.ToStdString() + 
-               "' at (" + std::to_string(textX) + "," + std::to_string(textY) + 
-               "), active=" + (isActive ? "true" : "false"), "BarSpaceContainer");
+        // LOG_DBG("Drawing tab " + std::to_string(tabIndex) + " '" + label.ToStdString() + 
+        //        "' at (" + std::to_string(textX) + "," + std::to_string(textY) + 
+        //        "), active=" + (isActive ? "true" : "false"), "BarSpaceContainer");
         
         dc.DrawText(label, textX, textY);
         

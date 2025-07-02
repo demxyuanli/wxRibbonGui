@@ -192,7 +192,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetFont(CFG_DEFAULTFONT()); 
     panel1->SetPanelBorderWidths(0, 0, 0, 1);
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
-    panel1->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
+    panel1->SetHeaderColour(CFG_COLOUR("PanelHeaderColour"));
     panel1->SetHeaderTextColour(CFG_COLOUR("PanelHeaderTextColour"));
     panel1->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
@@ -203,7 +203,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     wxMenu* fileMenu = new wxMenu;
     fileMenu->Append(ID_Menu_NewProject_MainFrame, "&New Project...\tCtrl-N");
     fileMenu->Append(ID_Menu_OpenProject_MainFrame, "&Open Project...\tCtrl-O");
-    wxMenu* recentFilesMenu = new wxMenu;    recentFilesMenu->Append(wxID_ANY, "File1.txt");
+    wxMenu* recentFilesMenu = new wxMenu;    recentFilesMenu->Append(wxID_ANY, "File1.txt"); 
     recentFilesMenu->Append(wxID_ANY, "File2.cpp");
     fileMenu->AppendSubMenu(recentFilesMenu, "Recent &Files");
     fileMenu->AppendSeparator();
@@ -220,7 +220,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetFont(CFG_DEFAULTFONT());
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
-    panel2->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
+    panel2->SetHeaderColour(CFG_COLOUR("PanelHeaderColour"));
     panel2->SetHeaderTextColour(CFG_COLOUR("PanelHeaderTextColour"));
     panel2->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
@@ -238,10 +238,8 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPage* page3 = new FlatUIPage(m_ribbon, "Edit");
     FlatUIPanel* panel3 = new FlatUIPanel(page3, "EditPanel", wxHORIZONTAL);
     FlatUIButtonBar* buttonBar3 = new FlatUIButtonBar(panel3);
-    wxBitmap copyBmp("IDP_COPY", wxBITMAP_TYPE_PNG_RESOURCE);
-    wxBitmap pasteBmp("IDP_PASTE", wxBITMAP_TYPE_PNG_RESOURCE);
-    buttonBar3->AddButton(wxID_COPY, "Copy", copyBmp);
-    buttonBar3->AddButton(wxID_PASTE, "Paste", pasteBmp);
+    buttonBar3->AddButton(wxID_COPY, "Pencil", SVG_ICON("pencil", wxSize(16, 16)));
+    buttonBar3->AddButton(wxID_PASTE, "Palette", SVG_ICON("palette", wxSize(16, 16)));
     panel3->AddButtonBar(buttonBar3);
     page3->AddPanel(panel3);
     m_ribbon->AddPage(page3);
@@ -250,10 +248,8 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPanel* panel4 = new FlatUIPanel(page4, "ViewPanel", wxHORIZONTAL);
     panel4->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar4 = new FlatUIButtonBar(panel4);
-    wxBitmap findBmp("IDP_FIND", wxBITMAP_TYPE_PNG_RESOURCE);
-    wxBitmap selectAllBmp("IDP_SELECT", wxBITMAP_TYPE_PNG_RESOURCE);
-    buttonBar4->AddButton(wxID_FIND, "Find", findBmp);
-    buttonBar4->AddButton(wxID_SELECTALL, "Select", selectAllBmp);
+    buttonBar4->AddButton(wxID_FIND, "Find", SVG_ICON("find", wxSize(16, 16)));
+    buttonBar4->AddButton(wxID_SELECTALL, "Select", SVG_ICON("select", wxSize(16, 16)));
     panel4->AddButtonBar(buttonBar4);
     page4->AddPanel(panel4);
     m_ribbon->AddPage(page4);
@@ -262,16 +258,14 @@ void FlatFrame::InitializeUI(const wxSize& size)
     FlatUIPanel* panel5 = new FlatUIPanel(page5, "HelpPanel", wxVERTICAL);
     panel5->SetFont(defaultFont);
     FlatUIButtonBar* buttonBar5 = new FlatUIButtonBar(panel5);
-    wxBitmap aboutBmp("IDP_ABOUT", wxBITMAP_TYPE_PNG_RESOURCE);
-    wxBitmap stopBmp("IDP_STOP", wxBITMAP_TYPE_PNG_RESOURCE);
-    buttonBar5->AddButton(wxID_ABOUT, "About", aboutBmp);
-    buttonBar5->AddButton(wxID_STOP, "Stop", stopBmp);
+    buttonBar5->AddButton(wxID_ABOUT, "About", SVG_ICON("about", wxSize(16, 16)));
+    buttonBar5->AddButton(wxID_STOP, "Ban", SVG_ICON("ban", wxSize(16, 16)));
     panel5->AddButtonBar(buttonBar5);
-    page5->AddPanel(panel5);
+    page5->AddPanel(panel5); 
     m_ribbon->AddPage(page5);
 
     // Create main layout with horizontal splitter
-    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL); 
     mainSizer->Add(m_ribbon, 0, wxEXPAND | wxALL, 2);
 
     // Create horizontal splitter for content area
@@ -323,7 +317,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     SetClientSize(size); // Default size
     Layout();
 
-    int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10;
+    int ribbonMinHeight = FlatUIBar::GetBarHeight() + CFG_INT("PanelTargetHeight") + 10; 
     m_ribbon->SetMinSize(wxSize(-1, ribbonMinHeight));
 
     Layout();

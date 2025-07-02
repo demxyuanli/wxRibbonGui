@@ -3,6 +3,7 @@
 #include "logger/Logger.h"
 #include <wx/settings.h>
 #include <sstream>
+#include <set>
 
 ThemeManager& ThemeManager::getInstance() {
     static ThemeManager instance;
@@ -255,7 +256,12 @@ int ThemeManager::getInt(const std::string& key) const {
     
     auto intIt = themeIt->second.integers.find(key);
     if (intIt == themeIt->second.integers.end()) {
-        LOG_WRN("Integer key not found: " + key + " in theme: " + m_currentTheme, "ThemeManager");
+        // Only log warning once per key to avoid log spam
+        static std::set<std::string> loggedKeys;
+        if (loggedKeys.find(key) == loggedKeys.end()) {
+            LOG_WRN("Integer key not found: " + key + " in theme: " + m_currentTheme, "ThemeManager");
+            loggedKeys.insert(key);
+        }
         return -1;
     }
     

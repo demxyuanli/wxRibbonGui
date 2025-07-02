@@ -404,7 +404,7 @@ void FlatUIFixPanel::PositionActivePage()
     
     // Debug logging for heights
     wxSize fixPanelSize = GetSize();
-    LOG_INF("Height debug - FixPanel: " + std::to_string(fixPanelSize.GetHeight()) + 
+    LOG_DBG("Height debug - FixPanel: " + std::to_string(fixPanelSize.GetHeight()) + 
            ", ScrollContainer: " + std::to_string(containerSize.GetHeight()) + 
            ", PageBestSize: " + std::to_string(pageSize.GetHeight()) + 
            ", PageSetSize: " + std::to_string(adjustedHeight), "FlatUIFixPanel");

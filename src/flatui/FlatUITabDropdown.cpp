@@ -40,7 +40,7 @@ void FlatUITabDropdown::UpdateHiddenTabs(const std::vector<size_t>& hiddenIndice
     // Show or hide the dropdown based on whether there are hidden tabs
     ShowDropdown(!hiddenIndices.empty());
     
-    LOG_INF("Updated hidden tabs: " + std::to_string(hiddenIndices.size()) + " tabs", "TabDropdown");
+    // LOG_INF("Updated hidden tabs: " + std::to_string(hiddenIndices.size()) + " tabs", "TabDropdown");
 }
 
 void FlatUITabDropdown::ClearMenu()
@@ -175,7 +175,7 @@ void FlatUITabDropdown::UpdateDropdownItems()
         m_customDropdown->SetValue("...");
     }
     
-    LOG_DBG("Updated dropdown items: " + std::to_string(m_customDropdown->GetCount()) + " items", "TabDropdown");
+    // LOG_DBG("Updated dropdown items: " + std::to_string(m_customDropdown->GetCount()) + " items", "TabDropdown");
 }
 
 void FlatUITabDropdown::ApplyCustomStyling()

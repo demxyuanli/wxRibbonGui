@@ -254,13 +254,13 @@ void FlatUIPanel::RecalculateBestSize()
     int finalHeight = wxMax(calculatedHeight, targetHeight);
 
     // Add debug logging 
-    LOG_INF("Panel " + GetLabel().ToStdString() +
-        " - Children: " + std::to_string(childrenTotalHeight) +
-        ", Header: " + std::to_string(headerOffsetHeight) +
-        ", Padding: " + std::to_string(CFG_INT("PanelInternalVerticalPadding")) +
-        ", Calculated: " + std::to_string(calculatedHeight) +
-        ", Target: " + std::to_string(targetHeight) +
-        ", Final: " + std::to_string(finalHeight), "FlatUIPanel");
+    // LOG_INF("Panel " + GetLabel().ToStdString() +
+    //     " - Children: " + std::to_string(childrenTotalHeight) +
+    //     ", Header: " + std::to_string(headerOffsetHeight) +
+    //     ", Padding: " + std::to_string(CFG_INT("PanelInternalVerticalPadding")) +
+    //     ", Calculated: " + std::to_string(calculatedHeight) +
+    //     ", Target: " + std::to_string(targetHeight) +
+    //     ", Final: " + std::to_string(finalHeight), "FlatUIPanel");
 
     SetMinSize(bestPanelSize);
     SetSize(bestPanelSize); // Keep this to enforce size, as in original
@@ -656,7 +656,7 @@ void FlatUIPanel::OnPaint(wxPaintEvent& evt)
                 size.GetHeight() - CFG_INT("PanelDefaultHeaderAreaSize") + (CFG_INT("PanelDefaultHeaderAreaSize") - textHeight) / 2);
 
             // Draw header borders
-            LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
+            // LOG_INF("Drawing bottom header borders for panel: " + m_headerBorderColour.GetAsString().ToStdString(), "FlatUIPanel");
             if (m_headerBorderTop > 0) {
                 gc->SetPen(wxPen(m_headerBorderColour, m_headerBorderTop));
                 gc->StrokeLine(0,

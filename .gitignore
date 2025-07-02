@@ -370,3 +370,6 @@ FodyWeavers.xsd
 /build/wxapp.vcxproj
 /build/wxapp.vcxproj.filters
 /config/final_review_gate.py
+/config/icons/svg/test_svg_regex.py
+/config/test_svg_regex.py
+/src/.vscode/tasks.json

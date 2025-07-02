@@ -59,6 +59,61 @@ private:
      */
     wxString GetThemedSvgContent(const wxString& name);
 
+    /**
+     * @brief Applies direct theme colors to SVG content without analyzing original colors.
+     * @param svgContent The original SVG content.
+     * @param primaryIconColor Primary icon color for fills and strokes.
+     * @param backgroundIconColor Background color for light elements.
+     * @return Theme-processed SVG content.
+     */
+    wxString ApplyDirectThemeColors(const wxString& svgContent, const wxString& primaryIconColor, const wxString& backgroundIconColor);
+
+    /**
+     * @brief Adds default fill color to SVG elements without color attributes.
+     * @param svgContent The SVG content to process.
+     * @param defaultColor The default color to apply.
+     * @return SVG content with default colors applied.
+     */
+    wxString AddDefaultFillToElements(const wxString& svgContent, const wxString& defaultColor);
+
+    /**
+     * @brief Normalizes the SVG structure.
+     * @param svgContent The original SVG content string.
+     * @return Normalized SVG content string.
+     */
+    wxString NormalizeSvgStructure(const wxString& svgContent);
+
+    /**
+     * @brief Replaces non-light colors in specified attributes with theme color.
+     * @param content SVG content to process.
+     * @param attribute Attribute name (fill, stroke, etc.).
+     * @param targetColor Theme color to replace with.
+     * @return SVG content with non-light colors replaced.
+     */
+    wxString ReplaceNonLightColors(const wxString& content, const wxString& attribute, const wxString& targetColor);
+
+    /**
+     * @brief Replaces non-light colors in CSS style attributes.
+     * @param content SVG content to process.
+     * @param targetColor Theme color to replace with.
+     * @return SVG content with non-light colors in styles replaced.
+     */
+    wxString ReplaceNonLightColorsInStyles(const wxString& content, const wxString& targetColor);
+
+    /**
+     * @brief Determines if a color should be replaced based on brightness.
+     * @param colorValue Color value to analyze.
+     * @return True if color should be replaced (dark/medium), false if light.
+     */
+    bool ShouldReplaceColor(const wxString& colorValue);
+
+    /**
+     * @brief Calculates the perceived brightness of a color.
+     * @param colorValue Color value in any supported format.
+     * @return Brightness value (0-255) or -1 if invalid.
+     */
+    int CalculateColorBrightness(const wxString& colorValue);
+
 public:
     /**
      * @brief Constructor.

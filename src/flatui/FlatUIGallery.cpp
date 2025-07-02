@@ -173,9 +173,9 @@ void FlatUIGallery::OnPaint(wxPaintEvent& evt)
         }
     }
 
-    LOG_DBG("FlatUIGallery OnPaint - Size: " +
-        std::to_string(size.GetWidth()) + "x" +
-        std::to_string(size.GetHeight()), "FlatUIGallery");
+    // LOG_DBG("FlatUIGallery OnPaint - Size: " +
+    //     std::to_string(size.GetWidth()) + "x" +
+    //     std::to_string(size.GetHeight()), "FlatUIGallery");
 }
 
 void FlatUIGallery::DrawItem(wxDC& dc, const ItemInfo& item, int index)

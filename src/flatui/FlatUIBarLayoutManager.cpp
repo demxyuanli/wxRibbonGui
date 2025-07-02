@@ -24,9 +24,6 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
         return;
     }
 
-    LOG_INF("Updating layout for size (" + std::to_string(barClientSize.GetWidth()) + 
-           "," + std::to_string(barClientSize.GetHeight()) + ")", "LayoutManager");
-
     // Cache the new size
     m_lastBarSize = barClientSize;
     m_layoutDirty = false;
@@ -62,10 +59,10 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
     int elementY = barTopMargin;
     
     // Debug: Log bar measurements
-    LOG_INF("Bar measurements: barStripHeight=" + std::to_string(barStripHeight) + 
-           ", barTopMargin=" + std::to_string(barTopMargin) + 
-           ", barBottomMargin=" + std::to_string(barBottomMargin) + 
-           ", innerHeight=" + std::to_string(innerHeight), "LayoutManager");
+    // LOG_INF("Bar measurements: barStripHeight=" + std::to_string(barStripHeight) + 
+    //        ", barTopMargin=" + std::to_string(barTopMargin) + 
+    //        ", barBottomMargin=" + std::to_string(barBottomMargin) + 
+    //        ", innerHeight=" + std::to_string(innerHeight), "LayoutManager");
 
     // Skip HomeSpace and SystemButtons - they are now managed by BarContainer
     // Just calculate their widths for tab area calculation
@@ -73,14 +70,14 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
     if (homeSpace && homeSpace->IsShown()) {
         homeSpaceWidth = homeSpace->GetButtonWidth() + elemSpacing;
         currentX += homeSpaceWidth;
-        LOG_INF("HomeSpace width (managed by container): " + std::to_string(homeSpaceWidth), "LayoutManager");
+        // LOG_INF("HomeSpace width (managed by container): " + std::to_string(homeSpaceWidth), "LayoutManager");
     }
 
     // System Buttons (Rightmost) - Just calculate width for boundary calculation
     int sysButtonsWidth = 0;
     if (systemButtons && systemButtons->IsShown()) {
         sysButtonsWidth = systemButtons->GetRequiredWidth();
-        LOG_INF("SystemButtons width (managed by container): " + std::to_string(sysButtonsWidth), "LayoutManager");
+        // LOG_INF("SystemButtons width (managed by container): " + std::to_string(sysButtonsWidth), "LayoutManager");
     }
 
     // Calculate right boundary for flexible elements (excluding system buttons)
@@ -91,11 +88,11 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
 
     // Tabs are now managed by FlatBarSpaceContainer
     // No longer calculate tab area here
-    LOG_INF("Tab area calculation skipped - managed by FlatBarSpaceContainer", "LayoutManager");
+    // LOG_INF("Tab area calculation skipped - managed by FlatBarSpaceContainer", "LayoutManager");
 
     // Function and Profile spaces are now managed by BarContainer
     // Skip their positioning logic entirely
-    LOG_INF("FunctionSpace and ProfileSpace are managed by BarContainer", "LayoutManager");
+    // LOG_INF("FunctionSpace and ProfileSpace are managed by BarContainer", "LayoutManager");
 
     // Spacers are still managed by the old layout manager for now
     // Hide them since we're using the container approach
@@ -142,22 +139,22 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
             }
             
             // Debug logging
-            LOG_INF("FixPanel positioning: barStripHeight=" + std::to_string(barStripHeight) + 
-                   ", barTopMargin=" + std::to_string(barTopMargin) + 
-                   ", barBottomMargin=" + std::to_string(barBottomMargin) + 
-                   ", totalBarHeight=" + std::to_string(totalBarHeight) + 
-                   ", FIXED_PANEL_Y=" + std::to_string(FIXED_PANEL_Y), "LayoutManager");
+            // LOG_INF("FixPanel positioning: barStripHeight=" + std::to_string(barStripHeight) + 
+            //        ", barTopMargin=" + std::to_string(barTopMargin) + 
+            //        ", barBottomMargin=" + std::to_string(barBottomMargin) + 
+            //        ", totalBarHeight=" + std::to_string(totalBarHeight) + 
+            //        ", FIXED_PANEL_Y=" + std::to_string(FIXED_PANEL_Y), "LayoutManager");
             
             fixPanel->SetPosition(wxPoint(0, FIXED_PANEL_Y));
             fixPanel->SetSize(barClientSize.GetWidth(), fixPanelHeight);
 
-            LOG_INF("Positioned FixPanel at (0, " + std::to_string(FIXED_PANEL_Y) + 
-                   ") with size (" + std::to_string(barClientSize.GetWidth()) + 
-                   ", " + std::to_string(fixPanelHeight) + ")", "LayoutManager");
+            // LOG_INF("Positioned FixPanel at (0, " + std::to_string(FIXED_PANEL_Y) + 
+            //        ") with size (" + std::to_string(barClientSize.GetWidth()) + 
+            //        ", " + std::to_string(fixPanelHeight) + ")", "LayoutManager");
 
             if (!fixPanel->IsShown()) {
                 fixPanel->Show();
-                LOG_INF("Showed FixPanel", "LayoutManager");
+                // LOG_INF("Showed FixPanel", "LayoutManager");
             }
 
             // Set active page in FixPanel
@@ -169,12 +166,12 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
             // Hide FixPanel in unpinned state
             if (fixPanel->IsShown()) {
                 fixPanel->Hide();
-                LOG_INF("Hidden FixPanel", "LayoutManager");
+                // LOG_INF("Hidden FixPanel", "LayoutManager");
             }
         }
     }
 
-    LOG_INF("Layout update completed", "LayoutManager");
+    // LOG_INF("Layout update completed", "LayoutManager");
     m_layoutValid = true;
     
     // Only use deferred refresh if not called during state transition
@@ -183,7 +180,7 @@ void FlatUIBarLayoutManager::UpdateLayout(const wxSize& barClientSize)
         // Only refresh if the window is not frozen (indicating no ongoing state transition)
         DeferredRefresh();
     } else {
-        LOG_INF("Skipping DeferredRefresh during state transition (window frozen)", "LayoutManager");
+        // LOG_INF("Skipping DeferredRefresh during state transition (window frozen)", "LayoutManager");
     }
 }
 

@@ -4,6 +4,8 @@
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
 #include <wx/file.h>
+#include <regex>
+#include <algorithm>
 
 // Static member definitions
 std::unique_ptr<SvgIconManager> SvgIconManager::instance = nullptr;
@@ -55,7 +57,7 @@ void SvgIconManager::LoadIcons()
         wxFileName fn(filename);
         wxString fullPath = iconDir + wxFILE_SEP_PATH + filename;
         iconMap[fn.GetName()] = fullPath;
-        LOG_DBG(wxString::Format("SvgIconManager: Loaded icon '%s' from '%s'", fn.GetName().ToStdString(), fullPath.ToStdString()), "SvgIconManager");
+        // LOG_DBG(wxString::Format("SvgIconManager: Loaded icon '%s' from '%s'", fn.GetName().ToStdString(), fullPath.ToStdString()), "SvgIconManager");
         cont = dir.GetNext(&filename);
     }
     
@@ -235,10 +237,10 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
     try {
         // Check if SVG theming is enabled
         bool svgThemeEnabled = CFG_INT("SvgThemeEnabled") != 0;
-        LOG_DBG(wxString::Format("SvgIconManager: SVG theming enabled: %s", svgThemeEnabled ? "true" : "false"), "SvgIconManager");
+        // LOG_DBG(wxString::Format("SvgIconManager: SVG theming enabled: %s", svgThemeEnabled ? "true" : "false"), "SvgIconManager");
         
         if (!svgThemeEnabled) {
-            LOG_DBG("SvgIconManager: SVG theming is disabled", "SvgIconManager");
+            // LOG_DBG("SvgIconManager: SVG theming is disabled", "SvgIconManager");
             return svgContent; // Return original content if theming is disabled
         }
 
@@ -253,9 +255,6 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
         // Convert wxColour to hex strings
         wxString primaryIconHex = wxString::Format("#%02x%02x%02x", 
             primaryIconColor.Red(), primaryIconColor.Green(), primaryIconColor.Blue());
-        
-        LOG_DBG(wxString::Format("SvgIconManager: Primary icon color: %s (R:%d G:%d B:%d)", 
-            primaryIconHex, primaryIconColor.Red(), primaryIconColor.Green(), primaryIconColor.Blue()), "SvgIconManager");
         wxString secondaryIconHex = wxString::Format("#%02x%02x%02x", 
             secondaryIconColor.Red(), secondaryIconColor.Green(), secondaryIconColor.Blue());
         wxString disabledIconHex = wxString::Format("#%02x%02x%02x", 
@@ -266,126 +265,15 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
             primaryBgColor.Red(), primaryBgColor.Green(), primaryBgColor.Blue());
         wxString secondaryBgHex = wxString::Format("#%02x%02x%02x", 
             secondaryBgColor.Red(), secondaryBgColor.Green(), secondaryBgColor.Blue());
+        
+        // LOG_DBG(wxString::Format("SvgIconManager: Theme colors - Primary: %s, Secondary: %s, Disabled: %s, Highlight: %s", 
+        //     primaryIconHex, secondaryIconHex, disabledIconHex, highlightIconHex), "SvgIconManager");
 
-        // Replace common SVG color values with theme colors
-        // Replace black colors with primary icon color
-        themedContent.Replace("fill=\"#000000\"", wxString::Format("fill=\"%s\"", primaryIconHex));
-        themedContent.Replace("fill=\"#000\"", wxString::Format("fill=\"%s\"", primaryIconHex));
-        themedContent.Replace("fill=\"black\"", wxString::Format("fill=\"%s\"", primaryIconHex));
-        themedContent.Replace("stroke=\"#000000\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
-        themedContent.Replace("stroke=\"#000\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
-        themedContent.Replace("stroke=\"black\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        // Direct theme color application - replace all colors with theme colors
+        themedContent = ApplyDirectThemeColors(themedContent, primaryIconHex, secondaryBgHex);
         
-        // Replace currentColor with primary icon color (common in modern SVGs)
-        themedContent.Replace("fill=\"currentColor\"", wxString::Format("fill=\"%s\"", primaryIconHex));
-        themedContent.Replace("stroke=\"currentColor\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
-        
-        // Replace common dark colors found in logs
-        themedContent.Replace("fill=\"#202023\"", wxString::Format("fill=\"%s\"", primaryIconHex));
-        themedContent.Replace("stroke=\"#202023\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
-        
-        // Handle path elements without explicit fill attribute (they default to black)
-        // Look for <path> tags without fill attribute and add primary icon color
-        wxString pathPattern = "<path ";
-        size_t pos = 0;
-        wxString searchContent = themedContent.ToStdString();
-        
-        while (true) {
-            size_t foundPos = searchContent.find(pathPattern.ToStdString(), pos);
-            if (foundPos == std::string::npos) break;
-            
-            size_t endPos = searchContent.find(">", foundPos);
-            if (endPos == std::string::npos) break;
-            
-            wxString pathTag = themedContent.Mid(foundPos, endPos - foundPos + 1);
-            // Check if this path already has a fill attribute
-            if (!pathTag.Contains("fill=")) {
-                // Add fill attribute with primary icon color
-                wxString newPathTag = pathTag;
-                newPathTag.Replace(">", wxString::Format(" fill=\"%s\">", primaryIconHex));
-                themedContent = themedContent.Left(foundPos) + newPathTag + themedContent.Mid(endPos + 1);
-                searchContent = themedContent.ToStdString();
-                pos = foundPos + newPathTag.length();
-            } else {
-                pos = endPos + 1;
-            }
-        }
-        
-        // Handle <g> elements without explicit fill attribute
-        wxString gPattern = "<g>";
-        themedContent.Replace(gPattern, wxString::Format("<g fill=\"%s\">", primaryIconHex));
-        
-        // Handle <g> elements with attributes but no fill
-        wxString gAttrPattern = "<g ";
-        pos = 0;
-        searchContent = themedContent.ToStdString();
-        
-        while (true) {
-            size_t foundPos = searchContent.find(gAttrPattern.ToStdString(), pos);
-            if (foundPos == std::string::npos) break;
-            
-            size_t endPos = searchContent.find(">", foundPos);
-            if (endPos == std::string::npos) break;
-            
-            wxString gTag = themedContent.Mid(foundPos, endPos - foundPos + 1);
-            // Check if this g element already has a fill attribute
-            if (!gTag.Contains("fill=")) {
-                // Add fill attribute with primary icon color
-                wxString newGTag = gTag;
-                newGTag.Replace(">", wxString::Format(" fill=\"%s\">", primaryIconHex));
-                themedContent = themedContent.Left(foundPos) + newGTag + themedContent.Mid(endPos + 1);
-                searchContent = themedContent.ToStdString();
-                pos = foundPos + newGTag.length();
-            } else {
-                pos = endPos + 1;
-            }
-        }
-
-        // Replace dark gray colors with secondary icon color
-        themedContent.Replace("fill=\"#333333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
-        themedContent.Replace("fill=\"#333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
-        themedContent.Replace("fill=\"#555555\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
-        themedContent.Replace("fill=\"#555\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
-        themedContent.Replace("stroke=\"#333333\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
-        themedContent.Replace("stroke=\"#333\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
-        themedContent.Replace("stroke=\"#555555\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
-        themedContent.Replace("stroke=\"#555\"", wxString::Format("stroke=\"%s\"", secondaryIconHex));
-
-        // Replace medium gray colors with disabled icon color
-        themedContent.Replace("fill=\"#808080\"", wxString::Format("fill=\"%s\"", disabledIconHex));
-        themedContent.Replace("fill=\"#888888\"", wxString::Format("fill=\"%s\"", disabledIconHex));
-        themedContent.Replace("fill=\"#999999\"", wxString::Format("fill=\"%s\"", disabledIconHex));
-        themedContent.Replace("stroke=\"#808080\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
-        themedContent.Replace("stroke=\"#888888\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
-        themedContent.Replace("stroke=\"#999999\"", wxString::Format("stroke=\"%s\"", disabledIconHex));
-
-        // Replace blue/highlight colors with theme highlight color
-        themedContent.Replace("fill=\"#0078d4\"", wxString::Format("fill=\"%s\"", highlightIconHex));
-        themedContent.Replace("fill=\"#0066cc\"", wxString::Format("fill=\"%s\"", highlightIconHex));
-        themedContent.Replace("fill=\"#007acc\"", wxString::Format("fill=\"%s\"", highlightIconHex));
-        themedContent.Replace("stroke=\"#0078d4\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
-        themedContent.Replace("stroke=\"#0066cc\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
-        themedContent.Replace("stroke=\"#007acc\"", wxString::Format("stroke=\"%s\"", highlightIconHex));
-
-        // Replace white/light backgrounds with theme background colors
-        themedContent.Replace("fill=\"#ffffff\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
-        themedContent.Replace("fill=\"#fff\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
-        themedContent.Replace("fill=\"white\"", wxString::Format("fill=\"%s\"", secondaryBgHex));
-        
-        // Replace light gray backgrounds
-        themedContent.Replace("fill=\"#f0f0f0\"", wxString::Format("fill=\"%s\"", primaryBgHex));
-        themedContent.Replace("fill=\"#eeeeee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
-        themedContent.Replace("fill=\"#eee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
-
-        LOG_DBG(wxString::Format("SvgIconManager: Applied theme colors to SVG content. Original length: %d, Themed length: %d", 
-            (int)svgContent.length(), (int)themedContent.length()), "SvgIconManager");
-        
-        // Log a sample of the themed content for debugging
-        if (themedContent.length() > 100) {
-            LOG_DBG(wxString::Format("SvgIconManager: Themed SVG sample: %s...", themedContent.Left(200)), "SvgIconManager");
-        }
-        
-        LOG_DBG("SvgIconManager: Applied theme colors to SVG content", "SvgIconManager");
+        // LOG_DBG(wxString::Format("SvgIconManager: Applied direct theme colors to SVG content. Original length: %d, Themed length: %d", 
+        //     (int)svgContent.length(), (int)themedContent.length()), "SvgIconManager");
         
     } catch (const std::exception& e) {
         LOG_ERR(wxString::Format("SvgIconManager: Exception while applying theme to SVG: %s", e.what()), "SvgIconManager");
@@ -411,8 +299,8 @@ wxString SvgIconManager::GetThemedSvgContent(const wxString& name)
         // Read original SVG content
         wxString originalContent = ReadSvgFile(it->second);
         if (!originalContent.IsEmpty()) {
-            LOG_DBG(wxString::Format("SvgIconManager: Original SVG content for '%s' (first 100 chars): %s", 
-                name, originalContent.Left(100)), "SvgIconManager");
+            // LOG_DBG(wxString::Format("SvgIconManager: Original SVG content for '%s' (first 100 chars): %s", 
+            //     name, originalContent.Left(100)), "SvgIconManager");
             
             // Apply theme colors
             wxString themedContent = ApplyThemeToSvg(originalContent);
@@ -420,7 +308,7 @@ wxString SvgIconManager::GetThemedSvgContent(const wxString& name)
             // Cache the themed content
             themedSvgCache[name] = themedContent;
             
-            LOG_DBG(wxString::Format("SvgIconManager: Generated themed SVG for icon '%s'", name.ToStdString()), "SvgIconManager");
+            // LOG_DBG(wxString::Format("SvgIconManager: Generated themed SVG for icon '%s'", name.ToStdString()), "SvgIconManager");
             return themedContent;
         } else {
             LOG_WRN(wxString::Format("SvgIconManager: Failed to read SVG file for icon '%s'", name.ToStdString()), "SvgIconManager");
@@ -461,4 +349,310 @@ void SvgIconManager::PreloadCommonIcons(const wxSize& size)
     }
     
     LOG_INF(wxString::Format("SvgIconManager: Preloaded %u common icons", (unsigned int)commonIcons.size()), "SvgIconManager");
+}
+
+// Enhanced color detection and mapping methods
+
+wxString SvgIconManager::ApplyDirectThemeColors(const wxString& svgContent, const wxString& primaryIconColor, const wxString& backgroundIconColor)
+{
+    wxString themedContent = svgContent;
+    
+    // LOG_DBG("SvgIconManager: Starting selective theme color application (non-light colors only)", "SvgIconManager");
+    
+    // Replace colors selectively - only non-light colors
+    themedContent = ReplaceNonLightColors(themedContent, "fill", primaryIconColor);
+    themedContent = ReplaceNonLightColors(themedContent, "stroke", primaryIconColor);
+    
+    // Handle colors in style attributes
+    themedContent = ReplaceNonLightColorsInStyles(themedContent, primaryIconColor);
+    
+    // Add default fill color to elements without any color attributes
+    themedContent = AddDefaultFillToElements(themedContent, primaryIconColor);
+    
+    // LOG_DBG(wxString::Format("SvgIconManager: Selective theme color application completed. Replaced non-light colors with %s", primaryIconColor), "SvgIconManager");
+    
+    return themedContent;
+}
+
+wxString SvgIconManager::NormalizeSvgStructure(const wxString& svgContent)
+{
+    wxString normalizedContent = svgContent;
+    
+    // Check if SVG has direct path elements under svg root (without g wrapper)
+    std::regex directPathRegex("<svg[^>]*>\\s*<path", std::regex_constants::icase);
+    std::string content = svgContent.ToStdString();
+    
+    if (std::regex_search(content, directPathRegex)) {
+        // This SVG has direct path elements, need to wrap them in a group
+        
+        // Find the opening svg tag
+        std::regex svgOpenRegex("<svg([^>]*)>", std::regex_constants::icase);
+        std::smatch svgMatch;
+        
+        if (std::regex_search(content, svgMatch, svgOpenRegex)) {
+            size_t svgEndPos = svgMatch.position() + svgMatch.length();
+            
+            // Find the closing svg tag
+            std::regex svgCloseRegex("</svg>", std::regex_constants::icase);
+            std::smatch closeMatch;
+            std::string remaining = content.substr(svgEndPos);
+            
+            if (std::regex_search(remaining, closeMatch, svgCloseRegex)) {
+                size_t closeStartPos = svgEndPos + closeMatch.position();
+                
+                // Extract the content between svg tags
+                std::string svgInnerContent = content.substr(svgEndPos, closeMatch.position());
+                
+                // Check if there are path elements not already wrapped in g
+                std::regex unwrappedPathRegex("(?!.*<g[^>]*>.*)<path[^>]*>", std::regex_constants::icase);
+                
+                if (std::regex_search(svgInnerContent, unwrappedPathRegex)) {
+                    // Wrap all content in a group element
+                    std::string newContent = content.substr(0, svgEndPos) +
+                                           "<g>" + svgInnerContent + "</g>" +
+                                           content.substr(closeStartPos);
+                    
+                    normalizedContent = wxString(newContent);
+                    LOG_DBG("SvgIconManager: Added group wrapper to SVG with direct path elements", "SvgIconManager");
+                }
+            }
+        }
+    }
+    
+    return normalizedContent;
+}
+
+wxString SvgIconManager::AddDefaultFillToElements(const wxString& svgContent, const wxString& defaultColor)
+{
+    // First normalize the SVG structure by adding g wrappers where needed
+    wxString themedContent = NormalizeSvgStructure(svgContent);
+    
+    // Now we can use a unified approach - just process group elements
+    // since all path elements should now be wrapped in groups
+    std::regex groupRegex("<g(\\s+[^>]*?)?>", std::regex_constants::icase);
+    std::string content = themedContent.ToStdString();
+    std::string result;
+    
+    std::sregex_iterator iter(content.begin(), content.end(), groupRegex);
+    std::sregex_iterator end;
+    
+    size_t lastPos = 0;
+    while (iter != end) {
+        std::smatch match = *iter;
+        std::string groupTag = match.str();
+        
+        // Check if this group already has fill or stroke attribute
+        if (groupTag.find("fill=") == std::string::npos && groupTag.find("stroke=") == std::string::npos) {
+            // Add fill attribute with default color
+            size_t insertPos = groupTag.find_last_of('>');
+            if (insertPos != std::string::npos) {
+                groupTag.insert(insertPos, " fill=\"" + defaultColor.ToStdString() + "\"");
+            }
+        }
+        
+        result += content.substr(lastPos, match.position() - lastPos);
+        result += groupTag;
+        lastPos = match.position() + match.length();
+        ++iter;
+    }
+    result += content.substr(lastPos);
+    
+    LOG_DBG("SvgIconManager: Added default fill color to group elements", "SvgIconManager");
+    return wxString(result);
+}
+
+wxString SvgIconManager::ReplaceNonLightColors(const wxString& content, const wxString& attribute, const wxString& targetColor)
+{
+    wxString result = content;
+    
+    // Create regex pattern to match the attribute with any color value
+    std::string pattern = attribute.ToStdString() + "=\"([^\"]+)\"";
+    std::regex attrRegex(pattern, std::regex_constants::icase);
+    
+    std::string contentStr = content.ToStdString();
+    std::string resultStr;
+    
+    std::sregex_iterator iter(contentStr.begin(), contentStr.end(), attrRegex);
+    std::sregex_iterator end;
+    
+    size_t lastPos = 0;
+    while (iter != end) {
+        std::smatch match = *iter;
+        wxString colorValue = wxString(match[1].str());
+        
+        // Check if this color should be replaced (non-light colors)
+        if (ShouldReplaceColor(colorValue)) {
+            // Replace this color
+            std::string replacement = attribute.ToStdString() + "=\"" + targetColor.ToStdString() + "\"";
+            
+            resultStr += contentStr.substr(lastPos, match.position() - lastPos);
+            resultStr += replacement;
+            
+            // LOG_DBG(wxString::Format("SvgIconManager: Replaced %s color '%s' with '%s'", 
+            //        attribute, colorValue, targetColor), "SvgIconManager");
+        } else {
+            // Keep original light color
+            resultStr += contentStr.substr(lastPos, match.position() - lastPos);
+            resultStr += match.str();
+            
+            // LOG_DBG(wxString::Format("SvgIconManager: Preserved light %s color '%s'", 
+            //        attribute, colorValue), "SvgIconManager");
+        }
+        
+        lastPos = match.position() + match.length();
+        ++iter;
+    }
+    resultStr += contentStr.substr(lastPos);
+    
+    return wxString(resultStr);
+}
+
+wxString SvgIconManager::ReplaceNonLightColorsInStyles(const wxString& content, const wxString& targetColor)
+{
+    wxString result = content;
+    
+    // Process style attributes like style="fill:#000000;stroke:red"
+    std::regex styleRegex("style=\"([^\"]*)\"", std::regex_constants::icase);
+    std::string contentStr = content.ToStdString();
+    std::string resultStr;
+    
+    std::sregex_iterator iter(contentStr.begin(), contentStr.end(), styleRegex);
+    std::sregex_iterator end;
+    
+    size_t lastPos = 0;
+    while (iter != end) {
+        std::smatch match = *iter;
+        std::string styleValue = match[1].str();
+        
+        // Process fill properties within style
+        std::regex fillRegex("fill\\s*:\\s*([^;]+)", std::regex_constants::icase);
+        std::smatch fillMatch;
+        
+        if (std::regex_search(styleValue, fillMatch, fillRegex)) {
+            wxString fillColor = wxString(fillMatch[1].str());
+            if (ShouldReplaceColor(fillColor)) {
+                styleValue = std::regex_replace(styleValue, fillRegex, 
+                                              "fill:" + targetColor.ToStdString());
+                // LOG_DBG(wxString::Format("SvgIconManager: Replaced style fill color '%s' with '%s'", 
+                //        fillColor, targetColor), "SvgIconManager");
+            }
+        }
+        
+        // Process stroke properties within style
+        std::regex strokeRegex("stroke\\s*:\\s*([^;]+)", std::regex_constants::icase);
+        std::smatch strokeMatch;
+        
+        if (std::regex_search(styleValue, strokeMatch, strokeRegex)) {
+            wxString strokeColor = wxString(strokeMatch[1].str());
+            if (ShouldReplaceColor(strokeColor)) {
+                styleValue = std::regex_replace(styleValue, strokeRegex, 
+                                              "stroke:" + targetColor.ToStdString());
+                // LOG_DBG(wxString::Format("SvgIconManager: Replaced style stroke color '%s' with '%s'", 
+                //        strokeColor, targetColor), "SvgIconManager");
+            }
+        }
+        
+        std::string replacement = "style=\"" + styleValue + "\"";
+        
+        resultStr += contentStr.substr(lastPos, match.position() - lastPos);
+        resultStr += replacement;
+        lastPos = match.position() + match.length();
+        ++iter;
+    }
+    resultStr += contentStr.substr(lastPos);
+    
+    return wxString(resultStr);
+}
+
+bool SvgIconManager::ShouldReplaceColor(const wxString& colorValue)
+{
+    // Determine if a color should be replaced based on brightness
+    // Returns true for dark/medium colors, false for light colors
+    
+    int brightness = CalculateColorBrightness(colorValue);
+    
+    if (brightness < 0) {
+        // Invalid color, check common keywords
+        wxString lowerColor = colorValue.Lower();
+        
+        // Don't replace light colors and transparent
+        if (lowerColor == "white" || lowerColor == "#fff" || lowerColor == "#ffffff" ||
+            lowerColor == "transparent" || lowerColor == "none" ||
+            lowerColor.Contains("lightgray") || lowerColor.Contains("lightgrey") ||
+            lowerColor.Contains("silver")) {
+            return false;
+        }
+        
+        // Replace dark/medium colors
+        if (lowerColor == "black" || lowerColor == "#000" || lowerColor == "#000000" ||
+            lowerColor == "gray" || lowerColor == "grey" || lowerColor == "currentcolor" ||
+            lowerColor.Contains("dark")) {
+            return true;
+        }
+        
+        // For unknown colors, replace them (conservative approach)
+        return true;
+    }
+    
+    // Light colors (brightness > 180) - don't replace
+    if (brightness > 180) {
+        return false;
+    }
+    
+    // Dark and medium colors - replace
+    return true;
+}
+
+int SvgIconManager::CalculateColorBrightness(const wxString& colorValue)
+{
+    std::string color = colorValue.Lower().ToStdString();
+    
+    // Remove whitespace
+    color.erase(std::remove_if(color.begin(), color.end(), ::isspace), color.end());
+    
+    // Handle hex colors
+    if (!color.empty() && color[0] == '#') {
+        std::string hex = color.substr(1);
+        if (hex.length() == 3) {
+            // Short hex format (#RGB -> #RRGGBB)
+            hex = std::string(1, hex[0]) + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        
+        if (hex.length() == 6) {
+            try {
+                int r = std::stoi(hex.substr(0, 2), nullptr, 16);
+                int g = std::stoi(hex.substr(2, 2), nullptr, 16);
+                int b = std::stoi(hex.substr(4, 2), nullptr, 16);
+                
+                // Calculate perceived brightness using standard formula
+                return static_cast<int>(0.299 * r + 0.587 * g + 0.114 * b);
+            } catch (...) {
+                return -1;
+            }
+        }
+    }
+    
+    // Handle RGB/RGBA format
+    std::regex rgbRegex("rgba?\\((\\d+),(\\d+),(\\d+)(?:,[\\d.]+)?\\)");
+    std::smatch match;
+    if (std::regex_match(color, match, rgbRegex)) {
+        try {
+            int r = std::stoi(match[1].str());
+            int g = std::stoi(match[2].str());
+            int b = std::stoi(match[3].str());
+            
+            return static_cast<int>(0.299 * r + 0.587 * g + 0.114 * b);
+        } catch (...) {
+            return -1;
+        }
+    }
+    
+    // For named colors, return predefined brightness values
+    if (color == "white") return 255;
+    if (color == "black") return 0;
+    if (color == "gray" || color == "grey") return 128;
+    if (color == "lightgray" || color == "lightgrey" || color == "silver") return 192;
+    if (color == "darkgray" || color == "darkgrey") return 64;
+    
+    return -1; // Unknown format
 }

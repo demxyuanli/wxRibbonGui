@@ -64,8 +64,6 @@ void FlatUIBar::OnPaint(wxPaintEvent& evt)
     if (m_performanceManager) {
         m_performanceManager->EndPerformanceTimer("FlatUIBar_OnPaint");
     }
-
-    LOG_DBG("FlatUIBar OnPaint: Background and separator drawn. Tabs handled by FlatBarSpaceContainer.", "FlatUIBar");
 }
 
 void FlatUIBar::DrawBackgroundOptimized(wxGraphicsContext& gc)
