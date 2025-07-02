@@ -122,13 +122,13 @@ void FlatFrame::InitializeUI(const wxSize& size)
     wxFont defaultFont = CFG_DEFAULTFONT();
     m_ribbon->SetDoubleBuffered(true);
     m_ribbon->SetTabStyle(FlatUIBar::TabStyle::DEFAULT);
-    m_ribbon->SetTabBorderColour(wxColour(200, 200, 200));
-    m_ribbon->SetActiveTabBackgroundColour(wxColour(255, 255, 255));
-    m_ribbon->SetActiveTabTextColour(wxColour(50, 50, 50));
-    m_ribbon->SetInactiveTabTextColour(wxColour(100, 100, 100));
+    m_ribbon->SetTabBorderColour(CFG_COLOUR("BarTabBorderColour"));
+    m_ribbon->SetActiveTabBackgroundColour(CFG_COLOUR("BarActiveTabBgColour"));
+    m_ribbon->SetActiveTabTextColour(CFG_COLOUR("BarActiveTextColour"));
+    m_ribbon->SetInactiveTabTextColour(CFG_COLOUR("BarInactiveTextColour"));
     m_ribbon->SetTabBorderStyle(FlatUIBar::TabBorderStyle::SOLID);
     m_ribbon->SetTabBorderWidths(2, 0, 1, 1);
-    m_ribbon->SetTabBorderTopColour(wxColour(0, 120, 215));
+    m_ribbon->SetTabBorderTopColour(CFG_COLOUR("BarTabBorderTopColour"));
     m_ribbon->SetTabCornerRadius(0);
     m_ribbon->SetHomeButtonWidth(30);
 
@@ -150,12 +150,16 @@ void FlatFrame::InitializeUI(const wxSize& size)
     m_ribbon->AddSpaceSeparator(FlatUIBar::SPACER_TAB_FUNCTION, 30, false, true, true);
 
     wxPanel* searchPanel = new wxPanel(m_ribbon);
+    searchPanel->SetBackgroundColour(CFG_COLOUR("BarBgColour")); // Use consistent theme background
     wxBoxSizer* searchSizer = new wxBoxSizer(wxHORIZONTAL);
     m_searchCtrl = new wxSearchCtrl(searchPanel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(240, -1), wxTE_PROCESS_ENTER);
     m_searchCtrl->SetFont(defaultFont);
+    m_searchCtrl->SetBackgroundColour(CFG_COLOUR("SearchCtrlBgColour"));
+    m_searchCtrl->SetForegroundColour(CFG_COLOUR("SearchCtrlFgColour"));
     m_searchCtrl->ShowSearchButton(true);
     m_searchCtrl->ShowCancelButton(true);
     wxBitmapButton* searchButton = new wxBitmapButton(searchPanel, ID_SearchExecute, SVG_ICON("search", wxSize(16, 16)));
+    searchButton->SetBackgroundColour(CFG_COLOUR("BarBgColour")); // Set consistent background
     searchSizer->Add(m_searchCtrl, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 2);
     searchSizer->Add(searchButton, 0, wxALIGN_CENTER_VERTICAL);
     searchPanel->SetSizer(searchSizer);
@@ -163,11 +167,14 @@ void FlatFrame::InitializeUI(const wxSize& size)
     m_ribbon->SetFunctionSpaceControl(searchPanel, 270);
 
     wxPanel* profilePanel = new wxPanel(m_ribbon);
+    profilePanel->SetBackgroundColour(CFG_COLOUR("BarBgColour")); // Set theme background color
     wxBoxSizer* profileSizer = new wxBoxSizer(wxHORIZONTAL);
     wxBitmapButton* userButton = new wxBitmapButton(profilePanel, ID_UserProfile, SVG_ICON("user",wxSize(16, 16)));
     userButton->SetToolTip("User Profile");
+    userButton->SetBackgroundColour(CFG_COLOUR("BarBgColour")); // Set consistent background
     wxBitmapButton* settingsButton = new wxBitmapButton(profilePanel, wxID_PREFERENCES, SVG_ICON("settings", wxSize(16, 16)));
     settingsButton->SetToolTip("Settings");
+    settingsButton->SetBackgroundColour(CFG_COLOUR("BarBgColour")); // Set consistent background
     profileSizer->Add(userButton, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
     profileSizer->Add(settingsButton, 0, wxALIGN_CENTER_VERTICAL);
     profilePanel->SetSizer(profileSizer);
@@ -186,7 +193,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel1->SetPanelBorderWidths(0, 0, 0, 1);
     panel1->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel1->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
-    panel1->SetHeaderTextColour(wxColour(120, 120, 120));
+    panel1->SetHeaderTextColour(CFG_COLOUR("PanelHeaderTextColour"));
     panel1->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar1 = new FlatUIButtonBar(panel1);
 	buttonBar1->SetDisplayStyle(ButtonDisplayStyle::ICON_ONLY);
@@ -214,7 +221,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     panel2->SetPanelBorderWidths(0, 0, 0, 1);
     panel2->SetHeaderStyle(PanelHeaderStyle::BOTTOM_CENTERED);
     panel2->SetHeaderColour(CFG_COLOUR("ThemeWhiteColour"));
-    panel2->SetHeaderTextColour(wxColour(120, 120, 120));
+    panel2->SetHeaderTextColour(CFG_COLOUR("PanelHeaderTextColour"));
     panel2->SetHeaderBorderWidths(0, 0, 0, 0);
     FlatUIButtonBar* buttonBar2 = new FlatUIButtonBar(panel2);
     buttonBar2->AddButton(wxID_HELP, "Help", SVG_ICON("help", wxSize(16, 16)));
@@ -279,6 +286,7 @@ void FlatFrame::InitializeUI(const wxSize& size)
     // Add title for SVG area
     wxStaticText* svgTitle = new wxStaticText(svgPanel, wxID_ANY, "SVG Icons Display");
     svgTitle->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+    svgTitle->SetForegroundColour(CFG_COLOUR("DefaultTextColour"));
     svgSizer->Add(svgTitle, 0, wxALL | wxALIGN_CENTER, 10);
     
     // Create scrolled window for SVG icons
@@ -298,9 +306,11 @@ void FlatFrame::InitializeUI(const wxSize& size)
 
     // Create message panel (right side)
     wxPanel* messagePanel = new wxPanel(splitter, wxID_ANY);
-    messagePanel->SetBackgroundColour(this->GetBackgroundColour());
+    messagePanel->SetBackgroundColour(CFG_COLOUR("FrameAppWorkspaceColour"));
     wxBoxSizer* messagePanelSizer = new wxBoxSizer(wxVERTICAL);
     m_messageOutput = new wxTextCtrl(messagePanel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY);
+    m_messageOutput->SetBackgroundColour(CFG_COLOUR("TextCtrlBgColour"));
+    m_messageOutput->SetForegroundColour(CFG_COLOUR("TextCtrlFgColour"));
     messagePanelSizer->Add(m_messageOutput, 1, wxEXPAND);
     messagePanel->SetSizer(messagePanelSizer);
 
@@ -367,6 +377,7 @@ void FlatFrame::LoadSVGIcons(wxWindow* parent, wxSizer* sizer)
                 wxFileName fn(fullPath);
                 wxStaticText* label = new wxStaticText(iconPanel, wxID_ANY, fn.GetName());
                 label->SetFont(wxFont(8, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+                label->SetForegroundColour(CFG_COLOUR("DefaultTextColour"));
                 iconSizer->Add(label, 0, wxALIGN_CENTER | wxALL, 2);
             }
             catch (const std::exception& e)
@@ -568,6 +579,38 @@ void FlatFrame::OnThemeChanged(wxCommandEvent& event)
     
     // Call base class implementation for actual theme change handling
     FlatUIFrame::OnThemeChanged(event);
+    
+    // Re-apply specific colors for FlatFrame controls
+    if (m_searchPanel) {
+        m_searchPanel->SetBackgroundColour(CFG_COLOUR("SearchPanelBgColour"));
+    }
+    
+    if (m_searchCtrl) {
+        m_searchCtrl->SetBackgroundColour(CFG_COLOUR("SearchCtrlBgColour"));
+        m_searchCtrl->SetForegroundColour(CFG_COLOUR("SearchCtrlFgColour"));
+    }
+    
+    if (m_messageOutput) {
+        m_messageOutput->SetBackgroundColour(CFG_COLOUR("TextCtrlBgColour"));
+        m_messageOutput->SetForegroundColour(CFG_COLOUR("TextCtrlFgColour"));
+    }
+    
+    // Re-apply ribbon colors
+    if (m_ribbon) {
+        m_ribbon->SetTabBorderColour(CFG_COLOUR("BarTabBorderColour"));
+        m_ribbon->SetActiveTabBackgroundColour(CFG_COLOUR("BarActiveTabBgColour"));
+        m_ribbon->SetActiveTabTextColour(CFG_COLOUR("BarActiveTextColour"));
+        m_ribbon->SetInactiveTabTextColour(CFG_COLOUR("BarInactiveTextColour"));
+        m_ribbon->SetTabBorderTopColour(CFG_COLOUR("BarTabBorderTopColour"));
+        
+        // Force ribbon to update its display
+        m_ribbon->Refresh(true);
+        m_ribbon->Update();
+    }
+    
+    // Additional full refresh to ensure all changes take effect
+    Refresh(true);
+    Update();
 }
 
 

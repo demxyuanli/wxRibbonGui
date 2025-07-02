@@ -60,7 +60,7 @@ void FlatUIHomeMenu::BuildMenuLayout()
 {
     m_itemSizer->Clear(true); // Clear previous items if any
 
-    bool hasDynamicItems = !m_menuItems.empty();
+    bool hasDynamicItems = !m_menuItems.empty(); 
 
     for (const auto& itemInfo : m_menuItems) {
         if (itemInfo.isSeparator) {
@@ -190,6 +190,14 @@ void FlatUIHomeMenu::OnPaint(wxPaintEvent& event)
     wxAutoBufferedPaintDC dc(m_panel);
     int w, h;
     m_panel->GetSize(&w, &h);
+
+    // Fill background with theme color
+    dc.SetBrush(wxBrush(CFG_COLOUR("PrimaryContentBgColour")));
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.DrawRectangle(0, 0, w, h);
+
+    // Draw border
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
     dc.SetPen(wxPen(CFG_COLOUR("HomeMenuBorderColour"), 1));
     dc.DrawRectangle(0, 0, w, h);
 }
@@ -378,4 +386,37 @@ void FlatUIHomeMenu::ShowThemeSubmenu(wxWindow* parentItem)
     
     // Clean up menu after use
     delete themeMenu;
+}
+
+void FlatUIHomeMenu::RefreshTheme()
+{
+    // Update background colors
+    SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
+    
+    if (m_panel) {
+        m_panel->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
+        
+        // Update all child panels and text colors
+        wxWindowList& children = m_panel->GetChildren();
+        for (wxWindow* child : children) {
+            if (child->GetClassInfo()->GetClassName() == wxString("wxPanel")) {
+                // Skip separator panels (they have specific colors)
+                if (child->GetSize().GetHeight() == 1) {
+                    child->SetBackgroundColour(CFG_COLOUR("BarTabBorderColour"));
+                } else {
+                    child->SetBackgroundColour(CFG_COLOUR("PrimaryContentBgColour"));
+                }
+            }
+            else if (child->GetClassInfo()->GetClassName() == wxString("wxStaticText")) {
+                wxStaticText* text = static_cast<wxStaticText*>(child);
+                text->SetForegroundColour(CFG_COLOUR("MenuTextColour"));
+            }
+        }
+        
+        m_panel->Refresh(true);
+        m_panel->Update();
+    }
+    
+    Refresh(true);
+    Update();
 }

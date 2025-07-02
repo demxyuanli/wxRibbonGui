@@ -169,7 +169,7 @@ void FlatUIPanel::RecalculateBestSize()
 
     wxSize bestPanelSize(0, 0); // Renamed from bestSize for clarity with TARGET_PANEL_HEIGHT
     int headerOffsetWidth = 0, headerOffsetHeight = 0;
-
+     
     if (m_headerStyle == PanelHeaderStyle::TOP || m_headerStyle == PanelHeaderStyle::BOTTOM_CENTERED) {
         headerOffsetHeight = CFG_INT("PanelDefaultHeaderAreaSize");
     }

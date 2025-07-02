@@ -74,7 +74,7 @@ void FlatUIPinButton::OnPaint(wxPaintEvent& evt)
     wxAutoBufferedPaintDC dc(this);
 
     // Clear background
-    dc.SetBackground(wxBrush(CFG_COLOUR("ThemeWhiteColour")));
+    dc.SetBackground(wxBrush(CFG_COLOUR("BarBgColour")));
     dc.Clear();
 
     // Draw unpin icon

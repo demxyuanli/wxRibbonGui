@@ -54,6 +54,9 @@ public:
     
     // Theme submenu functionality
     void ShowThemeSubmenu(wxWindow* parentItem);
+    
+    // Theme refresh method
+    void RefreshTheme();
 
 protected:
     void OnPaint(wxPaintEvent& event);

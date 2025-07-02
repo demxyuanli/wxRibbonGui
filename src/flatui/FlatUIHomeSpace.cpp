@@ -51,14 +51,13 @@ void FlatUIHomeSpace::OnPaint(wxPaintEvent& evt)
 
     CalculateButtonRect(GetClientSize());
 
-    wxColour parentBgColor = GetParent() ? GetParent()->GetBackgroundColour() : CFG_COLOUR("SystemButtonBgColour");
     wxColour finalBgColorToDraw;
 
     if (m_hover) { // m_menu check removed as it's no longer relevant for hover indication
-        finalBgColorToDraw = CFG_COLOUR("HomeSpaceHoverBgColour");
+        finalBgColorToDraw = CFG_COLOUR("HomespaceHoverBgColour");
     }
     else {
-        finalBgColorToDraw = parentBgColor; // In normal state, match parent background
+        finalBgColorToDraw = CFG_COLOUR("BarBgColour"); // Use theme background color
     }
 
     // Fill the entire control area with the determined background color

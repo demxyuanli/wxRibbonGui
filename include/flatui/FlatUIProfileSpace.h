@@ -17,7 +17,7 @@ public:
 
 protected:
     void OnSize(wxSizeEvent& evt);
-    // void OnPaint(wxPaintEvent& evt); // Optional
+    void OnPaint(wxPaintEvent& evt);
 
 private:
     wxWindow* m_childControl;

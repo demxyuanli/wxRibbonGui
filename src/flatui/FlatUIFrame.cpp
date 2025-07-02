@@ -1,5 +1,6 @@
 #include "flatui/FlatUIFrame.h"
 #include "flatui/FlatUIPage.h" // For FlatUIPage in RefreshAllUI
+#include "flatui/FlatUIHomeMenu.h" // For FlatUIHomeMenu::RefreshTheme
 #include <wx/dcbuffer.h> // For wxScreenDC
 #include <wx/display.h>  // For wxDisplay
 #include <functional>   // For std::function
@@ -27,13 +28,13 @@ FlatUIFrame::FlatUIFrame(wxWindow* parent, wxWindowID id, const wxString& title,
       m_isPseudoMaximized(false)
       // m_dragging, m_resizing, m_resizeMode, m_rubberBandVisible, m_borderThreshold are initialized by BorderlessFrameLogic
 {
-    InitFrameStyle(); // Specific styling for FlatUIFrame 
+    InitFrameStyle(); // Specific styling for FlatUIFrame
 }
 
 FlatUIFrame::~FlatUIFrame()
 {
     wxLogDebug("FlatUIFrame destruction started.");
-    wxLogDebug("FlatUIFrame destruction completed."); 
+    wxLogDebug("FlatUIFrame destruction completed.");
 }
 
 void FlatUIFrame::InitFrameStyle()
@@ -304,10 +305,60 @@ void FlatUIFrame::RefreshAllUI()
     std::function<void(wxWindow*)> refreshRecursive = [&](wxWindow* window) {
         if (!window) return;
         
-        // Update background colors
-        if (window != this) { // Don't update the main frame background here
-            // Let each control use its theme-specific background color
-            window->SetBackgroundColour(wxNullColour); // Reset to default, will pick up theme color
+        // Special handling for specific control types
+        wxString className = window->GetClassInfo()->GetClassName();
+        
+        // Re-apply theme colors for specific controls
+        if (className == "wxSearchCtrl") {
+            window->SetBackgroundColour(CFG_COLOUR("SearchCtrlBgColour"));
+            window->SetForegroundColour(CFG_COLOUR("SearchCtrlFgColour"));
+        }
+        else if (className == "wxTextCtrl") {
+            window->SetBackgroundColour(CFG_COLOUR("TextCtrlBgColour"));
+            window->SetForegroundColour(CFG_COLOUR("TextCtrlFgColour"));
+        }
+        else if (className == "wxPanel") {
+            // Check for specific panel types by name
+            wxString name = window->GetName();
+            if (name.Contains("search") || name.Contains("Search")) {
+                window->SetBackgroundColour(CFG_COLOUR("SearchPanelBgColour"));
+            }
+            else if (name.Contains("svg") || name.Contains("SVG")) {
+                window->SetBackgroundColour(CFG_COLOUR("SvgPanelBgColour"));
+            }
+            else if (name.Contains("icon") || name.Contains("Icon")) {
+                window->SetBackgroundColour(CFG_COLOUR("IconPanelBgColour"));
+            }
+        }
+        else if (className == "wxScrolledWindow") {
+            window->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
+        }
+        else if (className == "wxStaticText") {
+            // Re-apply text colors based on usage
+            wxString label = static_cast<wxStaticText*>(window)->GetLabel();
+            if (label.Contains("Error") || label.Contains("error")) {
+                window->SetForegroundColour(CFG_COLOUR("ErrorTextColour"));
+            }
+            else if (label.Contains("Not Found") || label.Contains("Missing")) {
+                window->SetForegroundColour(CFG_COLOUR("PlaceholderTextColour"));
+            }
+            else {
+                window->SetForegroundColour(CFG_COLOUR("DefaultTextColour"));
+            }
+        }
+        else if (className == "FlatUIHomeMenu") {
+            // Cast to FlatUIHomeMenu and call RefreshTheme
+            FlatUIHomeMenu* homeMenu = static_cast<FlatUIHomeMenu*>(window);
+            homeMenu->RefreshTheme();
+        }
+        else if (className == "FlatUITabDropdown") {
+            window->SetBackgroundColour(CFG_COLOUR("BarBackgroundColour"));
+        }
+        else if (className == "FlatUIFixPanel") {
+            window->SetBackgroundColour(CFG_COLOUR("BarBackgroundColour"));
+        }
+        else if (className == "FlatUIFloatPanel") {
+            window->SetBackgroundColour(CFG_COLOUR("ScrolledWindowBgColour"));
         }
         
         // Force refresh

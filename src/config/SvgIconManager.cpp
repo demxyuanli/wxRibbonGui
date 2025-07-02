@@ -59,7 +59,7 @@ void SvgIconManager::LoadIcons()
         cont = dir.GetNext(&filename);
     }
     
-    LOG_INF(wxString::Format("SvgIconManager: Loaded %zu SVG icons from '%s'", iconMap.size(), iconDir.ToStdString()), "SvgIconManager");
+    LOG_INF(wxString::Format("SvgIconManager: Loaded %u SVG icons from '%s'", (unsigned int)iconMap.size(), iconDir.ToStdString()), "SvgIconManager");
 }
 
 wxString SvgIconManager::GetCacheKey(const wxString& name, const wxSize& size) const
@@ -107,8 +107,8 @@ wxBitmapBundle SvgIconManager::GetBitmapBundle(const wxString& name)
                 }
             }
             
-            LOG_ERR(wxString::Format("SvgIconManager: Failed to create bitmap bundle for icon '%s' from path '%s'.",
-                   name.ToStdString(), it->second.ToStdString()), "SvgIconManager");
+                LOG_ERR(wxString::Format("SvgIconManager: Failed to create bitmap bundle for icon '%s' from path '%s'.",
+                       name.ToStdString(), it->second.ToStdString()), "SvgIconManager");
                    
         } catch (const std::exception& e) {
             LOG_ERR(wxString::Format("SvgIconManager: Exception while loading SVG icon '%s': %s",
@@ -235,6 +235,8 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
     try {
         // Check if SVG theming is enabled
         bool svgThemeEnabled = CFG_INT("SvgThemeEnabled") != 0;
+        LOG_DBG(wxString::Format("SvgIconManager: SVG theming enabled: %s", svgThemeEnabled ? "true" : "false"), "SvgIconManager");
+        
         if (!svgThemeEnabled) {
             LOG_DBG("SvgIconManager: SVG theming is disabled", "SvgIconManager");
             return svgContent; // Return original content if theming is disabled
@@ -251,6 +253,9 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
         // Convert wxColour to hex strings
         wxString primaryIconHex = wxString::Format("#%02x%02x%02x", 
             primaryIconColor.Red(), primaryIconColor.Green(), primaryIconColor.Blue());
+        
+        LOG_DBG(wxString::Format("SvgIconManager: Primary icon color: %s (R:%d G:%d B:%d)", 
+            primaryIconHex, primaryIconColor.Red(), primaryIconColor.Green(), primaryIconColor.Blue()), "SvgIconManager");
         wxString secondaryIconHex = wxString::Format("#%02x%02x%02x", 
             secondaryIconColor.Red(), secondaryIconColor.Green(), secondaryIconColor.Blue());
         wxString disabledIconHex = wxString::Format("#%02x%02x%02x", 
@@ -271,6 +276,71 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
         themedContent.Replace("stroke=\"#000\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
         themedContent.Replace("stroke=\"black\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
         
+        // Replace currentColor with primary icon color (common in modern SVGs)
+        themedContent.Replace("fill=\"currentColor\"", wxString::Format("fill=\"%s\"", primaryIconHex));
+        themedContent.Replace("stroke=\"currentColor\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        
+        // Replace common dark colors found in logs
+        themedContent.Replace("fill=\"#202023\"", wxString::Format("fill=\"%s\"", primaryIconHex));
+        themedContent.Replace("stroke=\"#202023\"", wxString::Format("stroke=\"%s\"", primaryIconHex));
+        
+        // Handle path elements without explicit fill attribute (they default to black)
+        // Look for <path> tags without fill attribute and add primary icon color
+        wxString pathPattern = "<path ";
+        size_t pos = 0;
+        wxString searchContent = themedContent.ToStdString();
+        
+        while (true) {
+            size_t foundPos = searchContent.find(pathPattern.ToStdString(), pos);
+            if (foundPos == std::string::npos) break;
+            
+            size_t endPos = searchContent.find(">", foundPos);
+            if (endPos == std::string::npos) break;
+            
+            wxString pathTag = themedContent.Mid(foundPos, endPos - foundPos + 1);
+            // Check if this path already has a fill attribute
+            if (!pathTag.Contains("fill=")) {
+                // Add fill attribute with primary icon color
+                wxString newPathTag = pathTag;
+                newPathTag.Replace(">", wxString::Format(" fill=\"%s\">", primaryIconHex));
+                themedContent = themedContent.Left(foundPos) + newPathTag + themedContent.Mid(endPos + 1);
+                searchContent = themedContent.ToStdString();
+                pos = foundPos + newPathTag.length();
+            } else {
+                pos = endPos + 1;
+            }
+        }
+        
+        // Handle <g> elements without explicit fill attribute
+        wxString gPattern = "<g>";
+        themedContent.Replace(gPattern, wxString::Format("<g fill=\"%s\">", primaryIconHex));
+        
+        // Handle <g> elements with attributes but no fill
+        wxString gAttrPattern = "<g ";
+        pos = 0;
+        searchContent = themedContent.ToStdString();
+        
+        while (true) {
+            size_t foundPos = searchContent.find(gAttrPattern.ToStdString(), pos);
+            if (foundPos == std::string::npos) break;
+            
+            size_t endPos = searchContent.find(">", foundPos);
+            if (endPos == std::string::npos) break;
+            
+            wxString gTag = themedContent.Mid(foundPos, endPos - foundPos + 1);
+            // Check if this g element already has a fill attribute
+            if (!gTag.Contains("fill=")) {
+                // Add fill attribute with primary icon color
+                wxString newGTag = gTag;
+                newGTag.Replace(">", wxString::Format(" fill=\"%s\">", primaryIconHex));
+                themedContent = themedContent.Left(foundPos) + newGTag + themedContent.Mid(endPos + 1);
+                searchContent = themedContent.ToStdString();
+                pos = foundPos + newGTag.length();
+            } else {
+                pos = endPos + 1;
+            }
+        }
+
         // Replace dark gray colors with secondary icon color
         themedContent.Replace("fill=\"#333333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
         themedContent.Replace("fill=\"#333\"", wxString::Format("fill=\"%s\"", secondaryIconHex));
@@ -307,6 +377,14 @@ wxString SvgIconManager::ApplyThemeToSvg(const wxString& svgContent)
         themedContent.Replace("fill=\"#eeeeee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
         themedContent.Replace("fill=\"#eee\"", wxString::Format("fill=\"%s\"", primaryBgHex));
 
+        LOG_DBG(wxString::Format("SvgIconManager: Applied theme colors to SVG content. Original length: %d, Themed length: %d", 
+            (int)svgContent.length(), (int)themedContent.length()), "SvgIconManager");
+        
+        // Log a sample of the themed content for debugging
+        if (themedContent.length() > 100) {
+            LOG_DBG(wxString::Format("SvgIconManager: Themed SVG sample: %s...", themedContent.Left(200)), "SvgIconManager");
+        }
+        
         LOG_DBG("SvgIconManager: Applied theme colors to SVG content", "SvgIconManager");
         
     } catch (const std::exception& e) {
@@ -333,6 +411,9 @@ wxString SvgIconManager::GetThemedSvgContent(const wxString& name)
         // Read original SVG content
         wxString originalContent = ReadSvgFile(it->second);
         if (!originalContent.IsEmpty()) {
+            LOG_DBG(wxString::Format("SvgIconManager: Original SVG content for '%s' (first 100 chars): %s", 
+                name, originalContent.Left(100)), "SvgIconManager");
+            
             // Apply theme colors
             wxString themedContent = ApplyThemeToSvg(originalContent);
             
@@ -379,5 +460,5 @@ void SvgIconManager::PreloadCommonIcons(const wxSize& size)
         GetIconBitmap(iconName, size, true); // This will cache the bitmap
     }
     
-    LOG_INF(wxString::Format("SvgIconManager: Preloaded %zu common icons", commonIcons.size()), "SvgIconManager");
+    LOG_INF(wxString::Format("SvgIconManager: Preloaded %u common icons", (unsigned int)commonIcons.size()), "SvgIconManager");
 }

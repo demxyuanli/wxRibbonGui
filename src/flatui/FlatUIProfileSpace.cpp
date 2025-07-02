@@ -9,7 +9,9 @@ FlatUIProfileSpace::FlatUIProfileSpace(wxWindow* parent, wxWindowID id)
 {
 
     Bind(wxEVT_SIZE, &FlatUIProfileSpace::OnSize, this);
-    // Bind(wxEVT_PAINT, &FlatUIProfileSpace::OnPaint, this); // If custom painting needed
+    Bind(wxEVT_PAINT, &FlatUIProfileSpace::OnPaint, this);
+    
+    SetBackgroundStyle(wxBG_STYLE_PAINT);
 }
 
 FlatUIProfileSpace::~FlatUIProfileSpace() {}
@@ -63,4 +65,14 @@ void FlatUIProfileSpace::OnSize(wxSizeEvent& evt)
         m_childControl->SetSize(w, h);
     }
     evt.Skip();
+}
+
+void FlatUIProfileSpace::OnPaint(wxPaintEvent& evt)
+{
+    wxPaintDC dc(this);
+    
+    // Fill background with theme color
+    wxColour bgColor = CFG_COLOUR("BarBgColour");
+    dc.SetBackground(wxBrush(bgColor));
+    dc.Clear();
 }
